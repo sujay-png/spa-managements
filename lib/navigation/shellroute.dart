@@ -28,7 +28,10 @@ class _ShellrouteState extends State<Shellroute> {
         backgroundColor: AppColors.surface,
         title: Row(
           children: [
-            Icon(Icons.spa),
+            Container(
+              padding: EdgeInsets.all(15),
+              
+              child: Icon(Icons.spa)),
             SizedBox(width: 8),
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -47,11 +50,14 @@ class _ShellrouteState extends State<Shellroute> {
           ],
         ),
         actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.logout),
-          //   tooltip: 'Sign out',
-          //   onPressed: () => context.read<AuthController>().signOut(),
-          // ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            onPressed: (){
+
+            }
+          ),
+          // context.read<AuthController>().signOut(),
         ],
       ),
       body: LayoutBuilder(
@@ -64,51 +70,47 @@ class _ShellrouteState extends State<Shellroute> {
 
           return Row(
             children: [
-              MouseRegion(
-                onEnter: (_) => setState(() => _isexpanded = true),
-                onExit: (_) => setState(() => _isexpanded = false),
-                child: NavigationRail(
-                  extended: _isexpanded,
-                  minWidth: 72,
-                  minExtendedWidth: 200,
-                  selectedIndex: _index,
-                  onDestinationSelected: (i) => setState(() => _index = i),
-                  labelType: NavigationRailLabelType.none,
-                  backgroundColor: AppColors.surface,
-                  indicatorColor: AppColors.secondary.withValues(alpha: 0.2),
-                  destinations: const [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.dashboard_outlined),
-                      selectedIcon: Icon(Icons.dashboard),
-                      label: Text('Dashboard'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.people_outline),
-                      selectedIcon: Icon(Icons.people),
-                      label: Text('Bookings'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.payments_outlined),
-                      selectedIcon: Icon(Icons.payments),
-                      label: Text('Customers'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.build_outlined),
-                      selectedIcon: Icon(Icons.build),
-                      label: Text('Services'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.campaign_outlined),
-                      selectedIcon: Icon(Icons.campaign),
-                      label: Text('Staff'),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.campaign_outlined),
-                      selectedIcon: Icon(Icons.campaign),
-                      label: Text('Service Menu'),
-                    ),
-                  ],
-                ),
+              NavigationRail(
+               extended: true,
+                minWidth: 72,
+                minExtendedWidth: 200,
+                selectedIndex: _index,
+                onDestinationSelected: (i) => setState(() => _index = i),
+                labelType: NavigationRailLabelType.none,
+                backgroundColor: AppColors.surface,
+                indicatorColor: AppColors.secondary.withValues(alpha: 0.2),
+                destinations: const [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.dashboard_outlined),
+                    selectedIcon: Icon(Icons.dashboard),
+                    label: Text('Dashboard'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.people_outline),
+                    selectedIcon: Icon(Icons.people),
+                    label: Text('Bookings'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.payments_outlined),
+                    selectedIcon: Icon(Icons.payments),
+                    label: Text('Customers'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.build_outlined),
+                    selectedIcon: Icon(Icons.build),
+                    label: Text('Services'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.campaign_outlined),
+                    selectedIcon: Icon(Icons.campaign),
+                    label: Text('Staff'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.campaign_outlined),
+                    selectedIcon: Icon(Icons.campaign),
+                    label: Text('Service Menu'),
+                  ),
+                ],
               ),
               const VerticalDivider(width: 1),
               Expanded(child: _pages[_index]),
