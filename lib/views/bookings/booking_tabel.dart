@@ -307,15 +307,43 @@ class _BookingTabelState extends State<BookingTabel> {
                     ),
 
                     /// Actions Menu
-                    SizedBox(
-                      width: 30,
-                      child: IconButton(
-                        icon: const Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
-                        onPressed: () {
-                          // Handle menu option click
-                        },
-                      ),
-                    ),
+                 /// Actions Menu
+SizedBox(
+  width: 30,
+  child: PopupMenuButton<String>(
+    icon: const Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
+    onSelected: (value) {
+      if (value == 'edit') {
+        _editBooking(item);
+      } else if (value == 'delete') {
+        _deleteBooking(item);
+      }
+    },
+    itemBuilder: (context) => [
+      const PopupMenuItem(
+
+        value: 'edit',
+        child: Row(
+          children: [
+            Icon(Icons.edit_outlined, size: 16),
+            SizedBox(width: 8),
+            Text('Edit'),
+          ],
+        ),
+      ),
+      const PopupMenuItem(
+        value: 'delete',
+        child: Row(
+          children: [
+            Icon(Icons.delete_outline, size: 16, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete', style: TextStyle(color: Colors.red)),
+          ],
+        ),
+      ),
+    ],
+  ),
+),
                   ],
                 ),
               );
@@ -375,4 +403,24 @@ class _BookingTabelState extends State<BookingTabel> {
       ),
     );
   }
+
+  //Edit Delete function
+
+  void _editBooking(Map<String, dynamic> item) {
+  // Hook this up to your booking edit dialog/form
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Edit ${item['id']}')),
+  );
+}
+
+void _deleteBooking(Map<String, dynamic> item) {
+  setState(() {
+    bookings.removeWhere((b) => b['id'] == item['id']);
+    // keep current page in range after deletion
+    final totalPages = (bookings.length / _rowsPerPage).ceil();
+    if (_currentPage >= totalPages && _currentPage > 0) {
+      _currentPage--;
+    }
+  });
+}
 }

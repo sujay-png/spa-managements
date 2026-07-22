@@ -110,8 +110,8 @@ class _CustomerPageState extends State<CustomerPage> {
 
                     Row(
                     children: [
-                      SizedBox(
-                        width: 1200,
+                      Expanded(
+                        
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: TextField(
@@ -128,6 +128,7 @@ class _CustomerPageState extends State<CustomerPage> {
                       const SizedBox(width: 12),
                       
                       /// Filter Button
+                      Spacer(),
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: () {
