@@ -10,7 +10,7 @@ class BookingTabel extends StatefulWidget {
 
 class _BookingTabelState extends State<BookingTabel> {
   int _currentPage = 0;
-  final int _rowsPerPage = 2; // <-- 5 rows per page
+  final int _rowsPerPage = 2; 
   final List<Map<String, dynamic>> bookings = [
     {
       'id': 'BK001',
