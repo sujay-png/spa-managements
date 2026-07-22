@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/dashboard_stats.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:ira_spa_webapp/views/dashboard/services_list.dart';
+import 'package:ira_spa_webapp/views/dashboard/upcomming_appointments.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -10,6 +14,8 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+ 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,7 +35,7 @@ class _DashboardState extends State<Dashboard> {
                     'Welcome back, Sarah',
                     style: TextStyle(
                       color: AppColors.textSecondary,
-                      fontSize: 38,
+                      fontSize: 28,
                       letterSpacing: 1.4,
                       fontWeight: FontWeight.w500,
                     ),
@@ -45,6 +51,7 @@ class _DashboardState extends State<Dashboard> {
                   ),
                 ],
               ),
+              //=========================Dashboard stats======================================
               Row(
                 children: [
                   Expanded(
@@ -94,6 +101,18 @@ class _DashboardState extends State<Dashboard> {
                   ),
                 ],
               ),
+
+              //========================================List Tille==============================================================
+              Row(
+                spacing: 15,
+                children: [
+                  
+                   Expanded(child: UpcommingAppointments(),),
+                   Expanded(child: ServicesList(),)
+                ],
+                
+              ),
+           
             ],
           ),
         ),

@@ -94,7 +94,7 @@ class DashboardStats extends StatelessWidget {
           Text(
             value,
             style: const TextStyle(
-              fontSize: 38,
+              fontSize: 25,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
               height: 1,
