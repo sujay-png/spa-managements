@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/bookings/booking_page.dart';
+import 'package:ira_spa_webapp/views/customer/customer_page.dart';
 import 'package:ira_spa_webapp/views/dashboard/dashboard.dart';
+import 'package:ira_spa_webapp/views/services/services_page.dart';
 
 class Shellroute extends StatefulWidget {
   const Shellroute({super.key});
@@ -17,6 +19,8 @@ class _ShellrouteState extends State<Shellroute> {
   static const _pages = [
     Dashboard(),
     BookingPage(),
+    CustomerPage(),
+    ServicePage(),
     // FeeCollectionView(),
     // MaintenanceView(),
     // NoticeBoardView(),
