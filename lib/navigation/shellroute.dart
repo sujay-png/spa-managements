@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/bookings/booking_page.dart';
 import 'package:ira_spa_webapp/views/customer/customer_page.dart';
 import 'package:ira_spa_webapp/views/dashboard/dashboard.dart';
 import 'package:ira_spa_webapp/views/services/services_page.dart';
-import 'package:provider/provider.dart';
+import 'package:ira_spa_webapp/views/staff/staff_page.dart';
 
 class Shellroute extends StatefulWidget {
   const Shellroute({super.key});
@@ -22,19 +21,32 @@ class _ShellrouteState extends State<Shellroute> {
     Dashboard(),
     BookingPage(),
     CustomerPage(),
-    ServicePage()
+    ServicePage(),
+    StaffPage(),
+    // FeeCollectionView(),
     // MaintenanceView(),
     // NoticeBoardView(),
   ];
 
   @override
   Widget build(BuildContext context) {
-
-    
-    final authcontroller=context.watch<AuthController>();
-    final displayname=authcontroller.userName;
     return Scaffold(
-      
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        title: Row(children: [
+            
+           
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Sign out',
+            onPressed: () {},
+          ),
+          // context.read<AuthController>().signOut(),
+        ],
+      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isMobileLayout = constraints.maxWidth < _mobileBreakpoint;
@@ -64,7 +76,7 @@ class _ShellrouteState extends State<Shellroute> {
                             width: 45,
                             height: 45,
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 102, 86, 70),
+                              color:  const Color.fromARGB(255, 102, 86, 70),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -111,6 +123,7 @@ class _ShellrouteState extends State<Shellroute> {
                     // ),
 
                     // const SizedBox(height: 30),
+
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 25),
                       child: Align(
@@ -133,23 +146,17 @@ class _ShellrouteState extends State<Shellroute> {
 
                     const Spacer(),
 
-                   
+                    Divider(color: AppColors.border),
+
+                    _menu(Icons.settings_outlined, "Settings", 6),
 
                     const SizedBox(height: 20),
 
                     ListTile(
-                      leading:  CircleAvatar(child: Text(_initials(displayname!))),
-                      title:  Text('$displayname'),
-                     // subtitle: const Text("Manager"),
-                      trailing: Tooltip(
-                        message: 'Logout',
-                        child: IconButton(
-                          onPressed: () {
-                            context.read<AuthController>().signOut();
-                          },
-                          icon: const Icon(Icons.logout),
-                        ),
-                      ),
+                      leading: const CircleAvatar(child: Text("SJ")),
+                      title: const Text("Sarah Johnson"),
+                      subtitle: const Text("Manager"),
+                      trailing: const Icon(Icons.notifications_none),
                     ),
 
                     const SizedBox(height: 20),
@@ -196,17 +203,9 @@ class _ShellrouteState extends State<Shellroute> {
               ],
             )
           : null,
-          
     );
-    
+  }
 
-  }
- String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty) return '';
-    if (parts.length == 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[1][0]).toUpperCase();
-  }
   Widget _menu(IconData icon, String title, int index) {
     final selected = _index == index;
 
@@ -222,9 +221,7 @@ class _ShellrouteState extends State<Shellroute> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: selected
-                ? const Color.fromARGB(255, 102, 86, 70)
-                : Colors.transparent,
+            color: selected ?  const Color.fromARGB(255, 102, 86, 70): Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
