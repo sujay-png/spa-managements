@@ -27,39 +27,12 @@ class _ShellrouteState extends State<Shellroute> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        title: Row(children: [
-            
-           
-          ],
-        ),
-        actions: [
-          SizedBox(
-            width: 100,
-            child: ElevatedButton(
-              onPressed: () {
-                context.read<AuthController>().signOut();
-              },
 
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8C7B68),
-                foregroundColor: AppColors.surface,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              child: Text('Logout'),
-            ),
-          ),
-        ],
-      ),
+    
+    final authcontroller=context.watch<AuthController>();
+    final displayname=authcontroller.userName;
+    return Scaffold(
+      
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isMobileLayout = constraints.maxWidth < _mobileBreakpoint;
@@ -158,17 +131,23 @@ class _ShellrouteState extends State<Shellroute> {
 
                     const Spacer(),
 
-                    Divider(color: AppColors.border),
-
-                    _menu(Icons.settings_outlined, "Settings", 6),
+                   
 
                     const SizedBox(height: 20),
 
                     ListTile(
-                      leading: const CircleAvatar(child: Text("SJ")),
-                      title: const Text("Sarah Johnson"),
-                      subtitle: const Text("Manager"),
-                      trailing: const Icon(Icons.notifications_none),
+                      leading:  CircleAvatar(child: Text(_initials(displayname!))),
+                      title:  Text('$displayname'),
+                     // subtitle: const Text("Manager"),
+                      trailing: Tooltip(
+                        message: 'Logout',
+                        child: IconButton(
+                          onPressed: () {
+                            context.read<AuthController>().signOut();
+                          },
+                          icon: const Icon(Icons.logout),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 20),
@@ -215,9 +194,17 @@ class _ShellrouteState extends State<Shellroute> {
               ],
             )
           : null,
+          
     );
-  }
+    
 
+  }
+ String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty) return '';
+    if (parts.length == 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
   Widget _menu(IconData icon, String title, int index) {
     final selected = _index == index;
 

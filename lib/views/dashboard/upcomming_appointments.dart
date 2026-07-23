@@ -9,8 +9,7 @@ class UpcommingAppointments extends StatefulWidget {
 }
 
 class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
-
-   final List<Map<String, dynamic>> appointments = [
+  final List<Map<String, dynamic>> appointments = [
     {
       'time': '10:00 AM',
       'clientName': 'Emma Wilson',
@@ -48,7 +47,7 @@ class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
         borderRadius: BorderRadius.circular(15),
         color: Colors.white,
       ),
-    
+
       child: Column(
         children: [
           Padding(
@@ -93,11 +92,10 @@ class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
             itemCount: appointments.length,
             itemBuilder: (context, index) {
               final appointment = appointments[index];
+
+              final isConfirmed = appointment['status'] == 'confirmed';
+
               return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 10,
-                ),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -106,76 +104,90 @@ class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 80,
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+
+                  // Time
+                  leading: SizedBox(
+                    width: 70,
+                    child: Center(
                       child: Text(
                         appointment['time'],
                         style: const TextStyle(
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
-                          fontSize: 13,
                         ),
                       ),
                     ),
-    
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            appointment['clientName'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            appointment['service'],
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
+                  ),
+
+                  // Client Name
+                  title: Text(
+                    appointment['clientName'],
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
-                    Text(
-                      appointment['staffName'],
+                  ),
+
+                  // Service
+                  subtitle: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      appointment['service'],
                       style: const TextStyle(
+                        fontSize: 12,
                         color: AppColors.textSecondary,
-                        fontSize: 13,
                       ),
                     ),
-                    const SizedBox(width: 24),
-    
-                    // Status Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: appointment['status'] == 'confirmed'
-                            ? Colors.green.withOpacity(0.12)
-                            : Colors.orange.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        appointment['status'],
-                        style: TextStyle(
-                          color: appointment['status'] == 'confirmed'
-                              ? Colors.green
-                              : Colors.orange,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                  ),
+
+                  // Staff + Status
+                  trailing: SizedBox(
+                    width: 170,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            appointment['staffName'],
+                            textAlign: TextAlign.end,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isConfirmed
+                                ? Colors.green.withOpacity(0.12)
+                                : Colors.orange.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            appointment['status'],
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isConfirmed ? Colors.green : Colors.orange,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               );
             },

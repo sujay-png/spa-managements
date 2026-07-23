@@ -1,7 +1,4 @@
-
-
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 
 class AuthService {
   final SupabaseClient _client = Supabase.instance.client;
@@ -15,4 +12,18 @@ class AuthService {
       _client.auth.signInWithPassword(email: email, password: password);
 
   Future<void> signOut() => _client.auth.signOut();
+
+ 
+  Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
+    try {
+      final response = await _client
+          .from('Useraccount')
+          .select()
+          .eq('id', userId) 
+          .single();
+      return response;
+    } catch (e) {
+      return null;
+    }
+  }
 }

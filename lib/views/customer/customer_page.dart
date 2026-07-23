@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/customerstats.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:ira_spa_webapp/views/customer/customer_tabel.dart';
 
 class CustomerPage extends StatefulWidget {
   const CustomerPage({super.key});
@@ -12,128 +13,128 @@ class CustomerPage extends StatefulWidget {
 class _CustomerPageState extends State<CustomerPage> {
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
-      body:SingleChildScrollView(
+    return Scaffold(
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
-             mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Column(
-                 mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   Text(
-                      'Customers',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 28,
-                        letterSpacing: 1.4,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Text(
+                    'Customers',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 28,
+                      letterSpacing: 1.4,
+                      fontWeight: FontWeight.w500,
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          'Manage your customer relationships',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                            letterSpacing: 1.4,
-                            fontWeight: FontWeight.w500,
+                  ),
+                  Row(
+                    children: [
+                      Text(
+                        'Manage your customer relationships',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          letterSpacing: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Spacer(),
+                      SizedBox(
+                        width: 200,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            showcustomerdialog(context);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8C7B68),
+                            foregroundColor: AppColors.surface,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          icon: const Icon(Icons.add, size: 20),
+                          label: Text(
+                            'Add Customer',
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  fontSize: 15,
+                                  color: AppColors.surface,
+                                ),
                           ),
                         ),
-                          Spacer(),
-                        SizedBox(
-                          width: 200,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                            
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(
-                                0xFF8C7B68,
-                              ), 
-                              foregroundColor: AppColors.surface,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  30,
-                                ), 
-                              ),
-                            ),
-                            icon: const Icon(Icons.add, size: 20),
-                            label: Text(
-                              'Add Customer',
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(
-                                    fontSize: 15,
-                                    color: AppColors.surface,
-                                  ),
-                            ),
+                      ),
+                    ],
+                  ),
+                  //===========================customer stats==============================================
+                  const SizedBox(height: 15),
+                  Padding(
+                    padding: const EdgeInsets.all(23),
+                    child: Row(
+                      spacing: 15,
+                      children: [
+                        Expanded(
+                          child: Customerstats(
+                            title: 'Total Customers',
+                            value: '1247',
+                            badge: '+12.5%',
+                            badgeColor: Colors.green,
+                          ),
+                        ),
+                        Expanded(
+                          child: Customerstats(
+                            title: 'Active Members',
+                            value: '892',
+                            badge: '+5.4%',
+                            badgeColor: Colors.green,
+                          ),
+                        ),
+                        Expanded(
+                          child: Customerstats(
+                            title: 'New This Month',
+                            value: '43',
+                            badge: '+12% from last month',
+                            badgeColor: Colors.green,
                           ),
                         ),
                       ],
                     ),
-                  const SizedBox(height: 15,),
-                    Padding(
-                      padding: const EdgeInsets.all(23),
-                      child: Row(
-                        spacing: 15,
-                        children: [
-                          Expanded(child: Customerstats(
-                            title: 'Total Customers', 
-                            value: '1247', 
-                            badge: '+12.5%', 
-                            badgeColor: Colors.green,)
-                            ),
-                             Expanded(child: Customerstats(
-                            title: 'Active Members', 
-                            value: '892', 
-                            badge: '+5.4%', 
-                            badgeColor: Colors.green,)
-                            ),
-                             Expanded(child: Customerstats(
-                            title: 'New This Month', 
-                            value: '43', 
-                            badge: '+12% from last month', 
-                            badgeColor: Colors.green,)
-                            )
-                        ],
-                      ),
-                    ),
-
-                    Row(
+                  ),
+                  //======================Search bar filter and export button==================================
+                  Row(
                     children: [
                       Expanded(
-                        
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: TextField(
                             // onChanged: controller.search,
                             decoration: const InputDecoration(
-                              hintText: 'Search by customer, phone or bookingId…',
+                              hintText:
+                                  'Search by customer, phone or bookingId…',
                               prefixIcon: Icon(Icons.search),
                             ),
                           ),
                         ),
                       ),
-                     
-                      
+
                       const SizedBox(width: 12),
-                      
+
                       /// Filter Button
                       Spacer(),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                        
-                          },
+                          onPressed: () {},
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.textPrimary,
                             backgroundColor: AppColors.surface,
@@ -144,22 +145,27 @@ class _CustomerPageState extends State<CustomerPage> {
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          icon: const Icon(Icons.filter_alt_outlined, size: 18, color: AppColors.textSecondary),
+                          icon: const Icon(
+                            Icons.filter_alt_outlined,
+                            size: 18,
+                            color: AppColors.textSecondary,
+                          ),
                           label: const Text(
                             'Filter',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(width: 12),
-                      
+
                       /// Export Button
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                        
-                          },
+                          onPressed: () {},
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.textPrimary,
                             backgroundColor: AppColors.surface,
@@ -170,23 +176,288 @@ class _CustomerPageState extends State<CustomerPage> {
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                           ),
-                          icon: const Icon(Icons.download_outlined, size: 18, color: AppColors.textSecondary),
+                          icon: const Icon(
+                            Icons.download_outlined,
+                            size: 18,
+                            color: AppColors.textSecondary,
+                          ),
                           label: const Text(
                             'Export',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      )
+                      ),
                     ],
                   ),
+
+                  //==================================== customertabel=================================================
+                  CustomerTabel(),
                 ],
               ),
-             
             ],
           ),
         ),
-
-      ) ,
+      ),
     );
   }
+
+  //========================================Showcustomer dialog==========================================================
+  void showcustomerdialog(BuildContext context) {
+    final dateCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
+    final name = TextEditingController();
+    final email = TextEditingController();
+    final phone = TextEditingController();
+    final Address = TextEditingController();
+
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: Colors.white,
+            child: Container(
+              width: 480,
+              padding: const EdgeInsets.all(24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Add New Customer',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Fill in the details below',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 32, thickness: 1),
+                    label(Icons.person_outline, 'Full Name'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: name,
+                      decoration: dec('Enter Full Name'),
+                    ),
+
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              label(Icons.email_outlined, 'Email'),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: email,
+                                decoration: dec('Enter Email'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              label(Icons.phone_outlined, 'Phone Number'),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: phone,
+                                decoration: dec('Enter Phone Number'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              label(
+                                Icons.calendar_today_outlined,
+                                'Date Of Birth',
+                              ),
+                              const SizedBox(height: 8),
+                              TextField(
+                                controller: dateCtrl,
+                                readOnly: true,
+                                decoration: dec(
+                                  'dd-mm-yyyy',
+                                  Icons.calendar_today,
+                                ),
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2023),
+                                    lastDate: DateTime(2030),
+                                  );
+                                  if (picked != null) {
+                                    setState(
+                                      () => dateCtrl.text =
+                                          "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}",
+                                    );
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                     label(null, 'Address'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: Address,
+                      maxLines: 3,
+                      decoration: dec('Enter Customer Address.'),
+                    ),
+                    const SizedBox(height: 16),
+                    label(null, 'NOTES'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: notesCtrl,
+                      maxLines: 3,
+                      decoration: dec('Any special requests or notes...'),
+                    ),
+                    const SizedBox(height: 24),
+                    const Divider(height: 1, thickness: 1),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8B7D76),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              'Create Booking',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  InputDecoration dec(String hint, [IconData? suffix]) => InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+    filled: true,
+    fillColor: const Color(0xFFF7F5F0),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    suffixIcon: suffix != null
+        ? Icon(suffix, size: 18, color: Colors.grey.shade600)
+        : null,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF8B7D76)),
+    ),
+  );
+
+  Widget label(IconData? icon, String text) => Row(
+    children: [
+      if (icon != null) ...[
+        Icon(icon, size: 14, color: Colors.grey.shade600),
+        const SizedBox(width: 6),
+      ],
+      Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.1,
+          color: Colors.grey.shade700,
+        ),
+      ),
+    ],
+  );
 }

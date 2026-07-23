@@ -12,13 +12,23 @@ class AuthController extends ChangeNotifier {
   String? _error;
 
   User? get user => _user;
+ Map<String,dynamic>?_userProfile;
   bool get isLoggedIn => _user != null;
   bool get loading => _loading;
   String? get error => _error;
 
-  AuthController() {
-    _service.authState.listen((user) {
+ Map<String, dynamic>? get userProfile => _userProfile;
+ String? get userName => _userProfile?['user_name'];
+
+
+ AuthController() {
+    _service.authState.listen((user) async {
       _user = user;
+      if (user != null) {
+        _userProfile = await _service.fetchUserProfile(user.id);
+      } else {
+        _userProfile = null;
+      }
       notifyListeners();
     });
   }
@@ -29,6 +39,10 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
     try {
       await _service.signIn(email.trim(), password);
+      final response = await _service.signIn(email.trim(), password);
+      if (response.user != null) {
+      _userProfile = await _service.fetchUserProfile(response.user!.id);
+    }
       return true;
     } on AuthException catch (e) {
       _error = e.message ?? 'Sign in failed';

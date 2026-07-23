@@ -1,9 +1,11 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/dashboard_stats.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/dashboard/services_list.dart';
 import 'package:ira_spa_webapp/views/dashboard/upcomming_appointments.dart';
+import 'package:provider/provider.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -17,6 +19,8 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final authController =context.watch<AuthController>();
+    final displayName = authController.userName ?? '';
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
@@ -31,7 +35,7 @@ class _DashboardState extends State<Dashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Welcome back, Sarah',
+                    'Welcome back, $displayName',
                     style: TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 28,

@@ -207,134 +207,146 @@ class _BookingPageState extends State<BookingPage> {
     );
   }
 
+  //================================Booking Form===========================================================
   void showBookingDialog(BuildContext context) {
-    final customers = ['Amelia Rao', 'Priya Shetty', 'Neha Kamath'];
-    final services = ['Haircut', 'Facial', 'Massage'];
-    final therapists = ['Anjali', 'Rohan', 'Fatima'];
-
-    const brown = Color(0xFF8A6D4E);
-
     String? customer, service, therapist;
-    DateTime? date;
-    TimeOfDay? time;
-    final notes = TextEditingController();
+    final dateCtrl = TextEditingController();
+    final timeCtrl = TextEditingController();
+    final notesCtrl = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (context, setState) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
-            child: SizedBox(
-              width: 440,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: Colors.white,
+            child: Container(
+              width: 480,
+              padding: const EdgeInsets.all(24),
               child: SingleChildScrollView(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          "New Booking",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'New Booking',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Fill in the details below',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close),
+                          icon: const Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),
-                    const Text(
-                      "Fill in the details below",
-                      style: TextStyle(color: Color(0xFF9A9187), fontSize: 13),
-                    ),
-                    const SizedBox(height: 20),
-
-                    dropdown(
-                      "Customer",
-                      Icons.person_outline,
-                      customers,
-                      customer,
-                      (v) => setState(() => customer = v),
-                    ),
+                    const Divider(height: 32, thickness: 1),
+                    label(Icons.person_outline, 'CUSTOMER'),
+                    const SizedBox(height: 8),
+                    dropdown('Select Customer', customer, [
+                      'Sarah Jenkins',
+                      'Michael Brown',
+                      'Jessica Taylor',
+                    ], (v) => setState(() => customer = v)),
                     const SizedBox(height: 16),
-                    dropdown(
-                      "Service",
-                      Icons.content_cut,
-                      services,
-                      service,
-                      (v) => setState(() => service = v),
-                    ),
+                    label(Icons.content_cut, 'SERVICE'),
+                    const SizedBox(height: 8),
+                    dropdown('Select Service', service, [
+                      'Deep Tissue Massage',
+                      'Aromatherapy',
+                      'Swedish Massage',
+                      'Facial Glow',
+                    ], (v) => setState(() => service = v)),
                     const SizedBox(height: 16),
+                    label(Icons.person_outline, 'THERAPIST'),
+                    const SizedBox(height: 8),
                     dropdown(
-                      "Therapist",
-                      Icons.person_outline,
-                      therapists,
+                      'Select Therapist',
                       therapist,
+                      ['Emily Watson', 'John Doe', 'Sophia Smith'],
                       (v) => setState(() => therapist = v),
                     ),
                     const SizedBox(height: 16),
-
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              label(Icons.calendar_today_outlined, "Date"),
+                              label(Icons.calendar_today_outlined, 'DATE'),
+                              const SizedBox(height: 8),
                               TextField(
+                                controller: dateCtrl,
                                 readOnly: true,
-                                decoration: decoration.copyWith(
-                                  hintText: date == null
-                                      ? "dd-mm-yyyy"
-                                      : "${date!.day}-${date!.month}-${date!.year}",
-                                  suffixIcon: const Icon(
-                                    Icons.calendar_today,
-                                    size: 18,
-                                  ),
+                                decoration: dec(
+                                  'dd-mm-yyyy',
+                                  Icons.calendar_today,
                                 ),
                                 onTap: () async {
-                                  final d = await showDatePicker(
+                                  final picked = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
-                                    firstDate: DateTime(2024),
-                                    lastDate: DateTime(2100),
+                                    firstDate: DateTime(2023),
+                                    lastDate: DateTime(2030),
                                   );
-                                  if (d != null) setState(() => date = d);
+                                  if (picked != null) {
+                                    setState(
+                                      () => dateCtrl.text =
+                                          "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}",
+                                    );
+                                  }
                                 },
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              label(Icons.access_time, "Time"),
+                              label(Icons.access_time, 'TIME'),
+                               SizedBox(height: 8),
                               TextField(
+                                controller: timeCtrl,
                                 readOnly: true,
-                                decoration: decoration.copyWith(
-                                  hintText: time?.format(context) ?? "--:--",
-                                  suffixIcon: const Icon(
-                                    Icons.access_time,
-                                    size: 18,
-                                  ),
-                                ),
+                                decoration: dec('--:--', Icons.schedule),
                                 onTap: () async {
-                                  final t = await showTimePicker(
+                                  final picked = await showTimePicker(
                                     context: context,
                                     initialTime: TimeOfDay.now(),
                                   );
-                                  if (t != null) setState(() => time = t);
+                                  if (picked != null)
+                                    setState(
+                                      () => timeCtrl.text = picked.format(
+                                        context,
+                                      ),
+                                    );
                                 },
                               ),
                             ],
@@ -343,48 +355,56 @@ class _BookingPageState extends State<BookingPage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
-                    label(Icons.edit_note, "Notes"),
+                    label(null, 'NOTES'),
+                    const SizedBox(height: 8),
                     TextField(
-                      controller: notes,
+                      controller: notesCtrl,
                       maxLines: 3,
-                      decoration: decoration.copyWith(
-                        hintText: "Any special requests or notes...",
-                      ),
+                      decoration: dec('Any special requests or notes...'),
                     ),
                     const SizedBox(height: 24),
-
+                    const Divider(height: 1, thickness: 1),
+                    const SizedBox(height: 20),
                     Row(
                       children: [
                         Expanded(
                           child: OutlinedButton(
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey.shade300),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
                             onPressed: () => Navigator.pop(context),
                             child: const Text(
-                              "Cancel",
-                              style: TextStyle(color: Colors.black87),
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 16),
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: brown,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
+                              backgroundColor: const Color(0xFF8B7D76),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                             onPressed: () => Navigator.pop(context),
-                            child: const Text("Create Booking"),
+                            child: const Text(
+                              'Create Booking',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
                       ],
@@ -393,59 +413,79 @@ class _BookingPageState extends State<BookingPage> {
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
-}
 
-const fill = Color(0xFFF1ECE3);
-const labelColor = Color(0xFF6B6259);
-Widget label(IconData icon, String text) => Padding(
-  padding: const EdgeInsets.only(bottom: 6),
-  child: Row(
+  InputDecoration dec(String hint, [IconData? suffix]) => InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+    filled: true,
+    fillColor: const Color(0xFFF7F5F0),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    suffixIcon: suffix != null
+        ? Icon(suffix, size: 18, color: Colors.grey.shade600)
+        : null,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF8B7D76)),
+    ),
+  );
+
+  Widget dropdown(
+    String hint,
+    String? val,
+    List<String> items,
+    ValueChanged<String?> onChanged,
+  ) => DropdownButtonFormField<String>(
+    value: val,
+    hint: Text(
+      hint,
+      style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+    ),
+    isExpanded: true,
+    icon: const Icon(Icons.keyboard_arrow_down, color: Colors.black87),
+    decoration: dec(hint),
+    dropdownColor: Colors.white,
+    items: items
+        .map(
+          (i) => DropdownMenuItem(
+            value: i,
+            child: Text(
+              i,
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+          ),
+        )
+        .toList(),
+    onChanged: onChanged,
+  );
+
+  Widget label(IconData? icon, String text) => Row(
     children: [
-      Icon(icon, size: 16, color: labelColor),
-      const SizedBox(width: 6),
+      if (icon != null) ...[
+        Icon(icon, size: 14, color: Colors.grey.shade600),
+        const SizedBox(width: 6),
+      ],
       Text(
-        text.toUpperCase(),
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: labelColor,
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.1,
+          color: Colors.grey.shade700,
         ),
       ),
     ],
-  ),
-);
-
-Widget dropdown(
-  String hint,
-  IconData icon,
-  List<String> items,
-  String? value,
-  void Function(String?) onChanged,
-) => Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    label(icon, hint),
-    DropdownButtonFormField<String>(
-      value: value,
-      decoration: decoration.copyWith(hintText: "Select $hint"),
-      items: items
-          .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-          .toList(),
-      onChanged: (v) => onChanged(v),
-    ),
-  ],
-);
-final decoration = InputDecoration(
-  filled: true,
-  fillColor: fill,
-  border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(10),
-    borderSide: BorderSide.none,
-  ),
-  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-);
+  );
+}
