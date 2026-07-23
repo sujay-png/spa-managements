@@ -112,86 +112,65 @@ class _CustomerPageState extends State<CustomerPage> {
                     ),
                   ),
                   //======================Search bar filter and export button==================================
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: TextField(
-                            // onChanged: controller.search,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Search by customer, phone or bookingId…',
-                              prefixIcon: Icon(Icons.search),
-                            ),
-                          ),
-                        ),
-                      ),
+                 Padding(
+  padding: const EdgeInsets.all(16),
+  child: Row(
+    children: [
+      /// Search Field
+      Expanded(
+        child: SizedBox(
+          height: 46,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Search by name, email, phone, or customer ID...',
+              prefixIcon: const Icon(Icons.search),
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+      ),
 
-                      const SizedBox(width: 12),
+      const SizedBox(width: 12),
 
-                      /// Filter Button
-                      Spacer(),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textPrimary,
-                            backgroundColor: AppColors.surface,
-                            minimumSize: const Size(0, 50),
-                            side: const BorderSide(color: AppColors.border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                          ),
-                          icon: const Icon(
-                            Icons.filter_alt_outlined,
-                            size: 18,
-                            color: AppColors.textSecondary,
-                          ),
-                          label: const Text(
-                            'Filter',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
+      /// Filter Button
+      SizedBox(
+        height: 46,
+        child: OutlinedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.filter_alt_outlined, size: 18),
+          label: const Text("Filter"),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      ),
 
-                      const SizedBox(width: 12),
+      const SizedBox(width: 12),
 
-                      /// Export Button
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textPrimary,
-                            backgroundColor: AppColors.surface,
-                            minimumSize: const Size(10, 50),
-                            side: const BorderSide(color: AppColors.border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                          ),
-                          icon: const Icon(
-                            Icons.download_outlined,
-                            size: 18,
-                            color: AppColors.textSecondary,
-                          ),
-                          label: const Text(
-                            'Export',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+      /// Export Button
+      SizedBox(
+        height: 46,
+        child: OutlinedButton.icon(
+          onPressed: () {},
+          icon: const Icon(Icons.download_outlined, size: 18),
+          label: const Text("Export"),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
 
                   //==================================== customertabel=================================================
                   CustomerTabel(),

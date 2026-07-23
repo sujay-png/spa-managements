@@ -1,180 +1,377 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/service_card.dart';
+import 'package:ira_spa_webapp/controllers/service_controller.dart';
+import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
-class ServicePage extends StatelessWidget {
+class ServicePage extends StatefulWidget {
   const ServicePage({super.key});
 
   @override
+  State<ServicePage> createState() => _ServicePageState();
+}
+
+class _ServicePageState extends State<ServicePage> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _serviceNameController = TextEditingController();
+  final _designationController = TextEditingController();
+  final _durationController = TextEditingController();
+  final _priceController = TextEditingController();
+
+  bool _saving = false;
+  @override
   Widget build(BuildContext context) {
-    // Exact colors matching your Figma design for each service
-    final List<Map<String, dynamic>> services = [
-      {
-        "title": "Swedish Massage",
-        "category": "Massage Therapy",
-        "categoryBgColor": const Color(0xFFF3ECE5),
-        "categoryTextColor": const Color(0xFF796D64),
-        "duration": "60 min",
-        "price": "\$120",
-        "bookings": "45",
-        "revenue": "\$5,400",
-        "badge": "active",
-        "badgeColor": const Color(0xFFE2F3EC),
-        "badgeTextColor": const Color(0xFF108A00),
-       "priceTextColor": const Color(0xFF9D785A),
-      },
-      {
-        "title": "Deep Tissue Massage",
-        "category": "Massage Therapy",
-        "categoryBgColor": const Color(0xFFF3ECE5),
-        "categoryTextColor": const Color(0xFF796D64),
-        "duration": "90 min",
-        "price": "\$140",
-        "bookings": "32",
-        "revenue": "\$4,480",
-        "badge": "active",
-        "badgeColor": const Color(0xFFE2F3EC),
-        "badgeTextColor": const Color(0xFF108A00),
-         "priceTextColor": const Color(0xFF9D785A),
-      },
-      {
-        "title": "Facial Treatment",
-        "category": "Skin Care",
-        "categoryBgColor": const Color(0xFFFBF0EA),
-        "categoryTextColor": const Color(0xFFC0826D),
-        "duration": "60 min",
-        "price": "\$95",
-        "bookings": "38",
-        "revenue": "\$3,610",
-        "badge": "active",
-        "badgeColor": const Color(0xFFE2F3EC),
-        "badgeTextColor": const Color(0xFF108A00),
-           "priceTextColor": const Color(0xFF9D785A),
-      },
-      {
-        "title": "Hot Stone Therapy",
-        "category": "Massage Therapy",
-        "categoryBgColor": const Color(0xFFF3ECE5),
-        "categoryTextColor": const Color(0xFF796D64),
-        "duration": "90 min",
-        "price": "\$150",
-        "bookings": "28",
-        "revenue": "\$4,200",
-        "badge": "active",
-        "badgeColor": const Color(0xFFE2F3EC),
-        "badgeTextColor": const Color(0xFF108A00),
-         "priceTextColor": const Color(0xFF9D785A),
-          
-      },
-      {
-        "title": "Aromatherapy",
-        "category": "Wellness",
-        "categoryBgColor": const Color(0xFFE2F3EC),
-        "categoryTextColor": const Color(0xFF108A00),
-        "duration": "60 min",
-        "price": "\$110",
-        "bookings": "35",
-        "revenue": "\$3,850",
-        "badge": "active",
-        "badgeColor": const Color(0xFFE2F3EC),
-        "badgeTextColor": const Color(0xFF108A00),
-          "priceTextColor": const Color(0xFF9D785A),
-      },
-    ];
+    final controller = context.watch<ServiceController>();
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            const Text(
-              "Services",
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 23,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-        
-
-            Row(
-              children: [
-                const Text(
-                  "Manage your spa services and treatment",
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                  ),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              const Text(
+                "Services",
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 23,
+                  fontWeight: FontWeight.w500,
                 ),
-                const Spacer(flex:50),
-                
-                SizedBox(
-                  width: 165,
-                 
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8C7A6B),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
+              ),
+
+              Row(
+                children: [
+                  const Text(
+                    "Manage your spa services and treatment",
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                  const Spacer(flex: 50),
+
+                  SizedBox(
+                    width: 165,
+
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        showserviceform(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8C7A6B),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: Text(
+                        'Add Service',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontSize: 15,
+                          color: AppColors.surface,
+                        ),
                       ),
                     ),
-                    icon: const Icon(Icons.add, size: 18),
-                   label: Text(
-                            'Add Service',
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  fontSize: 15,
-                                  color: AppColors.surface,
-                                ),
-                          ),
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 25),
-
-            // GridView builder
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: services.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-               crossAxisCount: 3,
-    crossAxisSpacing: 16,
-    mainAxisSpacing: 16,
-    childAspectRatio:1.45,
+                ],
               ),
-              itemBuilder: (context, index) {
-                final service = services[index];
-                return ServiceCard(
-                  title: service["title"],
-                  category: service["category"],
-                  categoryBgColor: service["categoryBgColor"],
-                  categoryTextColor: service["categoryTextColor"],
-                  duration: service["duration"],
-                  price: service["price"],
-                  bookings: service["bookings"],
-                  revenue: service["revenue"],
-                  badge: service["badge"],
-                  badgeColor: service["badgeColor"],
-                  badgeTextColor: service["badgeTextColor"],
-                  priceTextColor: service["priceTextColor"],
-                  onOptionsPressed: () {},
-                );
-              },
-            ),
-          ],
+
+              const SizedBox(height: 25),
+
+              // GridView builder
+              controller.loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: controller.services.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 1.45,
+                          ),
+                      itemBuilder: (context, index) {
+                        final service = controller.services[index];
+                        return ServiceCard(
+                          title: service.serviceName,
+                          category: service.designation,
+                          duration: service.duration,
+                          price: "₹${service.price.toStringAsFixed(0)}",
+                          bookings: "0",
+                          revenue: "₹0",
+                          badge: "Active",
+              
+                          onOptionsPressed: () {},
+                        );
+                      },
+                    ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  //===================================Save Service===================================
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+
+    try {
+      await context.read<ServiceController>().addService(
+        ServiceModel(
+          // id: '',
+          serviceName: _serviceNameController.text.trim(),
+          designation: _designationController.text.trim(),
+          duration: _durationController.text.trim(),
+          price: double.tryParse(_priceController.text.trim()) ?? 0,
+        ),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Service added successfully')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error adding service: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to add service: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  //======================================Add Service form=======================================
+  void showserviceform(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) {
+          return Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            backgroundColor: Colors.white,
+            child: Container(
+              width: 480,
+              padding: const EdgeInsets.all(24),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Add New Service',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Fill in the details below',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.close,
+                            size: 20,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 32, thickness: 1),
+                    label(Icons.person_outline, 'Service Name'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _serviceNameController,
+                      decoration: dec('Enter Service Name'),
+                    ),
+
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              label(Icons.email_outlined, 'Duration'),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                controller: _durationController,
+                                decoration: dec('Enter duration'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              label(Icons.phone_outlined, 'Price'),
+                              const SizedBox(height: 8),
+                              TextFormField(
+                                controller: _priceController,
+                                decoration: dec('Enter the amount'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    label(null, 'Designation'),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _designationController,
+                      decoration: dec('Enter Designation.'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    const SizedBox(height: 24),
+                    const Divider(height: 1, thickness: 1),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 16),
+
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _saving ? null : _save,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF8B7D76),
+                              disabledBackgroundColor: Colors.grey.shade400,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: _saving
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Create Service',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  //=====================Helper function================================
+  InputDecoration dec(String hint, [IconData? suffix]) => InputDecoration(
+    hintText: hint,
+    hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+    filled: true,
+    fillColor: const Color(0xFFF7F5F0),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    suffixIcon: suffix != null
+        ? Icon(suffix, size: 18, color: Colors.grey.shade600)
+        : null,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8),
+      borderSide: const BorderSide(color: Color(0xFF8B7D76)),
+    ),
+  );
+
+  Widget label(IconData? icon, String text) => Row(
+    children: [
+      if (icon != null) ...[
+        Icon(icon, size: 14, color: Colors.grey.shade600),
+        const SizedBox(width: 6),
+      ],
+      Text(
+        text,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.1,
+          color: Colors.grey.shade700,
+        ),
+      ),
+    ],
+  );
 }

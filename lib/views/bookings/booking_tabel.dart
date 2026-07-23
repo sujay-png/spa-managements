@@ -10,7 +10,7 @@ class BookingTabel extends StatefulWidget {
 
 class _BookingTabelState extends State<BookingTabel> {
   int _currentPage = 0;
-  final int _rowsPerPage = 2; 
+  final int _rowsPerPage = 5;
   final List<Map<String, dynamic>> bookings = [
     {
       'id': 'BK001',
@@ -163,19 +163,95 @@ class _BookingTabelState extends State<BookingTabel> {
             ),
             child: const Row(
               children: [
-                Expanded(flex: 1, child: Text('BOOKING ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8))),
-                Expanded(flex: 2, child: Text('CUSTOMER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8))),
-                Expanded(flex: 2, child: Text('SERVICE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8))),
-                Expanded(flex: 2, child: Text('THERAPIST', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8))),
-                Expanded(flex: 2, child: Text('DATE & TIME', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8))),
-                Expanded(flex: 1, child: Text('PRICE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8))),
-                Expanded(flex: 1, child: Text('STATUS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.8))),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'BOOKING ID',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'CUSTOMER',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'SERVICE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'THERAPIST',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'DATE & TIME',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'PRICE',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 1,
+                  child: Text(
+                    'STATUS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
                 SizedBox(width: 30), // Action Column space
               ],
             ),
           ),
 
-         
           ListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -186,7 +262,10 @@ class _BookingTabelState extends State<BookingTabel> {
               final isPending = item['status'] == 'Pending';
 
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
@@ -202,7 +281,11 @@ class _BookingTabelState extends State<BookingTabel> {
                       flex: 1,
                       child: Text(
                         item['id'],
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 13),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
 
@@ -212,9 +295,22 @@ class _BookingTabelState extends State<BookingTabel> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item['clientName'], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary, fontSize: 13)),
+                          Text(
+                            item['clientName'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                            ),
+                          ),
                           const SizedBox(height: 2),
-                          Text(item['phone'], style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                          Text(
+                            item['phone'],
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -225,9 +321,22 @@ class _BookingTabelState extends State<BookingTabel> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item['service'], style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary, fontSize: 13)),
+                          Text(
+                            item['service'],
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textPrimary,
+                              fontSize: 13,
+                            ),
+                          ),
                           const SizedBox(height: 2),
-                          Text(item['duration'], style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                          Text(
+                            item['duration'],
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 11,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -237,7 +346,10 @@ class _BookingTabelState extends State<BookingTabel> {
                       flex: 2,
                       child: Text(
                         item['therapist'],
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
 
@@ -249,17 +361,38 @@ class _BookingTabelState extends State<BookingTabel> {
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.calendar_today_outlined,
+                                size: 12,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(width: 4),
-                              Text(item['date'], style: const TextStyle(color: AppColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w500)),
+                              Text(
+                                item['date'],
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              const Icon(Icons.access_time, size: 12, color: AppColors.textSecondary),
+                              const Icon(
+                                Icons.access_time,
+                                size: 12,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(width: 4),
-                              Text(item['time'], style: const TextStyle(color: AppColors.textSecondary, fontSize: 11)),
+                              Text(
+                                item['time'],
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -271,7 +404,11 @@ class _BookingTabelState extends State<BookingTabel> {
                       flex: 1,
                       child: Text(
                         item['price'],
-                        style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary, fontSize: 13),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
 
@@ -281,13 +418,16 @@ class _BookingTabelState extends State<BookingTabel> {
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: isConfirmed
                                 ? Colors.green.withOpacity(0.12)
                                 : isPending
-                                    ? Colors.orange.withOpacity(0.12)
-                                    : Colors.blue.withOpacity(0.12),
+                                ? Colors.orange.withOpacity(0.12)
+                                : Colors.blue.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(30),
                           ),
                           child: Text(
@@ -296,8 +436,8 @@ class _BookingTabelState extends State<BookingTabel> {
                               color: isConfirmed
                                   ? Colors.green
                                   : isPending
-                                      ? Colors.orange
-                                      : Colors.blue,
+                                  ? Colors.orange
+                                  : Colors.blue,
                               fontWeight: FontWeight.w600,
                               fontSize: 11,
                             ),
@@ -307,43 +447,53 @@ class _BookingTabelState extends State<BookingTabel> {
                     ),
 
                     /// Actions Menu
-                 /// Actions Menu
-SizedBox(
-  width: 30,
-  child: PopupMenuButton<String>(
-    icon: const Icon(Icons.more_vert, size: 18, color: AppColors.textSecondary),
-    onSelected: (value) {
-      if (value == 'edit') {
-        _editBooking(item);
-      } else if (value == 'delete') {
-        _deleteBooking(item);
-      }
-    },
-    itemBuilder: (context) => [
-      const PopupMenuItem(
-
-        value: 'edit',
-        child: Row(
-          children: [
-            Icon(Icons.edit_outlined, size: 16),
-            SizedBox(width: 8),
-            Text('Edit'),
-          ],
-        ),
-      ),
-      const PopupMenuItem(
-        value: 'delete',
-        child: Row(
-          children: [
-            Icon(Icons.delete_outline, size: 16, color: Colors.red),
-            SizedBox(width: 8),
-            Text('Delete', style: TextStyle(color: Colors.red)),
-          ],
-        ),
-      ),
-    ],
-  ),
-),
+                    /// Actions Menu
+                    SizedBox(
+                      width: 30,
+                      child: PopupMenuButton<String>(
+                        icon: const Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: AppColors.textSecondary,
+                        ),
+                        onSelected: (value) {
+                          if (value == 'edit') {
+                            _editBooking(item);
+                          } else if (value == 'delete') {
+                            _deleteBooking(item);
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined, size: 16),
+                                SizedBox(width: 8),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.delete_outline,
+                                  size: 16,
+                                  color: Colors.red,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               );
@@ -359,7 +509,10 @@ SizedBox(
               children: [
                 Text(
                   'Showing ${startIndex + 1}-$endIndex of ${bookings.length} entries',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
                 Row(
                   children: [
@@ -372,14 +525,24 @@ SizedBox(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         minimumSize: const Size(0, 32),
                       ),
-                      child: const Text('Previous', style: TextStyle(fontSize: 12, color: AppColors.textPrimary)),
+                      child: const Text(
+                        'Previous',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
                       child: Text(
                         'Page ${_currentPage + 1} of $totalPages',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -392,7 +555,13 @@ SizedBox(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         minimumSize: const Size(0, 32),
                       ),
-                      child: const Text('Next', style: TextStyle(fontSize: 12, color: AppColors.textPrimary)),
+                      child: const Text(
+                        'Next',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -407,20 +576,20 @@ SizedBox(
   //Edit Delete function
 
   void _editBooking(Map<String, dynamic> item) {
-  // Hook this up to your booking edit dialog/form
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('Edit ${item['id']}')),
-  );
-}
+    // Hook this up to your booking edit dialog/form
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Edit ${item['id']}')));
+  }
 
-void _deleteBooking(Map<String, dynamic> item) {
-  setState(() {
-    bookings.removeWhere((b) => b['id'] == item['id']);
-    // keep current page in range after deletion
-    final totalPages = (bookings.length / _rowsPerPage).ceil();
-    if (_currentPage >= totalPages && _currentPage > 0) {
-      _currentPage--;
-    }
-  });
-}
+  void _deleteBooking(Map<String, dynamic> item) {
+    setState(() {
+      bookings.removeWhere((b) => b['id'] == item['id']);
+      // keep current page in range after deletion
+      final totalPages = (bookings.length / _rowsPerPage).ceil();
+      if (_currentPage >= totalPages && _currentPage > 0) {
+        _currentPage--;
+      }
+    });
+  }
 }

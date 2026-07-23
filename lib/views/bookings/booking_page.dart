@@ -60,7 +60,7 @@ class _BookingPageState extends State<BookingPage> {
                               vertical: 12,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
                           icon: const Icon(Icons.add, size: 20),
@@ -76,125 +76,127 @@ class _BookingPageState extends State<BookingPage> {
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: TextField(
-                            // onChanged: controller.search,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Search by customer, phone or bookingId…',
-                              prefixIcon: Icon(Icons.search),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 46,
+                            child: TextField(
+                              // onChanged: controller.search,
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'Search by customer, phone or bookingId…',
+                                prefixIcon: Icon(Icons.search),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      Spacer(),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          height: 50,
-                          width: 20,
+                        const SizedBox(width: 12),
 
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: 'Cancelled',
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 20,
-                                color: AppColors.textPrimary,
+                        SizedBox(
+                          height: 46,
+                          width: 160,
+                          child: DropdownButtonFormField<String>(
+                            value: 'Cancelled',
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
                               ),
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'Cancelled',
+                                child: Text('Cancelled'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Confirmed',
+                                child: Text('Confirmed'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Pending',
+                                child: Text('Pending'),
+                              ),
+                            ],
+                            onChanged: (value) {},
+                          ),
+                        ),
+
+
+                        const SizedBox(width: 12),
+
+                        /// Filter Button
+                        SizedBox(
+                          height: 46,
+                          child: OutlinedButton.icon(
+                            onPressed: () {},
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.textPrimary,
+                              backgroundColor: AppColors.surface,
+                              minimumSize: const Size(20, 50),
+                              side: const BorderSide(color: AppColors.border),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.filter_alt_outlined,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
+                            label: const Text(
+                              'Filter',
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                               ),
-                              items:
-                                  <String>[
-                                    'Cancelled',
-                                    'Confirmed',
-                                    'Pending',
-                                  ].map((String value) {
-                                    return DropdownMenuItem<String>(
-                                      value: value,
-                                      child: Text(value),
-                                    );
-                                  }).toList(),
-                              onChanged: (String? newValue) {},
                             ),
                           ),
                         ),
-                      ),
 
-                      const SizedBox(width: 12),
+                        const SizedBox(width: 12),
 
-                      /// Filter Button
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textPrimary,
-                            backgroundColor: AppColors.surface,
-                            minimumSize: const Size(20, 50),
-                            side: const BorderSide(color: AppColors.border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        /// Export Button
+                        SizedBox(
+                          height: 46,
+                          child: OutlinedButton.icon(
+                            onPressed: () {},
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.textPrimary,
+                              backgroundColor: AppColors.surface,
+                              minimumSize: const Size(15, 50),
+                              side: const BorderSide(color: AppColors.border),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                          ),
-                          icon: const Icon(
-                            Icons.filter_alt_outlined,
-                            size: 18,
-                            color: AppColors.textSecondary,
-                          ),
-                          label: const Text(
-                            'Filter',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                            icon: const Icon(
+                              Icons.download_outlined,
+                              size: 18,
+                              color: AppColors.textSecondary,
                             ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 12),
-
-                      /// Export Button
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.textPrimary,
-                            backgroundColor: AppColors.surface,
-                            minimumSize: const Size(15, 50),
-                            side: const BorderSide(color: AppColors.border),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                          ),
-                          icon: const Icon(
-                            Icons.download_outlined,
-                            size: 18,
-                            color: AppColors.textSecondary,
-                          ),
-                          label: const Text(
-                            'Export',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                            label: const Text(
+                              'Export',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   //==============================Bookings Tabel============================================================
                   BookingTabel(),
@@ -331,7 +333,7 @@ class _BookingPageState extends State<BookingPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               label(Icons.access_time, 'TIME'),
-                               SizedBox(height: 8),
+                              SizedBox(height: 8),
                               TextField(
                                 controller: timeCtrl,
                                 readOnly: true,

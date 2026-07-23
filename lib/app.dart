@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/navigation/approutes.dart';
 import 'package:ira_spa_webapp/navigation/shellroute.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
@@ -16,7 +17,7 @@ class IraspaApp extends StatelessWidget {
     return MultiProvider(
       providers: [
        ChangeNotifierProvider(create: (_) => AuthController()),
-    //     // ChangeNotifierProvider(create: (_) => TenantController()),
+     ChangeNotifierProvider(create: (_) => ServiceController()),
     //     // ChangeNotifierProvider(create: (_) => FeeController()),
     //     // ChangeNotifierProvider(create: (_) => MaintenanceController()),
     //     // ChangeNotifierProvider(create: (_) => NoticeController()),

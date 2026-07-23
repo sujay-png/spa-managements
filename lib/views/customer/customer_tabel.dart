@@ -10,7 +10,7 @@ class CustomerTabel extends StatefulWidget {
 
 class _CustomerTabelState extends State<CustomerTabel> {
   int _currentPage = 0;
-  final int _rowsPerPage = 2;
+  final int _rowsPerPage = 5;
   final List<Map<String, dynamic>> bookings = [
     {
       'id': 'CUS001',
@@ -53,7 +53,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
       'CustomerName': 'Olivia Davis',
       'phone': '+1 234 567 8900',
       'email': 'olivia.davis@email.com',
-      'Visit': '27',
+      'visits': '27',
       'total spent': '\$3,240',
       'last visit': 'Dec 3, 2025',
     },

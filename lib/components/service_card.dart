@@ -3,32 +3,26 @@ import 'package:flutter/material.dart';
 class ServiceCard extends StatelessWidget {
   final String title;
   final String category;
-  final Color categoryBgColor;
-  final Color categoryTextColor;
   final String duration;
   final String price;
-  final Color priceTextColor;
+
   final String bookings;
   final String revenue;
   final String badge;
-  final Color badgeColor;
-  final Color badgeTextColor;
+
   final VoidCallback? onOptionsPressed;
 
   const ServiceCard({
     super.key,
     required this.title,
     required this.category,
-    required this.categoryBgColor,
-    required this.categoryTextColor,
     required this.duration,
     required this.price,
-    required this.priceTextColor,
+   
     required this.bookings,
     required this.revenue,
     required this.badge,
-    required this.badgeColor,
-    required this.badgeTextColor,
+  
     this.onOptionsPressed,
   });
 
@@ -71,14 +65,14 @@ class ServiceCard extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: categoryBgColor,
+                  color: const Color(0xFFF3ECE5),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   category,
                   style: TextStyle(
                     fontSize: 11,
-                    color: categoryTextColor,
+                    color: const Color(0xFF796D64),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -167,7 +161,7 @@ class ServiceCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
-                          color: priceTextColor,
+                          color: const Color(0xFF9D785A),
                         ),
                       ),
                     ],
@@ -256,13 +250,13 @@ class ServiceCard extends StatelessWidget {
               vertical: 4,
             ),
             decoration: BoxDecoration(
-              color: badgeColor,
+              color:  const Color(0xFFE2F3EC),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
               badge,
               style: TextStyle(
-                color: badgeTextColor,
+                color: const Color(0xFF108A00),
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
               ),
