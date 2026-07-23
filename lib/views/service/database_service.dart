@@ -13,16 +13,23 @@ class DatabaseService {
   }
 
   //Watch Service
-  Future<List<ServiceModel>> fetchServices() async {
-    final response = await _supabase
+  Stream<List<ServiceModel>> watchServices() {
+    return _supabase
         .from('services')
-        .select()
-        .order('created_at', ascending: false);
-
-    return response
-        .map<ServiceModel>((e) => ServiceModel.fromJson(e))
-        .toList();
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: false)
+        .map((data) => data
+            .map((e) => ServiceModel.fromJson(e))
+            .toList());
   }
+    Future<void> deleteService(String id) async {
+    await _supabase
+        .from('services')
+        .delete()
+        .eq('id', id);
+  }
+
+}
   //   Future<void> updateService(ServiceModel service) async {
   //   await _supabase
   //       .from('services')
@@ -30,11 +37,4 @@ class DatabaseService {
   //       .eq('id', service.id);
   // }
 
-  Future<void> deleteService(String id) async {
-    await _supabase
-        .from('services')
-        .delete()
-        .eq('id', id);
-  }
-}
 

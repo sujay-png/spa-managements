@@ -6,7 +6,7 @@ class ServiceModel {
   final double price;
 
   const ServiceModel({
-     this.id,
+    this.id,
     required this.serviceName,
     required this.designation,
     required this.duration,
@@ -15,22 +15,22 @@ class ServiceModel {
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     return ServiceModel(
-        id: json['id'] as int?,
-      serviceName: json['service_name'] ?? '',
-      designation: json['designation'] ?? '',
-      duration: json['duration'] ?? '',
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      id: json['id'] as int?,
+      serviceName: json['service_name']?.toString() ?? '',
+      designation: json['designation']?.toString() ?? '',
+      duration: json['duration']?.toString() ?? '',
+      price: double.tryParse(json['price'].toString()) ?? 0.0,
     );
   }
 
- Map<String, dynamic> toJson() {
-  return {
-    'service_name': serviceName,
-    'designation': designation,
-    'duration': duration,
-    'price': price,
-  };
-}
+  Map<String, dynamic> toJson() {
+    return {
+      'service_name': serviceName,
+      'designation': designation,
+      'duration': duration,
+      'price': price,
+    };
+  }
 
   ServiceModel copyWith({
     int? id,
