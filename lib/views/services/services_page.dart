@@ -21,7 +21,7 @@ class ServicePage extends StatelessWidget {
         "badge": "active",
         "badgeColor": const Color(0xFFE2F3EC),
         "badgeTextColor": const Color(0xFF108A00),
-       "priceTextColor": const Color(0xFF9D785A),
+        "priceTextColor": const Color(0xFF9D785A),
       },
       {
         "title": "Deep Tissue Massage",
@@ -35,7 +35,7 @@ class ServicePage extends StatelessWidget {
         "badge": "active",
         "badgeColor": const Color(0xFFE2F3EC),
         "badgeTextColor": const Color(0xFF108A00),
-         "priceTextColor": const Color(0xFF9D785A),
+        "priceTextColor": const Color(0xFF9D785A),
       },
       {
         "title": "Facial Treatment",
@@ -49,7 +49,7 @@ class ServicePage extends StatelessWidget {
         "badge": "active",
         "badgeColor": const Color(0xFFE2F3EC),
         "badgeTextColor": const Color(0xFF108A00),
-           "priceTextColor": const Color(0xFF9D785A),
+        "priceTextColor": const Color(0xFF9D785A),
       },
       {
         "title": "Hot Stone Therapy",
@@ -63,8 +63,7 @@ class ServicePage extends StatelessWidget {
         "badge": "active",
         "badgeColor": const Color(0xFFE2F3EC),
         "badgeTextColor": const Color(0xFF108A00),
-         "priceTextColor": const Color(0xFF9D785A),
-          
+        "priceTextColor": const Color(0xFF9D785A),
       },
       {
         "title": "Aromatherapy",
@@ -78,41 +77,47 @@ class ServicePage extends StatelessWidget {
         "badge": "active",
         "badgeColor": const Color(0xFFE2F3EC),
         "badgeTextColor": const Color(0xFF108A00),
-          "priceTextColor": const Color(0xFF9D785A),
+        "priceTextColor": const Color(0xFF9D785A),
       },
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+                  backgroundColor: AppColors.bg,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
-            const Text(
-              "Services",
-              style: TextStyle(
-                color: AppColors.textPrimary,
-                fontSize: 23,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-        
-
+            /// Header Row
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  "Manage your spa services and treatment",
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Services",
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        "Manage your spa services and treatments",
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(flex:50),
+                const SizedBox(width: 16),
                 
+                /// Add Staff Button
                 SizedBox(
                   width: 165,
-                 
+
                   child: ElevatedButton.icon(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
@@ -127,19 +132,17 @@ class ServicePage extends StatelessWidget {
                       ),
                     ),
                     icon: const Icon(Icons.add, size: 18),
-                   label: Text(
-                            'Add Service',
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(
-                                  fontSize: 15,
-                                  color: AppColors.surface,
-                                ),
-                          ),
+                    label: Text(
+                      'Add Service',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontSize: 15,
+                        color: AppColors.surface,
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
-
             const SizedBox(height: 25),
 
             // GridView builder
@@ -148,10 +151,10 @@ class ServicePage extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: services.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-               crossAxisCount: 3,
-    crossAxisSpacing: 16,
-    mainAxisSpacing: 16,
-    childAspectRatio:1.45,
+                crossAxisCount: 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                childAspectRatio: 1.45,
               ),
               itemBuilder: (context, index) {
                 final service = services[index];
