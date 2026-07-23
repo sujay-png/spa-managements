@@ -1,3 +1,4 @@
+import 'package:ira_spa_webapp/models/customer_model.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -28,13 +29,21 @@ class DatabaseService {
         .delete()
         .eq('id', id);
   }
-
-}
-  //   Future<void> updateService(ServiceModel service) async {
+    //   Future<void> updateService(ServiceModel service) async {
   //   await _supabase
   //       .from('services')
   //       .update(service.toJson())
   //       .eq('id', service.id);
   // }
+
+
+//=================================Customer ==========================================
+
+ Future<void> addcustomer(CustomerModel customer) async {
+    await _supabase
+        .from('Customers')
+        .insert(customer.toJson());
+  }
+}
 
 

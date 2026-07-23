@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/bookings/booking_page.dart';
 import 'package:ira_spa_webapp/views/customer/customer_page.dart';
 import 'package:ira_spa_webapp/views/dashboard/dashboard.dart';
 import 'package:ira_spa_webapp/views/services/services_page.dart';
 import 'package:ira_spa_webapp/views/staff/staff_page.dart';
+import 'package:provider/provider.dart';
 
 class Shellroute extends StatefulWidget {
   const Shellroute({super.key});
@@ -23,30 +25,17 @@ class _ShellrouteState extends State<Shellroute> {
     CustomerPage(),
     ServicePage(),
     StaffPage(),
-    // FeeCollectionView(),
+
     // MaintenanceView(),
     // NoticeBoardView(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final authController = context.watch<AuthController>();
+    final displayName = authController.userName ?? '';
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        title: Row(children: [
-            
-           
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
-            onPressed: () {},
-          ),
-          // context.read<AuthController>().signOut(),
-        ],
-      ),
+    
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isMobileLayout = constraints.maxWidth < _mobileBreakpoint;
@@ -76,7 +65,7 @@ class _ShellrouteState extends State<Shellroute> {
                             width: 45,
                             height: 45,
                             decoration: BoxDecoration(
-                              color:  const Color.fromARGB(255, 102, 86, 70),
+                              color: const Color.fromARGB(255, 102, 86, 70),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
@@ -123,7 +112,6 @@ class _ShellrouteState extends State<Shellroute> {
                     // ),
 
                     // const SizedBox(height: 30),
-
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 25),
                       child: Align(
@@ -148,15 +136,30 @@ class _ShellrouteState extends State<Shellroute> {
 
                     Divider(color: AppColors.border),
 
-                    _menu(Icons.settings_outlined, "Settings", 6),
-
                     const SizedBox(height: 20),
 
                     ListTile(
-                      leading: const CircleAvatar(child: Text("SJ")),
-                      title: const Text("Sarah Johnson"),
-                      subtitle: const Text("Manager"),
-                      trailing: const Icon(Icons.notifications_none),
+                      leading: CircleAvatar(
+                        backgroundColor: const Color.fromARGB(255, 102, 86, 70),
+                        child: Text(
+                          displayName.isNotEmpty
+                              ? displayName[0].toUpperCase()
+                              : "U",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      title: Text('$displayName'),
+
+                      trailing: Tooltip(
+                        message: 'Logout',
+                        child: IconButton(
+                          onPressed: () {},
+                          icon: Icon(Icons.logout),
+                        ),
+                      ),
                     ),
 
                     const SizedBox(height: 20),
@@ -221,7 +224,9 @@ class _ShellrouteState extends State<Shellroute> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: selected ?  const Color.fromARGB(255, 102, 86, 70): Colors.transparent,
+            color: selected
+                ? const Color.fromARGB(255, 102, 86, 70)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(14),
           ),
           child: Row(
@@ -244,4 +249,6 @@ class _ShellrouteState extends State<Shellroute> {
       ),
     );
   }
+
+  //
 }
