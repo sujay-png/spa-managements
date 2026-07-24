@@ -247,6 +247,12 @@ void initState() {
                     TextFormField(
                       controller: _serviceNameController,
                       decoration: dec('Enter Service Name'),
+                      validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Service Name";
+                        }
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -261,6 +267,12 @@ void initState() {
                               TextFormField(
                                 controller: _durationController,
                                 decoration: dec('Enter duration'),
+                                 validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter duration";
+                        }
+                        return null;
+                      },
                               ),
                             ],
                           ),
@@ -275,7 +287,14 @@ void initState() {
                               TextFormField(
                                 controller: _priceController,
                                 decoration: dec('Enter the amount'),
+                                 validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter amount";
+                        }
+                        return null;
+                      },
                               ),
+
                             ],
                           ),
                         ),
@@ -289,6 +308,12 @@ void initState() {
                     TextFormField(
                       controller: _designationController,
                       decoration: dec('Enter Designation.'),
+                       validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter Designation";
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
 

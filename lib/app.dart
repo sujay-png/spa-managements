@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:ira_spa_webapp/controllers/customer_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
+import 'package:ira_spa_webapp/controllers/staff_controller.dart';
 import 'package:ira_spa_webapp/navigation/approutes.dart';
 import 'package:ira_spa_webapp/navigation/shellroute.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
@@ -20,8 +22,8 @@ class IraspaApp extends StatelessWidget {
        ChangeNotifierProvider(create: (_) => AuthController()),
      ChangeNotifierProvider(create: (_) => ServiceController()),
    ChangeNotifierProvider(create: (_) => CustomerController()),
-    //     // ChangeNotifierProvider(create: (_) => MaintenanceController()),
-    //     // ChangeNotifierProvider(create: (_) => NoticeController()),
+ ChangeNotifierProvider(create: (_) => StaffController()),
+  ChangeNotifierProvider(create: (_) => BookingController()),
        ],
       child:  MaterialApp(
         title: 'Ira Spa',

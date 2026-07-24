@@ -7,6 +7,7 @@ class CustomerModel {
   final String address;
   final String notes;
    final int? businessRef;
+   
 
   const CustomerModel({
     this.id,

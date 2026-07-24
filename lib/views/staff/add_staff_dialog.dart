@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:ira_spa_webapp/components/staff_card.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/staff_controller.dart';
+import 'package:ira_spa_webapp/models/staff_model.dart';
+import 'package:provider/provider.dart';
 
 class AddStaffDialog extends StatefulWidget {
   const AddStaffDialog({super.key});
@@ -10,20 +14,36 @@ class AddStaffDialog extends StatefulWidget {
 
 class _AddStaffDialogState extends State<AddStaffDialog> {
   final _formKey = GlobalKey<FormState>();
-
-  String designation = "Senior Therapist";
-  String specialization = "Massage Therapy";
+  bool _saving = false;
   String status = "Available";
-
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final TextEditingController designationController = TextEditingController();
+  final TextEditingController specializationController =
+      TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthController>();
+
+      if (auth.businessRef != null) {
+        context.read<StaffController>().loadStaff(auth.businessRef!);
+      } else {
+        debugPrint("Business Ref is null");
+      }
+    });
+  }
 
   @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
+    designationController.dispose();
+    specializationController.dispose();
     super.dispose();
   }
 
@@ -33,9 +53,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
     const Color fieldBgColor = Color(0xFFF8FAFC);
 
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SizedBox(
         width: 600,
         height: 620,
@@ -67,10 +85,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                    ),
+                    icon: const Icon(Icons.close, color: Colors.white),
                   ),
                 ],
               ),
@@ -135,7 +150,8 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                                     controller: emailController,
                                     keyboardType: TextInputType.emailAddress,
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
                                         return "Please enter an email";
                                       }
                                       final RegExp emailRegExp = RegExp(
@@ -175,7 +191,8 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                                     controller: phoneController,
                                     keyboardType: TextInputType.phone,
                                     validator: (value) {
-                                      if (value == null || value.trim().isEmpty) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
                                         return "Please enter a phone number";
                                       }
                                       if (value.trim().length < 7) {
@@ -216,34 +233,25 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  DropdownButtonFormField<String>(
-                                    value: designation,
+                                  TextFormField(
+                                    controller: designationController,
+                                    keyboardType: TextInputType.phone,
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return "Please enter designation";
+                                      }
+
+                                      return null;
+                                    },
                                     decoration: InputDecoration(
+                                      hintText: "",
                                       filled: true,
                                       fillColor: fieldBgColor,
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: "Senior Therapist",
-                                        child: Text("Senior Therapist"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Esthetician",
-                                        child: Text("Esthetician"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Wellness Coach",
-                                        child: Text("Wellness Coach"),
-                                      ),
-                                    ],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        designation = value!;
-                                      });
-                                    },
                                   ),
                                 ],
                               ),
@@ -261,34 +269,25 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  DropdownButtonFormField<String>(
-                                    value: specialization,
+                                  TextFormField(
+                                    controller: specializationController,
+                                    keyboardType: TextInputType.phone,
+                                    validator: (value) {
+                                      if (value == null ||
+                                          value.trim().isEmpty) {
+                                        return "Please enter Specialization";
+                                      }
+
+                                      return null;
+                                    },
                                     decoration: InputDecoration(
+                                      hintText: "",
                                       filled: true,
                                       fillColor: fieldBgColor,
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                        value: "Massage Therapy",
-                                        child: Text("Massage Therapy"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Skin Care",
-                                        child: Text("Skin Care"),
-                                      ),
-                                      DropdownMenuItem(
-                                        value: "Aromatherapy",
-                                        child: Text("Aromatherapy"),
-                                      ),
-                                    ],
-                                    onChanged: (value) {
-                                      setState(() {
-                                        specialization = value!;
-                                      });
-                                    },
                                   ),
                                 ],
                               ),
@@ -355,22 +354,12 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                             const SizedBox(width: 16),
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    Navigator.pop(context);
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Staff member "${nameController.text.trim()}" saved successfully!',
-                                        ),
-                                        backgroundColor: headerColor,
-                                        behavior: SnackBarBehavior.floating,
-                                        duration: const Duration(seconds: 3),
-                                      ),
-                                    );
-                                  }
-                                },
+                                onPressed: _saving
+                                    ? null
+                                    : () {
+                                        print("Save Staff button clicked");
+                                        _save();
+                                      },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: headerColor,
                                   minimumSize: const Size(double.infinity, 48),
@@ -396,5 +385,53 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
         ),
       ),
     );
+  }
+
+  //================================Save logic=================================
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+    final auth = context.read<AuthController>();
+
+    if (auth.businessRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Business reference not found.")),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+
+    try {
+      await context.read<StaffController>().addStaff(
+        StaffModel(
+          // id: '',
+          businessRef: auth.businessRef!,
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+          phno: phoneController.text.trim(),
+          designation: designationController.text.trim(),
+          specialization: specializationController.text.trim(),
+        ),
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Staff added successfully')),
+        );
+      }
+    } catch (e, stack) {
+      print(e);
+      print(stack);
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
   }
 }

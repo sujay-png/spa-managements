@@ -344,9 +344,15 @@ class _CustomerPageState extends State<CustomerPage> {
                     const Divider(height: 32, thickness: 1),
                     label(Icons.person_outline, 'Full Name'),
                     const SizedBox(height: 8),
-                    TextField(
+                    TextFormField(
                       controller: name,
                       decoration: dec('Enter Full Name'),
+                       validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter a full name";
+                        }
+                        return null;
+                      },
                     ),
 
                     const SizedBox(height: 16),
@@ -358,9 +364,15 @@ class _CustomerPageState extends State<CustomerPage> {
                             children: [
                               label(Icons.email_outlined, 'Email'),
                               const SizedBox(height: 8),
-                              TextField(
+                              TextFormField(
                                 controller: email,
                                 decoration: dec('Enter Email'),
+                               validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter a email";
+                        }
+                        return null;
+                      },
                               ),
                             ],
                           ),
@@ -372,9 +384,15 @@ class _CustomerPageState extends State<CustomerPage> {
                             children: [
                               label(Icons.phone_outlined, 'Phone Number'),
                               const SizedBox(height: 8),
-                              TextField(
+                              TextFormField(
                                 controller: phone,
                                 decoration: dec('Enter Phone Number'),
+                                 validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter phoneno";
+                        }
+                        return null;
+                      },
                               ),
                             ],
                           ),
@@ -426,18 +444,31 @@ class _CustomerPageState extends State<CustomerPage> {
 
                     label(null, 'Address'),
                     const SizedBox(height: 8),
-                    TextField(
+                    TextFormField(
                       controller: Address,
                       maxLines: 3,
                       decoration: dec('Enter Customer Address.'),
+                       validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter Customer Address";
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
                     label(null, 'NOTES'),
                     const SizedBox(height: 8),
-                    TextField(
+                    TextFormField(
                       controller: notesCtrl,
                       maxLines: 3,
                       decoration: dec('Any special requests or notes...'),
+                      validator: (value){
+                        if(value==null || value.trim().isEmpty){
+                          return "Please Enter notes";
+                        }
+                        return null;
+                      },
+                      
                     ),
                     const SizedBox(height: 24),
                     const Divider(height: 1, thickness: 1),

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
+import 'package:ira_spa_webapp/models/bookings_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
 class BookingTabel extends StatefulWidget {
   const BookingTabel({super.key});
@@ -9,141 +13,38 @@ class BookingTabel extends StatefulWidget {
 }
 
 class _BookingTabelState extends State<BookingTabel> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthController>();
+
+      if (auth.businessRef != null) {
+        context.read<BookingController>().loadBookings(auth.businessRef!);
+      } else {
+        debugPrint("Business Ref is null");
+      }
+    });
+  }
   int _currentPage = 0;
   final int _rowsPerPage = 5;
-  final List<Map<String, dynamic>> bookings = [
-    {
-      'id': 'BK001',
-      'clientName': 'Emma Wilson',
-      'phone': '+1 234 567 8900',
-      'service': 'Swedish Massage',
-      'duration': '60 min',
-      'therapist': 'Dr. Sarah Johnson',
-      'date': 'Dec 5, 2025',
-      'time': '10:00 AM - 11:00 AM',
-      'price': '\$120',
-      'status': 'Confirmed',
-    },
-    {
-      'id': 'BK002',
-      'clientName': 'Michael Brown',
-      'phone': '+1 234 567 8901',
-      'service': 'Facial Treatment',
-      'duration': '60 min',
-      'therapist': 'Lisa Chen',
-      'date': 'Dec 5, 2025',
-      'time': '11:30 AM - 12:30 PM',
-      'price': '\$95',
-      'status': 'Confirmed',
-    },
-    {
-      'id': 'BK003',
-      'clientName': 'Sophie Martinez',
-      'phone': '+1 234 567 8902',
-      'service': 'Hot Stone Therapy',
-      'duration': '90 min',
-      'therapist': 'Dr. Sarah Johnson',
-      'date': 'Dec 5, 2025',
-      'time': '02:00 PM - 03:30 PM',
-      'price': '\$150',
-      'status': 'Pending',
-    },
-    {
-      'id': 'BK004',
-      'clientName': 'James Anderson',
-      'phone': '+1 234 567 8903',
-      'service': 'Aromatherapy',
-      'duration': '60 min',
-      'therapist': 'Amy Parker',
-      'date': 'Dec 6, 2025',
-      'time': '09:00 AM - 10:00 AM',
-      'price': '\$110',
-      'status': 'Confirmed',
-    },
-    {
-      'id': 'BK005',
-      'clientName': 'Olivia Davis',
-      'phone': '+1 234 567 8904',
-      'service': 'Deep Tissue Massage',
-      'duration': '90 min',
-      'therapist': 'Dr. Sarah Johnson',
-      'date': 'Dec 6, 2025',
-      'time': '02:30 PM - 04:00 PM',
-      'price': '\$140',
-      'status': 'Completed',
-    },
-    {
-      'id': 'BK006',
-      'clientName': 'Emma Wilson',
-      'phone': '+1 234 567 8900',
-      'service': 'Swedish Massage',
-      'duration': '60 min',
-      'therapist': 'Dr. Sarah Johnson',
-      'date': 'Dec 5, 2025',
-      'time': '10:00 AM - 11:00 AM',
-      'price': '\$120',
-      'status': 'Confirmed',
-    },
-    {
-      'id': 'BK007',
-      'clientName': 'Michael Brown',
-      'phone': '+1 234 567 8901',
-      'service': 'Facial Treatment',
-      'duration': '60 min',
-      'therapist': 'Lisa Chen',
-      'date': 'Dec 5, 2025',
-      'time': '11:30 AM - 12:30 PM',
-      'price': '\$95',
-      'status': 'Confirmed',
-    },
-    {
-      'id': 'BK008',
-      'clientName': 'Sophie Martinez',
-      'phone': '+1 234 567 8902',
-      'service': 'Hot Stone Therapy',
-      'duration': '90 min',
-      'therapist': 'Dr. Sarah Johnson',
-      'date': 'Dec 5, 2025',
-      'time': '02:00 PM - 03:30 PM',
-      'price': '\$150',
-      'status': 'Pending',
-    },
-    {
-      'id': 'BK009',
-      'clientName': 'James Anderson',
-      'phone': '+1 234 567 8903',
-      'service': 'Aromatherapy',
-      'duration': '60 min',
-      'therapist': 'Amy Parker',
-      'date': 'Dec 6, 2025',
-      'time': '09:00 AM - 10:00 AM',
-      'price': '\$110',
-      'status': 'Confirmed',
-    },
-    {
-      'id': 'BK0010',
-      'clientName': 'Olivia Davis',
-      'phone': '+1 234 567 8904',
-      'service': 'Deep Tissue Massage',
-      'duration': '90 min',
-      'therapist': 'Dr. Sarah Johnson',
-      'date': 'Dec 6, 2025',
-      'time': '02:30 PM - 04:00 PM',
-      'price': '\$140',
-      'status': 'Completed',
-    },
-  ];
+  
 
   @override
   Widget build(BuildContext context) {
-    final int totalPages = (bookings.length / _rowsPerPage).ceil();
-    final int startIndex = _currentPage * _rowsPerPage;
-    final int endIndex = (startIndex + _rowsPerPage) > bookings.length
-        ? bookings.length
-        : (startIndex + _rowsPerPage);
+    final bookingController = context.watch<BookingController>();
+final bookings = bookingController.bookings;
 
-    final List<Map<String, dynamic>> paginatedAppointments = bookings.isEmpty
-        ? []
+final int totalPages =
+    bookings.isEmpty ? 1 : (bookings.length / _rowsPerPage).ceil();
+
+final int startIndex = _currentPage * _rowsPerPage;
+final int endIndex = (startIndex + _rowsPerPage).clamp(0, bookings.length);
+
+final List<BookingsModel> paginatedAppointments =
+    bookings.isEmpty
+        ? <BookingsModel>[]
         : bookings.sublist(startIndex, endIndex);
 
     return Container(
@@ -252,253 +153,268 @@ class _BookingTabelState extends State<BookingTabel> {
             ),
           ),
 
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: paginatedAppointments.length,
-            itemBuilder: (context, index) {
-              final item = paginatedAppointments[index];
-              final isConfirmed = item['status'] == 'Confirmed';
-              final isPending = item['status'] == 'Pending';
+     bookingController.loading
+     ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : paginatedAppointments.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: Text('No customers found')),
+                    )
 
-              return Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 14,
+
+      : ListView.builder(
+         shrinkWrap: true,
+         physics: const NeverScrollableScrollPhysics(),
+         itemCount: paginatedAppointments.length,
+         itemBuilder: (context, index) {
+           final BookingsModel item = paginatedAppointments[index];
+       
+           final isConfirmed =
+          item.statusrequired.toLowerCase() == 'confirmed';
+           final isPending =
+          item.statusrequired.toLowerCase() == 'pending';
+       
+           return Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.border,
+              width: index == paginatedAppointments.length - 1 ? 0 : 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            /// Booking ID
+            Expanded(
+              flex: 1,
+              child: Text(
+                "#${item.id ?? '-'}",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
                 ),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: AppColors.border,
-                      width: index == paginatedAppointments.length - 1 ? 0 : 1,
+              ),
+            ),
+       
+            /// Customer
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.customer,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.custphone ?? "-",
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+       
+            /// Service
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.servicename,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    item.serviceDuration ?? "-",
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+       
+            /// Therapist
+            Expanded(
+              flex: 2,
+              child: Text(
+                item.therapistname,
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+       
+            /// Date & Time
+            Expanded(
+              flex: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${item.bookingdate.day.toString().padLeft(2, '0')}-${item.bookingdate.month.toString().padLeft(2, '0')}-${item.bookingdate.year}",
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        size: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        item.timeslot,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+       
+            /// Price
+            Expanded(
+              flex: 1,
+              child: Text(
+                item.servicePrice ?? "-",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+       
+            /// Status
+            Expanded(
+              flex: 1,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isConfirmed
+                        ? Colors.green.withOpacity(.12)
+                        : isPending
+                            ? Colors.orange.withOpacity(.12)
+                            : Colors.blue.withOpacity(.12),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    item.statusLabel,
+                    style: TextStyle(
+                      color: isConfirmed
+                          ? Colors.green
+                          : isPending
+                              ? Colors.orange
+                              : Colors.blue,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
                     ),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    /// Booking ID
-                    Expanded(
-                      flex: 1,
-                      child: Text(
-                        item['id'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-
-                    /// Customer
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['clientName'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item['phone'],
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// Service
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['service'],
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            item['duration'],
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// Therapist
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        item['therapist'],
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-
-                    /// Date & Time
-                    Expanded(
-                      flex: 2,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.calendar_today_outlined,
-                                size: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                item['date'],
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.access_time,
-                                size: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                item['time'],
-                                style: const TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 11,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    /// Price
-                    Expanded(
-                      flex: 1,
-                      child: Text(
-                        item['price'],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-
-                    /// Status
-                    Expanded(
-                      flex: 1,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isConfirmed
-                                ? Colors.green.withOpacity(0.12)
-                                : isPending
-                                ? Colors.orange.withOpacity(0.12)
-                                : Colors.blue.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Text(
-                            item['status'],
-                            style: TextStyle(
-                              color: isConfirmed
-                                  ? Colors.green
-                                  : isPending
-                                  ? Colors.orange
-                                  : Colors.blue,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    /// Actions Menu
-                    /// Actions Menu
-                    SizedBox(
-                      width: 30,
-                      child: PopupMenuButton<String>(
-                        icon: const Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: AppColors.textSecondary,
-                        ),
-                        onSelected: (value) {
-                          if (value == 'edit') {
-                            _editBooking(item);
-                          } else if (value == 'delete') {
-                            _deleteBooking(item);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: 'edit',
-                            child: Row(
-                              children: [
-                                Icon(Icons.edit_outlined, size: 16),
-                                SizedBox(width: 8),
-                                Text('Edit'),
-                              ],
-                            ),
-                          ),
-                          const PopupMenuItem(
-                            value: 'delete',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.delete_outline,
-                                  size: 16,
-                                  color: Colors.red,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+              ),
+            ),
+       
+            /// Actions
+            SizedBox(
+         width: 30,
+         child: PopupMenuButton<String>(
+           icon: const Icon(
+        Icons.more_vert,
+        size: 18,
+        color: AppColors.textSecondary,
+           ),
+           onSelected: (value) {
+        if (value == 'edit') {
+          _editBooking(item);
+        } else if (value == 'delete') {
+          _deleteBooking(item);
+        }
+           },
+           itemBuilder: (context) => const [
+        PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit_outlined, size: 16),
+              SizedBox(width: 8),
+              Text('Edit'),
+            ],
           ),
+        ),
+        PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_outline,
+                size: 16,
+                color: Colors.red,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+           ],
+         ),
+       ),
+          ],
+        ),
+           );
+         },
+       ),
+      
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: const BoxDecoration(
@@ -575,21 +491,39 @@ class _BookingTabelState extends State<BookingTabel> {
 
   //Edit Delete function
 
-  void _editBooking(Map<String, dynamic> item) {
-    // Hook this up to your booking edit dialog/form
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Edit ${item['id']}')));
-  }
+  void _editBooking(BookingsModel booking) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text("Edit Booking #${booking.id}"),
+    ),
+  );
 
-  void _deleteBooking(Map<String, dynamic> item) {
-    setState(() {
-      bookings.removeWhere((b) => b['id'] == item['id']);
-      // keep current page in range after deletion
-      final totalPages = (bookings.length / _rowsPerPage).ceil();
-      if (_currentPage >= totalPages && _currentPage > 0) {
-        _currentPage--;
-      }
-    });
-  }
+  // TODO:
+  // Open your booking dialog here
+}
+  Future<void> _deleteBooking(BookingsModel booking) async {
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Delete Booking"),
+      content: const Text(
+        "Are you sure you want to delete this booking?",
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text("Delete"),
+        ),
+      ],
+    ),
+  );
+
+  if (confirm != true) return;
+
+  await context.read<BookingController>().deleteBooking(booking.id!);
+}
 }
