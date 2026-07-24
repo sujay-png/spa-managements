@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/customerstats.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/customer_controller.dart';
 import 'package:ira_spa_webapp/models/customer_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
@@ -14,17 +15,34 @@ class CustomerPage extends StatefulWidget {
 }
 
 class _CustomerPageState extends State<CustomerPage> {
-    final dateCtrl = TextEditingController();
-    final notesCtrl = TextEditingController();
-    final name = TextEditingController();
-    final email = TextEditingController();
-    final phone = TextEditingController();
-    final Address = TextEditingController();
+  final dateCtrl = TextEditingController();
+  final notesCtrl = TextEditingController();
+  final name = TextEditingController();
+  final email = TextEditingController();
+  final phone = TextEditingController();
+  final Address = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  @override
+  void initState(){
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+    final auth = context.read<AuthController>();
 
-    bool _saving=false;
+    if (auth.businessRef != null) {
+      context.read<CustomerController>().loadcustomer(auth.businessRef!);
+    } else {
+      debugPrint("Business Ref is null");
+    }
+  });
+
+
+  }
+
+  bool _saving = false;
   @override
   Widget build(BuildContext context) {
+   
+
     return Scaffold(
       body: Form(
         key: _formKey,
@@ -126,66 +144,79 @@ class _CustomerPageState extends State<CustomerPage> {
                       ),
                     ),
                     //======================Search bar filter and export button==================================
-                   Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-        /// Search Field
-        Expanded(
-          child: SizedBox(
-            height: 46,
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search by name, email, phone, or customer ID...',
-                prefixIcon: const Icon(Icons.search),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ),
-        ),
-        
-        const SizedBox(width: 12),
-        
-        /// Filter Button
-        SizedBox(
-          height: 46,
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.filter_alt_outlined, size: 18),
-            label: const Text("Filter"),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ),
-        
-        const SizedBox(width: 12),
-        
-        /// Export Button
-        SizedBox(
-          height: 46,
-          child: OutlinedButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.download_outlined, size: 18),
-            label: const Text("Export"),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ),
-            ],
-          ),
-        ),
-        
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          /// Search Field
+                          Expanded(
+                            child: SizedBox(
+                              height: 46,
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText:
+                                      'Search by name, email, phone, or customer ID...',
+                                  prefixIcon: const Icon(Icons.search),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 0,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          /// Filter Button
+                          SizedBox(
+                            height: 46,
+                            child: OutlinedButton.icon(
+                              onPressed: () {},
+                              icon: const Icon(
+                                Icons.filter_alt_outlined,
+                                size: 18,
+                              ),
+                              label: const Text("Filter"),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(width: 12),
+
+                          /// Export Button
+                          SizedBox(
+                            height: 46,
+                            child: OutlinedButton.icon(
+                              onPressed: () {},
+                              icon: const Icon(
+                                Icons.download_outlined,
+                                size: 18,
+                              ),
+                              label: const Text("Export"),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     //==================================== customertabel=================================================
                     CustomerTabel(),
                   ],
@@ -198,50 +229,67 @@ class _CustomerPageState extends State<CustomerPage> {
     );
   }
 
-  //===========================================Save Customer=========================
   //===================================Save Service===================================
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+  if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _saving = true);
+  final auth = context.read<AuthController>();
 
-    try {
-      await context.read<CustomerController>().addcustomer(
-        CustomerModel(
-          // id: '',
-          name: name.text.trim(),
-          email: email.text.trim(),
-          phoneno: phone.text.trim(),
-          address:Address.text.trim(),
-          notes: notesCtrl.text.trim()
-        ),
-      );
-
-      if (mounted) {
-        Navigator.pop(context);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Service added successfully')),
-        );
-      }
-    } catch (e) {
-      debugPrint('Error adding service: $e');
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to add service: $e')));
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _saving = false);
-      }
-    }
+  if (auth.businessRef == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Business reference not found."),
+      ),
+    );
+    return;
   }
 
+  setState(() => _saving = true);
 
+  try {
+    await context.read<CustomerController>().addcustomer(
+      CustomerModel(
+        businessRef: auth.businessRef!,
+        name: name.text.trim(),
+        email: email.text.trim(),
+        phoneno: phone.text.trim(),
+        dob: dateCtrl.text.isEmpty
+            ? null
+            : DateTime.parse(
+                "${dateCtrl.text.split('-')[2]}-"
+                "${dateCtrl.text.split('-')[1]}-"
+                "${dateCtrl.text.split('-')[0]}",
+              ),
+        address: Address.text.trim(),
+        notes: notesCtrl.text.trim(),
+      ),
+    );
+
+    if (!mounted) return;
+
+    Navigator.pop(context);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Customer added successfully"),
+      ),
+    );
+  } catch (e) {
+    debugPrint("Customer Save Error: $e");
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(e.toString())),
+    );
+  } finally {
+    if (mounted) {
+      setState(() => _saving = false);
+    }
+  }
+}
   //========================================Showcustomer dialog==========================================================
-  void showcustomerdialog(BuildContext context) { 
+  void showcustomerdialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -376,7 +424,7 @@ class _CustomerPageState extends State<CustomerPage> {
                     ),
                     const SizedBox(height: 16),
 
-                     label(null, 'Address'),
+                    label(null, 'Address'),
                     const SizedBox(height: 8),
                     TextField(
                       controller: Address,
@@ -426,7 +474,21 @@ class _CustomerPageState extends State<CustomerPage> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            onPressed: ()=>_saving?null:_save,
+                            onPressed: _saving
+                                ? null
+                                : () async {
+                                    debugPrint("Add Customer button clicked");
+
+                                    try {
+                                      await _save();
+                                      debugPrint("Customer saved successfully");
+                                    } catch (e) {
+                                      debugPrint(
+                                        "Error while saving customer: $e",
+                                      );
+                                    }
+                                  },
+
                             child: const Text(
                               'Add Customer',
                               style: TextStyle(

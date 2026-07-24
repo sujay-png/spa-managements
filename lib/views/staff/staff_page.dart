@@ -133,9 +133,9 @@ class _StaffPageState extends State<StaffPage> {
               itemCount: staffList.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.99,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1.2,
               ),
               itemBuilder: (context, index) {
                 final staff = staffList[index];

@@ -14,13 +14,19 @@ class CustomerController extends ChangeNotifier {
   String _search = '';
 
   StreamSubscription<List<CustomerModel>>? _sub;
-  //  CustomerController() {
-  //   _sub = _service.watchServices().listen((list) {
-  //     _services = list;
-  //     _loading = false;
-  //     notifyListeners();
-  //   });
-  // }
+  void loadcustomer(int bussinessRef){
+    _sub?.cancel();
+    _loading=true;
+    notifyListeners();
+    _sub=_customer.watchcustomer(bussinessRef).listen((list){
+      _cust=list;
+      _loading=false;
+      notifyListeners();
+
+
+    });
+  }
+ 
 
   List<CustomerModel> get _filteredcust {
     if (_search.isEmpty) return _cust;

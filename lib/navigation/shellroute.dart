@@ -156,12 +156,12 @@ class _ShellrouteState extends State<Shellroute> {
                       trailing: Tooltip(
                         message: 'Logout',
                         child: IconButton(
-                          onPressed: () {},
+                          onPressed: ()=>
+                          context.read<AuthController>().signOut(),
                           icon: Icon(Icons.logout),
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
                   ],
                 ),

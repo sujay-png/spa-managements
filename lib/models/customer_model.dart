@@ -6,6 +6,7 @@ class CustomerModel {
   final DateTime? dob;
   final String address;
   final String notes;
+   final int? businessRef;
 
   const CustomerModel({
     this.id,
@@ -14,7 +15,7 @@ class CustomerModel {
     required this.phoneno,
     this.dob,
     required this.address,
-    required this.notes,
+    required this.notes, this.businessRef,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -28,6 +29,7 @@ class CustomerModel {
           : null,
       address: json['customer_address']?.toString() ?? '',
       notes: json['customer_note']?.toString() ?? '',
+      businessRef: json['business_ref'] as int?,
     );
   }
 
@@ -36,9 +38,10 @@ class CustomerModel {
       'customer_name': name,
       'customer_email': email,
       'customer_phone': phoneno,
-      'customer_dob': dob?.toIso8601String(),
+          'customer_dob': dob?.toIso8601String().split('T').first,
       'customer_address': address,
       'customer_note': notes,
+          'business_ref': businessRef,
     };
   }
 

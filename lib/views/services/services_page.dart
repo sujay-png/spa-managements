@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/service_card.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
@@ -20,6 +21,20 @@ class _ServicePageState extends State<ServicePage> {
   final _designationController = TextEditingController();
   final _durationController = TextEditingController();
   final _priceController = TextEditingController();
+  @override
+void initState() {
+  super.initState();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final auth = context.read<AuthController>();
+
+    if (auth.businessRef != null) {
+      context.read<ServiceController>().loadServices(auth.businessRef!);
+    } else {
+      debugPrint("Business Ref is null");
+    }
+  });
+}
 
   bool _saving = false;
   @override
@@ -125,6 +140,17 @@ class _ServicePageState extends State<ServicePage> {
   //===================================Save Service===================================
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+     final auth = context.read<AuthController>();
+
+  if (auth.businessRef == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Business reference not found."),
+      ),
+    );
+    return;
+  }
+
 
     setState(() => _saving = true);
 
@@ -132,6 +158,7 @@ class _ServicePageState extends State<ServicePage> {
       await context.read<ServiceController>().addService(
         ServiceModel(
           // id: '',
+          businessRef: auth.businessRef!,
           serviceName: _serviceNameController.text.trim(),
           designation: _designationController.text.trim(),
           duration: _durationController.text.trim(),

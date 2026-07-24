@@ -14,16 +14,11 @@ class AuthService {
   Future<void> signOut() => _client.auth.signOut();
 
  
-  Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
-    try {
-      final response = await _client
-          .from('Useraccount')
-          .select()
-          .eq('id', userId) 
-          .single();
-      return response;
-    } catch (e) {
-      return null;
-    }
-  }
+ Future<Map<String, dynamic>?> fetchUserProfile(String userId) async {
+  return await Supabase.instance.client
+      .from('Useraccount')
+      .select()
+      .eq('id', userId)
+      .single();
+}
 }

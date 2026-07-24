@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/views/service/database_service.dart';
 
-class ServiceController extends ChangeNotifier {
+class 
+ServiceController extends ChangeNotifier {
   final DatabaseService _service = DatabaseService();
 
   List<ServiceModel> _services = [];
@@ -17,8 +18,13 @@ class ServiceController extends ChangeNotifier {
 
   StreamSubscription<List<ServiceModel>>? _sub;
 
-  ServiceController() {
-    _sub = _service.watchServices().listen((list) {
+  void loadServices(int businessRef) {
+    _sub?.cancel();
+
+    _loading = true;
+    notifyListeners();
+
+    _sub = _service.watchServices(businessRef).listen((list) {
       _services = list;
       _loading = false;
       notifyListeners();

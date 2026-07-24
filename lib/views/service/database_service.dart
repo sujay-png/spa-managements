@@ -14,15 +14,18 @@ class DatabaseService {
   }
 
   //Watch Service
-  Stream<List<ServiceModel>> watchServices() {
-    return _supabase
-        .from('services')
-        .stream(primaryKey: ['id'])
-        .order('created_at', ascending: false)
-        .map((data) => data
-            .map((e) => ServiceModel.fromJson(e))
-            .toList());
-  }
+Stream<List<ServiceModel>> watchServices(int businessRef) {
+ 
+
+  return _supabase
+      .from('services')
+      .stream(primaryKey: ['id'])
+      .eq('business_ref', businessRef)
+      .order('created_at', ascending: false)
+      .map((data) {
+        return data.map((e) => ServiceModel.fromJson(e)).toList();
+      });
+}
     Future<void> deleteService(String id) async {
     await _supabase
         .from('services')
@@ -39,11 +42,30 @@ class DatabaseService {
 
 //=================================Customer ==========================================
 
- Future<void> addcustomer(CustomerModel customer) async {
-    await _supabase
+Future<void> addcustomer(CustomerModel customer) async {
+  try {
+    final response = await _supabase
         .from('Customers')
-        .insert(customer.toJson());
+        .insert(customer.toJson())
+        .select();
+
+    print("Inserted Customer: $response");
+  } catch (e) {
+    print("Supabase Error: $e");
+    rethrow;
   }
 }
 
+Stream<List<CustomerModel>> watchcustomer(int businessRef) {
+ 
 
+  return _supabase
+      .from('Customers')
+      .stream(primaryKey: ['id'])
+      .eq('business_ref', businessRef)
+      .order('created_at', ascending: false)
+      .map((data) {
+        return data.map((e) => CustomerModel.fromJson(e)).toList();
+      });
+}
+}

@@ -19,6 +19,15 @@ class AuthController extends ChangeNotifier {
 
  Map<String, dynamic>? get userProfile => _userProfile;
  String? get userName => _userProfile?['user_name'];
+ int? get businessRef {
+  final value = _userProfile?['user_businessRef'];
+
+  if (value == null) return null;
+
+  if (value is int) return value;
+
+  return int.tryParse(value.toString());
+}
 
 
  AuthController() {
@@ -33,25 +42,35 @@ class AuthController extends ChangeNotifier {
     });
   }
 
-  Future<bool> signIn(String email, String password) async {
-    _loading = true;
-    _error = null;
+ Future<bool> signIn(String email, String password) async {
+  _loading = true;
+  _error = null;
+  notifyListeners();
+
+  try {
+    final response = await _service.signIn(
+      email.trim(),
+      password.trim(),
+    );
+
+    _user = response.user;
+
+    if (_user != null) {
+      _userProfile = await _service.fetchUserProfile(_user!.id);
+
+      debugPrint("User Profile: $_userProfile");
+      debugPrint("Business Ref: ${_userProfile?['user_businessRef']}");
+    }
+
+    return true;
+  } on AuthException catch (e) {
+    _error = e.message;
+    return false;
+  } finally {
+    _loading = false;
     notifyListeners();
-    try {
-      await _service.signIn(email.trim(), password);
-      final response = await _service.signIn(email.trim(), password);
-      if (response.user != null) {
-      _userProfile = await _service.fetchUserProfile(response.user!.id);
-    }
-      return true;
-    } on AuthException catch (e) {
-      _error = e.message ?? 'Sign in failed';
-      return false;
-    } finally {
-      _loading = false;
-      notifyListeners();
-    }
   }
+}
 
   Future<void> signOut() => _service.signOut();
 }
