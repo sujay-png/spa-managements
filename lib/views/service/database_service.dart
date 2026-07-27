@@ -24,15 +24,15 @@ class DatabaseService {
         });
   }
 
-  Future<void> deleteService(String id) async {
+  Future<void> deleteService(int id) async {
     await _supabase.from('services').delete().eq('id', id);
   }
-  //   Future<void> updateService(ServiceModel service) async {
-  //   await _supabase
-  //       .from('services')
-  //       .update(service.toJson())
-  //       .eq('id', service.id);
-  // }
+    Future<void> updateService(ServiceModel service) async {
+    await _supabase
+        .from('services')
+        .update(service.toJson())
+        .eq('id', service.id!);
+  }
 
   //=================================Customer ==========================================
 
@@ -60,7 +60,30 @@ class DatabaseService {
           return data.map((e) => CustomerModel.fromJson(e)).toList();
         });
   }
+ Future<void> updatecustomer(CustomerModel cust) async {
+  try {
+    await _supabase
+        .from('Customers')
+        .update({
+          'customer_name': cust.name,
+          'customer_email': cust.email,
+          'customer_phone': cust.phoneno,
+          'customer_dob': cust.dob?.toIso8601String().split('T').first,
+          'customer_address': cust.address,
+          'customer_note': cust.notes,
+        })
+        .eq('id', cust.id!);
 
+    print("Customer Updated");
+  } catch (e) {
+    print(e);
+    rethrow;
+  }
+
+   Future<void> deletecustomer(int id) async {
+    await _supabase.from('Customers').delete().eq('id', id);
+  }
+}
   //==============================Staff===========================================
   Future<void> addstaff(StaffModel staff) async {
     try {
@@ -69,57 +92,76 @@ class DatabaseService {
           .insert(staff.toJson())
           .select();
       print("Inserted Customer: $response");
-    }  on PostgrestException catch (e) {
-  print("Message: ${e.message}");
-  print("Details: ${e.details}");
-  print("Hint: ${e.hint}");
-  print("Code: ${e.code}");
-  rethrow;
-}
+    } on PostgrestException catch (e) {
+      print("Message: ${e.message}");
+      print("Details: ${e.details}");
+      print("Hint: ${e.hint}");
+      print("Code: ${e.code}");
+      rethrow;
+    }
   }
 
-  Stream<List<StaffModel>> watchStaff(int businessRef){
+  Stream<List<StaffModel>> watchStaff(int businessRef) {
     return _supabase
-    .from('Therapist')
-    .stream(primaryKey: ['id'])
-    .eq('business_ref', businessRef)
-    .order('created_at',ascending: false)
-    .map((data){
-      return data.map((e)=> StaffModel.fromJson(e)).toList();
-    });
+        .from('Therapist')
+        .stream(primaryKey: ['id'])
+        .eq('business_ref', businessRef)
+        .order('created_at', ascending: false)
+        .map((data) {
+          return data.map((e) => StaffModel.fromJson(e)).toList();
+        });
   }
 
   //==============================Bookings============================================
   Future<void> addBooking(BookingsModel booking) async {
-  await _supabase
-      .from('Booking')
-      .insert(booking.toMap());
-}
+    await _supabase.from('Booking').insert(booking.toMap());
+  }
 
-Stream<List<BookingsModel>> watchBookings(int businessRef) {
-  return _supabase
-      .from('Booking')
-      .stream(primaryKey: ['id'])
-      .eq('business_ref', businessRef)
-      .order('created_at', ascending: false)
-      .map(
-        (data) => data
-            .map((e) => BookingsModel.fromMap(e))
-            .toList(),
-      );
-}
+  Stream<List<BookingsModel>> watchBookings(int businessRef) {
+    return _supabase
+        .from('Booking')
+        .stream(primaryKey: ['id'])
+        .eq('business_ref', businessRef)
+        .order('created_at', ascending: false)
+        .map((data) => data.map((e) => BookingsModel.fromMap(e)).toList());
+  }
 
-Future<void> updateBooking(BookingsModel booking) async {
-  await _supabase
-      .from('Booking')
-      .update(booking.toMap())
-      .eq('id', booking.id!);
-}
+  Future<void> updateBooking(BookingsModel booking) async {
+    try {
+      await _supabase
+          .from('Booking')
+          .update({
+            'customer_ref': booking.customer,
+            'services': booking.servicename,
+            'therapist': booking.therapistname,
+            'available_slot': booking.bookingdate.toIso8601String(),
+            'confirmed_time': booking.timeslot,
+            'requirements_booking': booking.bookingdetails,
+            'booking_status': booking.statusrequired,
+          })
+          .eq('id', booking.id!);
 
-Future<void> deleteBooking(int id) async {
-  await _supabase
-      .from('Booking')
-      .delete()
-      .eq('id', id);
-}
+      print("Booking Updated");
+    } catch (e) {
+      print(e);
+      rethrow;
+    }
+  }
+
+  Future<void> deleteBooking(int id) async {
+    await _supabase.from('Booking').delete().eq('id', id);
+  }
+
+  Future<List<String>> getbookedtimeslots(DateTime date) async {
+    final start = DateTime(date.year, date.month, date.day);
+    final end = start.add(const Duration(days: 1));
+
+    final data = await _supabase
+        .from('Booking')
+        .select('confirmed_time')
+        .gte('available_slot', start.toIso8601String())
+        .lt('available_slot', end.toIso8601String());
+
+    return data.map<String>((e) => e['confirmed_time'] as String).toList();
+  }
 }

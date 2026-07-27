@@ -48,7 +48,20 @@ ServiceController extends ChangeNotifier {
   Future<void> addService(ServiceModel service) async {
     await _service.addService(service);
   }
+  Future<void> updatedservice(ServiceModel service) async{
+    await _service.updateService(service);
+    final index =_services.indexWhere((e)=>e.id == service.id);
+    if(index !=-1){
+      _services[index]=service;
+    }
+    notifyListeners();
+  }
+Future<void> deleteservice(int id)async{
+  await _service.deleteService(id);
+  _services.removeWhere((b)=>b.id==id);
+  notifyListeners();
 
+}
   @override
   void dispose() {
     _sub?.cancel();

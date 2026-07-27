@@ -22,27 +22,25 @@ class _CustomerPageState extends State<CustomerPage> {
   final phone = TextEditingController();
   final Address = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final _dialogformkey = GlobalKey<FormState>();
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-    final auth = context.read<AuthController>();
+      final auth = context.read<AuthController>();
 
-    if (auth.businessRef != null) {
-      context.read<CustomerController>().loadcustomer(auth.businessRef!);
-    } else {
-      debugPrint("Business Ref is null");
-    }
-  });
-
-
+      if (auth.businessRef != null) {
+        context.read<CustomerController>().loadcustomer(auth.businessRef!);
+      } else {
+        debugPrint("Business Ref is null");
+      }
+    });
   }
 
   bool _saving = false;
   @override
   Widget build(BuildContext context) {
-   
-
     return Scaffold(
       body: Form(
         key: _formKey,
@@ -153,6 +151,11 @@ class _CustomerPageState extends State<CustomerPage> {
                             child: SizedBox(
                               height: 46,
                               child: TextField(
+                                onChanged: (value) {
+                                  context.read<CustomerController>().search(
+                                    value,
+                                  );
+                                },
                                 decoration: InputDecoration(
                                   hintText:
                                       'Search by name, email, phone, or customer ID...',
@@ -218,7 +221,11 @@ class _CustomerPageState extends State<CustomerPage> {
                     ),
 
                     //==================================== customertabel=================================================
-                    CustomerTabel(),
+                    CustomerTabel(
+                      onEdit: (customer) {
+                        showcustomerdialog(context, customer: customer);
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -231,65 +238,74 @@ class _CustomerPageState extends State<CustomerPage> {
 
   //===================================Save Service===================================
   Future<void> _save() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  final auth = context.read<AuthController>();
+    final auth = context.read<AuthController>();
 
-  if (auth.businessRef == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Business reference not found."),
-      ),
-    );
-    return;
-  }
+    if (auth.businessRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Business reference not found.")),
+      );
+      return;
+    }
 
-  setState(() => _saving = true);
+    setState(() => _saving = true);
 
-  try {
-    await context.read<CustomerController>().addcustomer(
-      CustomerModel(
-        businessRef: auth.businessRef!,
-        name: name.text.trim(),
-        email: email.text.trim(),
-        phoneno: phone.text.trim(),
-        dob: dateCtrl.text.isEmpty
-            ? null
-            : DateTime.parse(
-                "${dateCtrl.text.split('-')[2]}-"
-                "${dateCtrl.text.split('-')[1]}-"
-                "${dateCtrl.text.split('-')[0]}",
-              ),
-        address: Address.text.trim(),
-        notes: notesCtrl.text.trim(),
-      ),
-    );
+    try {
+      await context.read<CustomerController>().addcustomer(
+        CustomerModel(
+          businessRef: auth.businessRef!,
+          name: name.text.trim(),
+          email: email.text.trim(),
+          phoneno: phone.text.trim(),
+          dob: dateCtrl.text.isEmpty
+              ? null
+              : DateTime.parse(
+                  "${dateCtrl.text.split('-')[2]}-"
+                  "${dateCtrl.text.split('-')[1]}-"
+                  "${dateCtrl.text.split('-')[0]}",
+                ),
+          address: Address.text.trim(),
+          notes: notesCtrl.text.trim(),
+        ),
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    Navigator.pop(context);
+      Navigator.pop(context);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Customer added successfully"),
-      ),
-    );
-  } catch (e) {
-    debugPrint("Customer Save Error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Customer added successfully")),
+      );
+    } catch (e) {
+      debugPrint("Customer Save Error: $e");
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.toString())),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => _saving = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
-}
+
   //========================================Showcustomer dialog==========================================================
-  void showcustomerdialog(BuildContext context) {
+  void showcustomerdialog(BuildContext context, {CustomerModel? customer}) {
+    final isedit = customer != null;
+    bool initialized = false;
+    if (customer != null) {
+      name.text = customer.name;
+      email.text = customer.email;
+      phone.text = customer.phoneno;
+      Address.text = customer.address;
+      dateCtrl.text =
+          "${customer.dob?.day.toString().padLeft(2, '0')}-"
+          "${customer.dob?.month.toString().padLeft(2, '0')}-"
+          "${customer.dob?.year}";
+    }
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -299,239 +315,263 @@ class _CustomerPageState extends State<CustomerPage> {
               borderRadius: BorderRadius.circular(16),
             ),
             backgroundColor: Colors.white,
-            child: Container(
-              width: 480,
-              padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Add New Customer',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Fill in the details below',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            size: 20,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 32, thickness: 1),
-                    label(Icons.person_outline, 'Full Name'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: name,
-                      decoration: dec('Enter Full Name'),
-                       validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter a full name";
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
+            child: Form(
+              key: _dialogformkey,
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              label(Icons.email_outlined, 'Email'),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: email,
-                                decoration: dec('Enter Email'),
-                               validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter a email";
-                        }
-                        return null;
-                      },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              label(Icons.phone_outlined, 'Phone Number'),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: phone,
-                                decoration: dec('Enter Phone Number'),
-                                 validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter phoneno";
-                        }
-                        return null;
-                      },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              label(
-                                Icons.calendar_today_outlined,
-                                'Date Of Birth',
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                controller: dateCtrl,
-                                readOnly: true,
-                                decoration: dec(
-                                  'dd-mm-yyyy',
-                                  Icons.calendar_today,
+                              Text(
+                                isedit ? 'Edit Customer' : 'Add New Customer',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textSecondary,
                                 ),
-                                onTap: () async {
-                                  final picked = await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(2023),
-                                    lastDate: DateTime(2030),
-                                  );
-                                  if (picked != null) {
-                                    setState(
-                                      () => dateCtrl.text =
-                                          "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}",
-                                    );
-                                  }
-                                },
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Fill in the details below',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    label(null, 'Address'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: Address,
-                      maxLines: 3,
-                      decoration: dec('Enter Customer Address.'),
-                       validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter Customer Address";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    label(null, 'NOTES'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: notesCtrl,
-                      maxLines: 3,
-                      decoration: dec('Any special requests or notes...'),
-                      validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter notes";
-                        }
-                        return null;
-                      },
-                      
-                    ),
-                    const SizedBox(height: 24),
-                    const Divider(height: 1, thickness: 1),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: BorderSide(color: Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                          IconButton(
+                            icon: const Icon(
+                              Icons.close,
+                              size: 20,
+                              color: Colors.grey,
                             ),
                             onPressed: () => Navigator.pop(context),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 32, thickness: 1),
+                      label(Icons.person_outline, 'Full Name'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: name,
+                        decoration: dec('Enter Full Name'),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Please Enter a full name";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                label(Icons.email_outlined, 'Email'),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: email,
+                                  decoration: dec('Enter Email'),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return "Please Enter a email";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8B7D76),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                label(Icons.phone_outlined, 'Phone Number'),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: phone,
+                                  decoration: dec('Enter Phone Number'),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return "Please enter a phone number";
+                                    }
+                                    if (value.trim().length < 7) {
+                                      return "Enter a valid phone number";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
                             ),
-                            onPressed: _saving
-                                ? null
-                                : () async {
-                                    debugPrint("Add Customer button clicked");
+                          ),
+                        ],
+                      ),
 
-                                    try {
-                                      await _save();
-                                      debugPrint("Customer saved successfully");
-                                    } catch (e) {
-                                      debugPrint(
-                                        "Error while saving customer: $e",
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                label(
+                                  Icons.calendar_today_outlined,
+                                  'Date Of Birth',
+                                ),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: dateCtrl,
+                                  readOnly: true,
+                                  decoration: dec(
+                                    'dd-mm-yyyy',
+                                    Icons.calendar_today,
+                                  ),
+                                  onTap: () async {
+                                    final picked = await showDatePicker(
+                                      context: context,
+                                      initialDate: DateTime.now(),
+                                      firstDate: DateTime(1100),
+                                      lastDate: DateTime(2030),
+                                    );
+                                    if (picked != null) {
+                                      setState(
+                                        () => dateCtrl.text =
+                                            "${picked.day.toString().padLeft(2, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.year}",
                                       );
                                     }
                                   },
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
 
-                            child: const Text(
-                              'Add Customer',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
+                      label(null, 'Address'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: Address,
+                        maxLines: 3,
+                        decoration: dec('Enter Customer Address.'),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Please Enter Customer Address";
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      label(null, 'NOTES'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: notesCtrl,
+                        maxLines: 3,
+                        decoration: dec('Any special requests or notes...'),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Please Enter notes";
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      const Divider(height: 1, thickness: 1),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF8B7D76),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: () async {
+                                if (isedit) {
+                                  final updatecustomer = CustomerModel(
+                                    id: customer!.id,  
+                                    businessRef: customer.businessRef,
+                                    name: name.text.trim(),
+                                    email: email.text.trim(),
+                                    phoneno: phone.text.trim(),
+                                    address: Address.text.trim(),
+                                    notes: notesCtrl.text.trim(),
+                                    dob: customer.dob, 
+                                  );
+                                  await context
+                                      .read<CustomerController>()
+                                      .updatedcustomer(updatecustomer);
+                                  if (!mounted) return;
+
+                                  Navigator.pop(context);
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "customer updated successfully",
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  _save();
+                                }
+                              },
+                              child: Text(
+                                isedit ? 'Update customer' : 'Create customer',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -540,6 +580,8 @@ class _CustomerPageState extends State<CustomerPage> {
       ),
     );
   }
+
+
 
   InputDecoration dec(String hint, [IconData? suffix]) => InputDecoration(
     hintText: hint,

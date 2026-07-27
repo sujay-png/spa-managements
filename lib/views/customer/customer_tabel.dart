@@ -7,7 +7,8 @@ import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
 class CustomerTabel extends StatefulWidget {
-  const CustomerTabel({super.key});
+  final Function(CustomerModel) onEdit;
+  const CustomerTabel({super.key, required this.onEdit});
 
   @override
   State<CustomerTabel> createState() => _CustomerTabelState();
@@ -320,9 +321,9 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                   ),
                                   onSelected: (value) {
                                     if (value == 'edit') {
-                                      _editCustomer(item);
+                                     widget.onEdit(item);
                                     } else if (value == 'delete') {
-                                      _editCustomer(item);
+                                     _deletecustomer(item);
                                     }
                                   },
                                   itemBuilder: (context) => [
@@ -442,11 +443,40 @@ class _CustomerTabelState extends State<CustomerTabel> {
 
   // ---- Edit / Delete actions ----
 
-  void _editCustomer(CustomerModel item) {
+ Future<void> _deletecustomer(CustomerModel customer) async {
+  if (customer.id == null) return;
+
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Delete customer"),
+      content: const Text("Are you sure you want to delete this booking?"),
+      actions: [
+      
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text("Delete"),
+        ),
+      ],
+    ),
+  );
+
+  if (confirm != true) return;
+  if (!mounted) return;
+
+  try {
+    await context.read<CustomerController>().deletecustomer(customer.id!);
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Edit ${item.name}")),
+      const SnackBar(content: Text("Customer deleted successfully")),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Failed to delete: $e")),
     );
   }
+}
 
   // void _deleteCustomer(CustomerModel item) {
   //   if (item.id == null) return;

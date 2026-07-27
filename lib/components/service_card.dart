@@ -10,7 +10,9 @@ class ServiceCard extends StatelessWidget {
   final String revenue;
   final String badge;
 
-  final VoidCallback? onOptionsPressed;
+  
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const ServiceCard({
     super.key,
@@ -18,18 +20,18 @@ class ServiceCard extends StatelessWidget {
     required this.category,
     required this.duration,
     required this.price,
-   
+
     required this.bookings,
     required this.revenue,
     required this.badge,
-  
-    this.onOptionsPressed,
+
+ required this.onEdit,required  this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -50,13 +52,60 @@ class ServiceCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2C221E),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF2C221E),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 30,
+                    child: PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, size: 18),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                         onEdit.call();
+                        } else if (value == 'delete') {
+                          onDelete.call();
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_outlined, size: 16),
+                              SizedBox(width: 8),
+                              Text('Edit'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 16,
+                                color: Colors.red,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Container(
@@ -80,7 +129,7 @@ class ServiceCard extends StatelessWidget {
             ],
           ),
 
-       Spacer(flex:3),
+          Spacer(flex: 3),
 
           /// Duration & Price Boxes
           Row(
@@ -131,7 +180,7 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ),
               ),
-             const SizedBox(width:16),
+              const SizedBox(width: 16),
               Expanded(
                 flex: 5,
                 child: Container(
@@ -170,21 +219,17 @@ class ServiceCard extends StatelessWidget {
               ),
             ],
           ),
-            
-             Spacer(
-              flex:2
-             ),
+
+          Spacer(flex: 2),
+
           /// Divider with Spacing
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(
-              color: Color(0xFFF0E7DE),
-              height: 1,
-              thickness: 1,
-            ),
+            child: Divider(color: Color(0xFFF0E7DE), height: 1, thickness: 1),
           ),
-               
-              Spacer(flex:1),
+
+          Spacer(flex: 1),
+
           /// Bookings & Revenue
           Row(
             children: [
@@ -241,16 +286,13 @@ class ServiceCard extends StatelessWidget {
             ],
           ),
 
-          const Spacer(flex:9),
+          const Spacer(flex: 9),
 
           /// Bottom Status Badge
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color:  const Color(0xFFE2F3EC),
+              color: const Color(0xFFE2F3EC),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(

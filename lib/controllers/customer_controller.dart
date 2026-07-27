@@ -34,6 +34,7 @@ class CustomerController extends ChangeNotifier {
     return _cust.where((service) {
       return service.name.toLowerCase().contains(_search) ||
           service.phoneno.contains(_search);
+       
     }).toList();
   }
 
@@ -46,4 +47,17 @@ class CustomerController extends ChangeNotifier {
     await _customer.addcustomer(customer);
   }
 
+  Future<void> updatedcustomer(CustomerModel cust)async{
+    await _customer.updatecustomer(cust);
+    final index = _cust.indexWhere((e) => e.id == cust.id);
+    if(index !=-1){
+      _cust[index]=cust;
+    }
+    notifyListeners();
+  }
+Future<void>deletecustomer(int id) async{
+  await _customer.deleteBooking(id);
+  _cust.removeWhere((b)=>b.id==id);
+  notifyListeners();
+}
 }

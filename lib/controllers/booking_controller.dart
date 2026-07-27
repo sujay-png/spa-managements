@@ -15,6 +15,7 @@ class BookingController extends ChangeNotifier {
   bool get loading => _loading;
 
   String _search = '';
+  String _statusFilter = 'All';
 
   StreamSubscription<List<BookingsModel>>? _sub;
 
@@ -26,36 +27,55 @@ class BookingController extends ChangeNotifier {
     _loading = true;
     notifyListeners();
 
-    _sub = _service.watchBookings(businessRef).listen(
-      (list) {
-        _bookings = list;
-        _loading = false;
-        notifyListeners();
-      },
-      onError: (e) {
-        debugPrint("Booking Stream Error: $e");
-        _loading = false;
-        notifyListeners();
-      },
-    );
+  _sub = _service.watchBookings(businessRef).listen(
+  (list) {
+    print("Bookings fetched: ${list.length}");
+    print(list);
+
+    _bookings = list;
+    _loading = false;
+    notifyListeners();
+  },
+  onError: (e) {
+    print(e);
+  },
+);
   }
 
   //======================== Search ========================
 
  List<BookingsModel> get _filteredBookings {
-  if (_search.isEmpty) return _bookings;
+  List<BookingsModel> filtered = _bookings;
 
-  return _bookings.where((booking) {
-    return booking.customer.toLowerCase().contains(_search) ||
-        booking.servicename.toLowerCase().contains(_search) ||
-        booking.therapistname.toLowerCase().contains(_search);
-  }).toList();
+  // Search
+  if (_search.isNotEmpty) {
+    filtered = filtered.where((booking) {
+      return booking.customer.toLowerCase().contains(_search) ||
+          booking.servicename.toLowerCase().contains(_search) ||
+          booking.therapistname.toLowerCase().contains(_search);
+    }).toList();
+  }
+
+  // Status Filter
+  if (_statusFilter != 'All') {
+    filtered = filtered.where((booking) {
+      return booking.statusrequired.toLowerCase() ==
+          _statusFilter.toLowerCase();
+    }).toList();
+  }
+
+  return filtered;
 }
-
+void filterStatus(String value) {
+  _statusFilter = value;
+  notifyListeners();
+}
   void search(String value) {
     _search = value.toLowerCase();
     notifyListeners();
   }
+
+ 
 
   //======================== CRUD ========================
 
@@ -63,13 +83,23 @@ class BookingController extends ChangeNotifier {
     await _service.addBooking(booking);
   }
 
-  Future<void> updateBooking(BookingsModel booking) async {
-    await _service.updateBooking(booking);
+Future<void> updateBooking(BookingsModel booking) async {
+  await _service.updateBooking(booking);
+
+  final index = _bookings.indexWhere((e) => e.id == booking.id);
+
+  if (index != -1) {
+    _bookings[index] = booking;
   }
 
+  notifyListeners();
+}
+
   Future<void> deleteBooking(int id) async {
-    await _service.deleteBooking(id);
-  }
+  await _service.deleteBooking(id);
+  _bookings.removeWhere((b) => b.id == id);
+  notifyListeners();
+}
 
   @override
   void dispose() {

@@ -14,27 +14,27 @@ class ServicePage extends StatefulWidget {
 }
 
 class _ServicePageState extends State<ServicePage> {
-  
   final _formKey = GlobalKey<FormState>();
+  final dialofformkey = GlobalKey<FormState>();
 
   final _serviceNameController = TextEditingController();
   final _designationController = TextEditingController();
   final _durationController = TextEditingController();
   final _priceController = TextEditingController();
   @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final auth = context.read<AuthController>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthController>();
 
-    if (auth.businessRef != null) {
-      context.read<ServiceController>().loadServices(auth.businessRef!);
-    } else {
-      debugPrint("Business Ref is null");
-    }
-  });
-}
+      if (auth.businessRef != null) {
+        context.read<ServiceController>().loadServices(auth.businessRef!);
+      } else {
+        debugPrint("Business Ref is null");
+      }
+    });
+  }
 
   bool _saving = false;
   @override
@@ -125,8 +125,13 @@ void initState() {
                           bookings: "0",
                           revenue: "₹0",
                           badge: "Active",
-              
-                          onOptionsPressed: () {},
+
+                          onEdit: () {
+                            showserviceform(context, service: service);
+                          },
+                          onDelete: () {
+                            _deleteService(service);
+                          },
                         );
                       },
                     ),
@@ -140,17 +145,14 @@ void initState() {
   //===================================Save Service===================================
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-     final auth = context.read<AuthController>();
+    final auth = context.read<AuthController>();
 
-  if (auth.businessRef == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Business reference not found."),
-      ),
-    );
-    return;
-  }
-
+    if (auth.businessRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Business reference not found.")),
+      );
+      return;
+    }
 
     setState(() => _saving = true);
 
@@ -189,7 +191,15 @@ void initState() {
   }
 
   //======================================Add Service form=======================================
-  void showserviceform(BuildContext context) {
+  void showserviceform(BuildContext context, {ServiceModel? service}) {
+    final isedit = service != null;
+    bool intialized = false;
+    if (service != null) {
+      _serviceNameController.text = service.serviceName;
+      _designationController.text = service.designation;
+      _durationController.text = service.duration;
+      _priceController.text = service.price.toString();
+    }
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -199,184 +209,225 @@ void initState() {
               borderRadius: BorderRadius.circular(16),
             ),
             backgroundColor: Colors.white,
-            child: Container(
-              width: 480,
-              padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Add New Service',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                            SizedBox(height: 4),
-                            Text(
-                              'Fill in the details below',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            size: 20,
-                            color: Colors.grey,
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ],
-                    ),
-                    const Divider(height: 32, thickness: 1),
-                    label(Icons.person_outline, 'Service Name'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _serviceNameController,
-                      decoration: dec('Enter Service Name'),
-                      validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Service Name";
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
+            child: Form(
+              key: dialofformkey,
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              label(Icons.email_outlined, 'Duration'),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: _durationController,
-                                decoration: dec('Enter duration'),
-                                 validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter duration";
-                        }
-                        return null;
-                      },
+                              Text(
+                                isedit ? 'Edit Customer' : 'Add New Service',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Fill in the details below',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              label(Icons.phone_outlined, 'Price'),
-                              const SizedBox(height: 8),
-                              TextFormField(
-                                controller: _priceController,
-                                decoration: dec('Enter the amount'),
-                                 validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter amount";
-                        }
-                        return null;
-                      },
-                              ),
-
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    label(null, 'Designation'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _designationController,
-                      decoration: dec('Enter Designation.'),
-                       validator: (value){
-                        if(value==null || value.trim().isEmpty){
-                          return "Please Enter Designation";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    const SizedBox(height: 24),
-                    const Divider(height: 1, thickness: 1),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
+                          IconButton(
+                            icon: const Icon(
+                              Icons.close,
+                              size: 20,
+                              color: Colors.grey,
+                            ),
                             onPressed: () => Navigator.pop(context),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              side: BorderSide(color: Colors.grey.shade300),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: 32, thickness: 1),
+                      label(Icons.person_outline, 'Service Name'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _serviceNameController,
+                        decoration: dec('Enter Service Name'),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Please Service Name";
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                label(Icons.email_outlined, 'Duration'),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _durationController,
+                                  decoration: dec('Enter duration'),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return "Please Enter duration";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
                             ),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w600,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                label(Icons.phone_outlined, 'Price'),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _priceController,
+                                  decoration: dec('Enter the amount'),
+                                  validator: (value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return "Please Enter amount";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      label(null, 'Designation'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _designationController,
+                        decoration: dec('Enter Designation.'),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Please Enter Designation";
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      const SizedBox(height: 24),
+                      const Divider(height: 1, thickness: 1),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                side: BorderSide(color: Colors.grey.shade300),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  color: Colors.black87,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(width: 16),
+                          const SizedBox(width: 16),
 
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _saving ? null : _save,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8B7D76),
-                              disabledBackgroundColor: Colors.grey.shade400,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () async {
+                                if (isedit) {
+                                  final updateservice = ServiceModel(
+                                    id: service.id,
+                                    businessRef: service.businessRef,
+                                    serviceName: _serviceNameController.text
+                                        .trim(),
+                                    designation: _designationController.text
+                                        .trim(),
+                                    duration: _durationController.text.trim(),
+                                    price:
+                                        double.tryParse(
+                                          _priceController.text.trim(),
+                                        ) ??
+                                        0.0,
+                                  );
+                                  await context
+                                      .read<ServiceController>()
+                                      .updatedservice(updateservice);
+                                  if (!mounted) return;
+
+                                  Navigator.pop(context);
+
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "service updated successfully",
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  _save();
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF8B7D76),
+                                disabledBackgroundColor: Colors.grey.shade400,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
+                              child: _saving
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : Text(
+                                      isedit
+                                          ? 'Update service'
+                                          : 'Create service',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                             ),
-                            child: _saving
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Create Service',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -384,6 +435,41 @@ void initState() {
         },
       ),
     );
+  }
+
+  Future<void> _deleteService(ServiceModel service) async {
+    if (service.id == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Service"),
+        content: const Text("Are you sure you want to delete this service?"),
+        actions: [
+         
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+    if (!mounted) return;
+
+    try {
+      await context.read<ServiceController>().deleteservice(service.id!);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Service deleted successfully")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to delete: $e")));
+    }
   }
 
   //=====================Helper function================================
