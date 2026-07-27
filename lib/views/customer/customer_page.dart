@@ -109,38 +109,49 @@ class _CustomerPageState extends State<CustomerPage> {
                     ),
                     //===========================customer stats==============================================
                     const SizedBox(height: 15),
-                    Padding(
-                      padding: const EdgeInsets.all(23),
-                      child: Row(
-                        spacing: 15,
-                        children: [
-                          Expanded(
-                            child: Customerstats(
-                              title: 'Total Customers',
-                              value: '1247',
-                              badge: '+12.5%',
-                              badgeColor: Colors.green,
-                            ),
-                          ),
-                          Expanded(
-                            child: Customerstats(
-                              title: 'Active Members',
-                              value: '892',
-                              badge: '+5.4%',
-                              badgeColor: Colors.green,
-                            ),
-                          ),
-                          Expanded(
-                            child: Customerstats(
-                              title: 'New This Month',
-                              value: '43',
-                              badge: '+12% from last month',
-                              badgeColor: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                   Consumer<CustomerController>(
+  builder: (context, controller, child) {
+    final stats = controller.stats;
+
+    if (stats == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(23),
+      child: Row(
+        children: [
+          Expanded(
+            child: Customerstats(
+              title: 'Total Customers',
+              value: stats.totalCustomers.toString(),
+              badge: '',
+              badgeColor: Colors.green,
+            ),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Customerstats(
+              title: 'Active Members',
+              value: stats.activeMembers.toString(),
+              badge: '',
+              badgeColor: Colors.green,
+            ),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Customerstats(
+              title: 'New This Month',
+              value: stats.newThisMonth.toString(),
+              badge: '',
+              badgeColor: Colors.green,
+            ),
+          ),
+        ],
+      ),
+    );
+  },
+),
                     //======================Search bar filter and export button==================================
                     Padding(
                       padding: const EdgeInsets.all(16),

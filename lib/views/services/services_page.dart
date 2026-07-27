@@ -193,7 +193,7 @@ class _ServicePageState extends State<ServicePage> {
   //======================================Add Service form=======================================
   void showserviceform(BuildContext context, {ServiceModel? service}) {
     final isedit = service != null;
-    bool intialized = false;
+ 
     if (service != null) {
       _serviceNameController.text = service.serviceName;
       _designationController.text = service.designation;

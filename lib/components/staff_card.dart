@@ -13,7 +13,8 @@ class StaffCard extends StatelessWidget {
   final String status;
   final Color statusBgColor;
   final Color statusTextColor;
-  final VoidCallback? onSchedulePressed;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   const StaffCard({
     super.key,
@@ -28,7 +29,8 @@ class StaffCard extends StatelessWidget {
     required this.status,
     required this.statusBgColor,
     required this.statusTextColor,
-    this.onSchedulePressed,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -60,22 +62,77 @@ class StaffCard extends StatelessWidget {
 
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 18,
+                ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     /// Avatar Circle with Initials
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: const Color(0xFFF2ECE4),
-                      child: Text(
-                        initials,
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF6B6259),
+                    Stack(
+                      children: [
+                        Center(
+                          child: CircleAvatar(
+                            radius: 30,
+                            backgroundColor: const Color(0xFFF2ECE4),
+                            child: Text(
+                              initials,
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF6B6259),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: SizedBox(
+                            width: 30,
+                            child: PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert, size: 18),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  onEdit.call();
+                                } else if (value == 'delete') {
+                                  onDelete.call();
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit_outlined, size: 16),
+                                      SizedBox(width: 8),
+                                      Text('Edit'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.delete_outline,
+                                        size: 16,
+                                        color: Colors.red,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        'Delete',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
 
                     /// Name, Designation & Specialization
@@ -272,7 +329,7 @@ class StaffCard extends StatelessWidget {
                           ),
                         ),
                         InkWell(
-                          onTap: onSchedulePressed,
+                          onTap: () {},
                           child: Row(
                             children: const [
                               Text(

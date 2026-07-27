@@ -6,7 +6,8 @@ import 'package:ira_spa_webapp/models/staff_model.dart';
 import 'package:provider/provider.dart';
 
 class AddStaffDialog extends StatefulWidget {
-  const AddStaffDialog({super.key});
+    final StaffModel? staff; 
+  const AddStaffDialog({super.key, this.staff});
 
   @override
   State<AddStaffDialog> createState() => _AddStaffDialogState();
@@ -16,6 +17,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
   String status = "Available";
+    late final bool isEdit = widget.staff != null;
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -23,8 +25,18 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   final TextEditingController specializationController =
       TextEditingController();
   @override
+
   void initState() {
     super.initState();
+
+    // Pre-fill fields when editing
+    if (widget.staff != null) {
+      nameController.text = widget.staff!.name;
+      emailController.text = widget.staff!.email;
+      phoneController.text = widget.staff!.phno;
+      designationController.text = widget.staff!.designation;
+      specializationController.text = widget.staff!.specialization;
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthController>();
@@ -36,7 +48,6 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
       }
     });
   }
-
   @override
   void dispose() {
     nameController.dispose();
@@ -75,14 +86,14 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Add New Staff Member",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                 Text(
+  isEdit ? "Edit Staff Member" : "Add New Staff Member",
+  style: const TextStyle(
+    color: Colors.white,
+    fontSize: 20,
+    fontWeight: FontWeight.bold,
+  ),
+),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close, color: Colors.white),
@@ -389,22 +400,41 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
 
   //================================Save logic=================================
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
-    final auth = context.read<AuthController>();
+  if (!_formKey.currentState!.validate()) return;
+  final auth = context.read<AuthController>();
 
-    if (auth.businessRef == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Business reference not found.")),
+  if (auth.businessRef == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Business reference not found.")),
+    );
+    return;
+  }
+
+  setState(() => _saving = true);
+
+  try {
+    if (isEdit) {
+      final updatedStaff = StaffModel(
+        id: widget.staff!.id,
+        businessRef: widget.staff!.businessRef,
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        phno: phoneController.text.trim(),
+        designation: designationController.text.trim(),
+        specialization: specializationController.text.trim(),
       );
-      return;
-    }
 
-    setState(() => _saving = true);
+      await context.read<StaffController>().updatestaff(updatedStaff);
 
-    try {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Staff updated successfully')),
+        );
+      }
+    } else {
       await context.read<StaffController>().addStaff(
         StaffModel(
-          // id: '',
           businessRef: auth.businessRef!,
           name: nameController.text.trim(),
           email: emailController.text.trim(),
@@ -416,22 +446,21 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
 
       if (mounted) {
         Navigator.pop(context);
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Staff added successfully')),
         );
       }
-    } catch (e, stack) {
-      print(e);
-      print(stack);
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
-    } finally {
-      if (mounted) {
-        setState(() => _saving = false);
-      }
+    }
+  } catch (e, stack) {
+    print(e);
+    print(stack);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  } finally {
+    if (mounted) {
+      setState(() => _saving = false);
     }
   }
+}
 }

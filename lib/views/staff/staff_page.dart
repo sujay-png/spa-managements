@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/staff_card.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/staff_controller.dart';
+import 'package:ira_spa_webapp/models/staff_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 import 'add_staff_dialog.dart';
@@ -130,8 +131,15 @@ void initState() {
                         status: "Available",
                         statusBgColor: Colors.green.shade100,
                         statusTextColor: Colors.green,
-
-                        onSchedulePressed: () {},
+                        onEdit: () {
+    showDialog(
+      context: context,
+      builder: (context) => AddStaffDialog(staff: staffMember),
+    );
+  },
+  onDelete: () {
+    _deleteStaff(staffMember);
+  },
                       );
                     },
                   ),
@@ -148,5 +156,40 @@ void initState() {
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
+//==========================Delete =============================
+Future<void> _deleteStaff(StaffModel staffMember) async {
+  if (staffMember.id == null) return;
+
+  final confirm = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Delete Staff"),
+      content: const Text("Are you sure you want to delete this staff member?"),
+      actions: [
+       
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text("Delete"),
+        ),
+      ],
+    ),
+  );
+
+  if (confirm != true) return;
+  if (!mounted) return;
+
+  try {
+    await context.read<StaffController>().deletestaff(staffMember.id!);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Staff deleted successfully")),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Failed to delete: $e")),
+    );
+  }
+}
 
 }

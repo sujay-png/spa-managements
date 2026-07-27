@@ -111,6 +111,16 @@ class DatabaseService {
           return data.map((e) => StaffModel.fromJson(e)).toList();
         });
   }
+   Future<void> deletestaff(int id) async {
+    await _supabase.from('Therapist').delete().eq('id', id);
+  }
+    Future<void> updatestaff(StaffModel staff) async {
+    await _supabase
+        .from('Therapist')
+        .update(staff.toJson())
+        .eq('id', staff.id!);
+  }
+
 
   //==============================Bookings============================================
   Future<void> addBooking(BookingsModel booking) async {

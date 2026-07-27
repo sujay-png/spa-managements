@@ -210,39 +210,9 @@ class _BookingPageState extends State<BookingPage> {
                             ),
                           ),
 
-                          const SizedBox(width: 12),
+                       
 
-                          /// Filter Button
-                          SizedBox(
-                            height: 46,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.textPrimary,
-                                backgroundColor: AppColors.surface,
-                                minimumSize: const Size(20, 50),
-                                side: const BorderSide(color: AppColors.border),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.filter_alt_outlined,
-                                size: 18,
-                                color: AppColors.textSecondary,
-                              ),
-                              label: const Text(
-                                'Filter',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
+                        
 
                           const SizedBox(width: 12),
 

@@ -48,6 +48,22 @@ class StaffController extends ChangeNotifier {
     await _staff.addstaff(staff);
   }
 
+  Future<void> updatestaff(StaffModel staff) async{
+    await _staff.updatestaff(staff);
+    final index =_staffs.indexWhere((e)=>e.id == staff.id);
+    if(index !=-1){
+      _staffs[index]=staff;
+    }
+    notifyListeners();
+  }
+  
+Future<void> deletestaff(int id)async{
+  await _staff.deletestaff(id);
+  _staffs.removeWhere((b)=>b.id==id);
+  notifyListeners();
+
+}
+
   @override
   void dispose() {
     _sub?.cancel();
