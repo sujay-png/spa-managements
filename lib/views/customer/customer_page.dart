@@ -41,6 +41,7 @@ class _CustomerPageState extends State<CustomerPage> {
   bool _saving = false;
   @override
   Widget build(BuildContext context) {
+    final customer =context.read<CustomerController>();
     return Scaffold(
       body: Form(
         key: _formKey,
@@ -109,49 +110,39 @@ class _CustomerPageState extends State<CustomerPage> {
                     ),
                     //===========================customer stats==============================================
                     const SizedBox(height: 15),
-                   Consumer<CustomerController>(
-  builder: (context, controller, child) {
-    final stats = controller.stats;
-
-    if (stats == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return Padding(
-      padding: const EdgeInsets.all(23),
-      child: Row(
-        children: [
-          Expanded(
-            child: Customerstats(
-              title: 'Total Customers',
-              value: stats.totalCustomers.toString(),
-              badge: '',
-              badgeColor: Colors.green,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Customerstats(
-              title: 'Active Members',
-              value: stats.activeMembers.toString(),
-              badge: '',
-              badgeColor: Colors.green,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Customerstats(
-              title: 'New This Month',
-              value: stats.newThisMonth.toString(),
-              badge: '',
-              badgeColor: Colors.green,
-            ),
-          ),
-        ],
-      ),
-    );
-  },
-),
+                    Padding(
+                          padding: const EdgeInsets.all(23),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Customerstats(
+                                  title: 'Total Customers',
+                                  value: '${customer.totalcustomer}',
+                                  badge: '+8.2% this month',
+                                  badgeColor: Colors.green,
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              Expanded(
+                                child: Customerstats(
+                                  title: 'Active Members',
+                                  value: '${customer.totalcustomer}',
+                                  badge: '+5.4% this month',
+                                  badgeColor: Colors.green,
+                                ),
+                              ),
+                              const SizedBox(width: 15),
+                              Expanded(
+                                child: Customerstats(
+                                  title: 'New This Month',
+                                  value: "${customer.newThisMonth}",
+                                  badge: '+12% from last month',
+                                  badgeColor: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                     //======================Search bar filter and export button==================================
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -543,14 +534,14 @@ class _CustomerPageState extends State<CustomerPage> {
                               onPressed: () async {
                                 if (isedit) {
                                   final updatecustomer = CustomerModel(
-                                    id: customer!.id,  
+                                    id: customer!.id,
                                     businessRef: customer.businessRef,
                                     name: name.text.trim(),
                                     email: email.text.trim(),
                                     phoneno: phone.text.trim(),
                                     address: Address.text.trim(),
                                     notes: notesCtrl.text.trim(),
-                                    dob: customer.dob, 
+                                    dob: customer.dob,
                                   );
                                   await context
                                       .read<CustomerController>()
@@ -591,8 +582,6 @@ class _CustomerPageState extends State<CustomerPage> {
       ),
     );
   }
-
-
 
   InputDecoration dec(String hint, [IconData? suffix]) => InputDecoration(
     hintText: hint,

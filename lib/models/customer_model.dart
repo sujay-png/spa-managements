@@ -7,6 +7,10 @@ class CustomerModel {
   final String address;
   final String notes;
    final int? businessRef;
+   final  int totalVisits;
+   final double spentThisMonth;
+  final DateTime? lastVisit;
+   
    
    
 
@@ -17,7 +21,9 @@ class CustomerModel {
     required this.phoneno,
     this.dob,
     required this.address,
-    required this.notes, this.businessRef,
+    required this.notes, this.businessRef,  this.totalVisits=0,
+     this.spentThisMonth=0.0, 
+     this.lastVisit,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {

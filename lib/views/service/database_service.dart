@@ -1,4 +1,5 @@
 import 'package:ira_spa_webapp/models/bookings_model.dart';
+import 'package:ira_spa_webapp/models/client_model.dart';
 import 'package:ira_spa_webapp/models/customer_model.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/models/staff_model.dart';
@@ -80,9 +81,49 @@ class DatabaseService {
     rethrow;
   }
 
-   Future<void> deletecustomer(int id) async {
+ 
+
+ 
+}
+  Future<void> deletecustomer(int id) async {
     await _supabase.from('Customers').delete().eq('id', id);
   }
+Future<Map<String, dynamic>> getCustomerStats(String customerName) async {
+  final bookings = await _supabase
+      .from('Bookings')
+      .select()
+      .eq('customer_ref', customerName);
+
+  final now = DateTime.now();
+
+  int totalVisits = bookings.length;
+
+  double spentThisMonth = 0;
+
+  DateTime? lastVisit;
+
+  for (final booking in bookings) {
+    final date = DateTime.parse(booking['available_slot']);
+
+    // Last Visit
+    if (lastVisit == null || date.isAfter(lastVisit)) {
+      lastVisit = date;
+    }
+
+    // Spent This Month
+    if (date.year == now.year &&
+        date.month == now.month &&
+        booking['booking_status'] == 'Completed') {
+      spentThisMonth +=
+          double.tryParse(booking['service_price']?.toString() ?? '0') ?? 0;
+    }
+  }
+
+  return {
+    'totalVisits': totalVisits,
+    'spentThisMonth': spentThisMonth,
+    'lastVisit': lastVisit,
+  };
 }
   //==============================Staff===========================================
   Future<void> addstaff(StaffModel staff) async {
@@ -93,10 +134,7 @@ class DatabaseService {
           .select();
       print("Inserted Customer: $response");
     } on PostgrestException catch (e) {
-      print("Message: ${e.message}");
-      print("Details: ${e.details}");
-      print("Hint: ${e.hint}");
-      print("Code: ${e.code}");
+     
       rethrow;
     }
   }
@@ -140,15 +178,7 @@ class DatabaseService {
     try {
       await _supabase
           .from('Booking')
-          .update({
-            'customer_ref': booking.customer,
-            'services': booking.servicename,
-            'therapist': booking.therapistname,
-            'available_slot': booking.bookingdate.toIso8601String(),
-            'confirmed_time': booking.timeslot,
-            'requirements_booking': booking.bookingdetails,
-            'booking_status': booking.statusrequired,
-          })
+          .update(booking.toMap())
           .eq('id', booking.id!);
 
       print("Booking Updated");
@@ -173,5 +203,57 @@ class DatabaseService {
         .lt('available_slot', end.toIso8601String());
 
     return data.map<String>((e) => e['confirmed_time'] as String).toList();
+  }
+
+  //=================================Service Menu========================================
+   Future<ClientModel> insertClient(ClientModel client) async {
+    final response = await _supabase
+        .from('clients')
+        .insert(client.toMap())
+        .select()
+        .single();
+    return ClientModel.fromMap(response);
+  }
+
+  Future<List<ClientModel>> getAllCustomers() async {
+    final response = await _supabase.from('clients').select();
+
+    return (response as List).map((e) => ClientModel.fromMap(e)).toList();
+  }
+
+  // ─── READ ─────────────────────────────────────────────────────────────────
+  Future<List<ClientModel>> getAllClients() async {
+    final response = await _supabase
+        .from('clients')
+        .select()
+        .order('id', ascending: false);
+    return (response as List).map((row) => ClientModel.fromMap(row)).toList();
+  }
+
+  Future<ClientModel?> getClientById(int id) async {
+    final response = await _supabase
+        .from('clients')
+        .select()
+        .eq('id', id)
+        .maybeSingle();
+    if (response == null) return null;
+    return ClientModel.fromMap(response);
+  }
+
+  // ─── UPDATE ───────────────────────────────────────────────────────────────
+  Future<ClientModel> updateClient(ClientModel client) async {
+    if (client.id == null) throw ArgumentError('Cannot update without an id.');
+    final response = await _supabase
+        .from('clients')
+        .update(client.toMap())
+        .eq('id', client.id!)
+        .select()
+        .single();
+    return ClientModel.fromMap(response);
+  }
+
+  // ─── DELETE ───────────────────────────────────────────────────────────────
+  Future<void> deleteClient(int id) async {
+    await _supabase.from('clients').delete().eq('id', id);
   }
 }

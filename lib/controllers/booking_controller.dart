@@ -16,8 +16,21 @@ class BookingController extends ChangeNotifier {
 
   String _search = '';
   String _statusFilter = 'All';
-
+  //===================total bookings============
+int get totalBookings => _bookings.length;
+//================total revenue======================
+double get totalRevenue {
+  return _bookings.fold(0.0, (sum, booking) {
+    final price = double.tryParse(booking.servicePrice ?? '0') ?? 0;
+    return sum + price;
+  });
+}
+//======Average time wait=================
+int get waitingBookings =>
+    _bookings.where((b) => b.statusrequired.toLowerCase() == 'pending').length;
   StreamSubscription<List<BookingsModel>>? _sub;
+
+  
 
   //======================== Load Bookings ========================
 

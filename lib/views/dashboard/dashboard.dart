@@ -2,6 +2,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/dashboard_stats.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
+import 'package:ira_spa_webapp/controllers/customer_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/dashboard/services_list.dart';
 import 'package:ira_spa_webapp/views/dashboard/upcomming_appointments.dart';
@@ -20,6 +22,8 @@ class _DashboardState extends State<Dashboard> {
   @override
   Widget build(BuildContext context) {
     final authController =context.watch<AuthController>();
+    final bookingcontroller=context.watch<BookingController>();
+    final customercontroller=context.watch<CustomerController>();
     final displayName = authController.userName ?? '';
     return Scaffold(
       body: SingleChildScrollView(
@@ -60,7 +64,7 @@ class _DashboardState extends State<Dashboard> {
                   Expanded(
                     child: DashboardStats(
                       title: "Total Revenue",
-                      value: "\$24,580",
+                      value: "${bookingcontroller.totalRevenue}",
                       badge: "+12.5%",
                       badgeColor: Colors.green,
                       icon: Icons.attach_money,
@@ -72,7 +76,7 @@ class _DashboardState extends State<Dashboard> {
                   Expanded(
                     child: DashboardStats(
                       title: "Today's Bookings",
-                      value: "18",
+                      value: "${bookingcontroller.totalBookings}",
                       badge: "+3 from yesterday",
                       badgeColor: Colors.green,
                       icon: Icons.calendar_today_outlined,
@@ -84,7 +88,7 @@ class _DashboardState extends State<Dashboard> {
                   Expanded(
                     child: DashboardStats(
                       title: "Total Customers",
-                      value: "1,247",
+                      value: "${customercontroller.totalcustomer}",
                       badge: "+8.2%",
                       badgeColor: Colors.green,
                       icon: Icons.groups_outlined,
@@ -96,7 +100,7 @@ class _DashboardState extends State<Dashboard> {
                   Expanded(
                     child: DashboardStats(
                       title: "Avg. Wait Time",
-                      value: "12 min",
+                      value: "${bookingcontroller.waitingBookings}",
                       badge: "-2 min",
                       badgeColor: Colors.blue,
                       icon: Icons.schedule_outlined,
