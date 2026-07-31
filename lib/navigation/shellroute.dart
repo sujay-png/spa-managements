@@ -38,6 +38,7 @@ class _ShellrouteState extends State<Shellroute> {
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();
     final displayName = authController.userName ?? '';
+    final businessname = authController.Bussiness ?? '';
     return Scaffold(
     
       body: LayoutBuilder(
@@ -82,7 +83,7 @@ class _ShellrouteState extends State<Shellroute> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Serenity Spa",
+                                businessname,
                                 style: Theme.of(context).textTheme.titleMedium!
                                     .copyWith(fontWeight: FontWeight.bold),
                               ),

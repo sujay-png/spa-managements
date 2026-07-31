@@ -13,10 +13,12 @@ class AuthController extends ChangeNotifier {
 
   User? get user => _user;
  Map<String,dynamic>?_userProfile;
+
+ Map<String,dynamic>?_storename;
   bool get isLoggedIn => _user != null;
   bool get loading => _loading;
   String? get error => _error;
-
+//======================Fetch username==============================
  Map<String, dynamic>? get userProfile => _userProfile;
  String? get userName => _userProfile?['user_name'];
  int? get businessRef {
@@ -28,19 +30,33 @@ class AuthController extends ChangeNotifier {
 
   return int.tryParse(value.toString());
 }
+//=====================================Fetch Bussiness name====================================
+Map<String,dynamic>? get storename=>_storename;
+String? get Bussiness =>_storename?['business_name'];
 
+AuthController() {
+  _service.authState.listen((user) async {
+    _user = user;
 
- AuthController() {
-    _service.authState.listen((user) async {
-      _user = user;
-      if (user != null) {
-        _userProfile = await _service.fetchUserProfile(user.id);
+    if (user != null) {
+      _userProfile = await _service.fetchUserProfile(user.id);
+       print("User Profile: $_userProfile");
+  print("Business Ref: $businessRef");
+
+      if (businessRef != null) {
+        _storename = await _service.fetchstorename(businessRef!);
+         print("Store Data: $_storename");
       } else {
-        _userProfile = null;
+        _storename = null;
       }
-      notifyListeners();
-    });
-  }
+    } else {
+      _userProfile = null;
+      _storename = null;
+    }
+
+    notifyListeners();
+  });
+}
 
  Future<bool> signIn(String email, String password) async {
   _loading = true;
@@ -58,9 +74,13 @@ class AuthController extends ChangeNotifier {
     if (_user != null) {
       _userProfile = await _service.fetchUserProfile(_user!.id);
 
-      debugPrint("User Profile: $_userProfile");
-      debugPrint("Business Ref: ${_userProfile?['user_businessRef']}");
+      print("User Profile: $_userProfile");
+      print("Business Ref: ${_userProfile?['user_businessRef']}");
     }
+     if (businessRef != null) {
+    _storename = await _service.fetchstorename(businessRef!);
+  }
+
 
     return true;
   } on AuthException catch (e) {

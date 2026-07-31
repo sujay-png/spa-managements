@@ -21,4 +21,13 @@ class AuthService {
       .eq('id', userId)
       .single();
 }
+Future<Map<String, dynamic>?> fetchstorename(int businessRef) async {
+  final data = await Supabase.instance.client
+      .from('Store')
+      .select()
+      .eq('id', businessRef)
+      .maybeSingle();
+
+  return data;
+}
 }

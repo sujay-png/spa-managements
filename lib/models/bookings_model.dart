@@ -49,18 +49,23 @@ class BookingsModel {
     this.serviceOptionId,
     this.emailSent = false,
   });
+  
 
 String get statusLabel {
   switch (statusrequired.toLowerCase()) {
     case 'pending':
       return 'Pending';
+
     case 'confirmed':
       return 'Confirmed';
+
     case 'complete':
     case 'completed':
-      return 'Complete';
+      return 'Completed';
+
     case 'cancelled':
       return 'Cancelled';
+
     default:
       return statusrequired;
   }

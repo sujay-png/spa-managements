@@ -163,6 +163,7 @@ class _LoginPageState extends State<LoginPage> {
                         );
 
                         if (!mounted) return;
+                        
                         messenger.showSnackBar(
                           const SnackBar(content: Text('Login successful')),
                         );

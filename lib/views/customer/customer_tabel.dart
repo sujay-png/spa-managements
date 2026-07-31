@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:ira_spa_webapp/controllers/customer_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/models/customer_model.dart';
@@ -36,6 +37,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
   @override
   Widget build(BuildContext context) {
     final customer = context.watch<CustomerController>();
+    final BookingController = context.watch<CustomerController>();
 
     final customers = customer.customers;
 
@@ -153,23 +155,30 @@ class _CustomerTabelState extends State<CustomerTabel> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               : paginatedCustomers.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(child: Text('No customers found')),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: paginatedCustomers.length,
-                      itemBuilder: (context, index) {
-                        final item = paginatedCustomers[index];
+              ? const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: Text('No customers found')),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: paginatedCustomers.length,
+                  itemBuilder: (context, index) {
+                    final item = paginatedCustomers[index];
 
-                        return Container(
+                    return IgnorePointer(
+                      ignoring: item.isblacklisted,
+                      child: Opacity(
+                        opacity: item.isblacklisted ? 0.4 : 1.0,
+                        child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 14,
                           ),
                           decoration: BoxDecoration(
+                            color: item.isblacklisted
+                                ? Colors.grey.shade200
+                                : Colors.transparent,
                             border: Border(
                               bottom: BorderSide(
                                 color: AppColors.border,
@@ -185,7 +194,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                 _formatCustomerId(item.id),
+                                  _formatCustomerId(item.id),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
@@ -235,8 +244,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                 flex: 3,
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       item.email,
@@ -266,8 +274,8 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                       color: AppColors.textSecondary,
                                     ),
                                     const SizedBox(width: 4),
-                                    const Text(
-                                      "0",
+                                     Text(
+                                  '${customer.totalVisits}',
                                       style: TextStyle(
                                         color: AppColors.textPrimary,
                                         fontSize: 12,
@@ -288,8 +296,9 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                       color: AppColors.textSecondary,
                                     ),
                                     const SizedBox(width: 4),
-                                    const Text(
-                                      "0",
+                                     Text(
+                   '0',
+
                                       style: TextStyle(
                                         color: AppColors.textSecondary,
                                         fontSize: 11,
@@ -302,7 +311,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
                               Expanded(
                                 flex: 3,
                                 child: Text(
-                                  "0",
+                    '${customer.lastVisit}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,
@@ -314,16 +323,23 @@ class _CustomerTabelState extends State<CustomerTabel> {
                               SizedBox(
                                 width: 30,
                                 child: PopupMenuButton<String>(
-                                  icon: const Icon(
+                                  icon: Icon(
                                     Icons.more_vert,
                                     size: 18,
                                     color: AppColors.textSecondary,
                                   ),
                                   onSelected: (value) {
                                     if (value == 'edit') {
-                                     widget.onEdit(item);
+                                      widget.onEdit(item);
                                     } else if (value == 'delete') {
-                                     _deletecustomer(item);
+                                      _deletecustomer(item);
+                                    } else if (value == 'block') {
+                                      context
+                                          .read<CustomerController>()
+                                          .toggleBlacklistCustomer(
+                                            item.id!,
+                                            item.isblacklisted,
+                                          );
                                     }
                                   },
                                   itemBuilder: (context) => [
@@ -349,8 +365,34 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                           SizedBox(width: 8),
                                           Text(
                                             'Delete',
-                                            style:
-                                                TextStyle(color: Colors.red),
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'block',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            item.isblacklisted
+                                                ? Icons.check_circle_outline
+                                                : Icons.block,
+                                            size: 16,
+                                            color: item.isblacklisted
+                                                ? Colors.green
+                                                : Colors.red,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            item.isblacklisted
+                                                ? 'Unblock Customer'
+                                                : 'Block Customer',
+                                            style: TextStyle(
+                                              color: item.isblacklisted
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -360,9 +402,11 @@ class _CustomerTabelState extends State<CustomerTabel> {
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
 
           //================================== Pagination ==================================
           Container(
@@ -443,40 +487,39 @@ class _CustomerTabelState extends State<CustomerTabel> {
 
   // ---- Edit / Delete actions ----
 
- Future<void> _deletecustomer(CustomerModel customer) async {
-  if (customer.id == null) return;
+  Future<void> _deletecustomer(CustomerModel customer) async {
+    if (customer.id == null) return;
 
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text("Delete customer"),
-      content: const Text("Are you sure you want to delete this booking?"),
-      actions: [
-      
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text("Delete"),
-        ),
-      ],
-    ),
-  );
-
-  if (confirm != true) return;
-  if (!mounted) return;
-
-  try {
-    await context.read<CustomerController>().deletecustomer(customer.id!);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Customer deleted successfully")),
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete customer"),
+        content: const Text("Are you sure you want to delete this booking?"),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
     );
-  } catch (e) {
+
+    if (confirm != true) return;
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Failed to delete: $e")),
-    );
+
+    try {
+      await context.read<CustomerController>().deletecustomer(customer.id!);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Customer deleted successfully")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to delete: $e")));
+    }
   }
-}
 
   // void _deleteCustomer(CustomerModel item) {
   //   if (item.id == null) return;
@@ -487,6 +530,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
     if (id == null) return 'CUS---';
     return 'CUS${id.toString().padLeft(3, '0')}';
   }
+
   String _initials(String name) {
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty) return '';

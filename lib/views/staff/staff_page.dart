@@ -124,13 +124,19 @@ void initState() {
                         specialization: staffMember.specialization,
                         email: staffMember.email,
                         phone: staffMember.phno,
+statusBgColor: staffMember.jobStatus == "Busy"
+      ? Colors.red.shade100
+      : Colors.green.shade100,
+
+  statusTextColor: staffMember.jobStatus == "Busy"
+      ? Colors.red
+      : Colors.green,
 
                         // Replace these with actual values if they're available in your model
                         rating: "0.0",
                         appointments: "0",
-                        status: "Available",
-                        statusBgColor: Colors.green.shade100,
-                        statusTextColor: Colors.green,
+                        status: staffMember.jobStatus,
+                      
                         onEdit: () {
     showDialog(
       context: context,

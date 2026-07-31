@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
 class ServicesList extends StatefulWidget {
   const ServicesList({super.key});
@@ -10,14 +13,30 @@ class ServicesList extends StatefulWidget {
 
 class _ServicesListState extends State<ServicesList> {
 
-  final List<Map<String, dynamic>> services = [
-      {'name': 'Swedish Massage', 'amount': '\$4,500', 'progress': 1.0, 'count': '45'},
-      {'name': 'Facial Treatment', 'amount': '\$3,800', 'progress': 0.8, 'count': '38'},
-      {'name': 'Hot Stone Therapy', 'amount': '\$4,200', 'progress': 0.65, 'count': '32'},
-      {'name': 'Aromatherapy', 'amount': '\$2,800', 'progress': 0.5, 'count': '28'},
-    ];
+   @override
+void initState() {
+  super.initState();
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    final auth=context.read<AuthController>();
+    context.read<ServiceController>().loadServices(auth.businessRef!);
+  });
+}
+
+
   @override
   Widget build(BuildContext context) {
+    final servicelist=context.watch<ServiceController>();
+        final services = servicelist.services;
+    final bookingCounts = servicelist.bookingCounts;
+
+     final maxCount = bookingCounts.values.isEmpty
+        ? 1
+        : bookingCounts.values
+            .reduce((a, b) => a > b ? a : b)
+            .clamp(1, double.infinity)
+            .toInt();
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -53,12 +72,25 @@ class _ServicesListState extends State<ServicesList> {
           const Divider(height: 1, color: AppColors.border),
 
           /// Services List
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: services.length,
-            itemBuilder: (context, index) {
-              final service = services[index];
+          servicelist.loading
+          ? const  Padding(
+                  padding: EdgeInsets.symmetric(vertical: 40),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : services.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: Text('No service found')),
+                    )
+          :ListView.builder(
+         shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: services.length,
+                      itemBuilder: (context, index) {
+                        final service = services[index];
+                        final count = bookingCounts[service.id] ?? 0;
+                        final progress = count / maxCount;
+
 
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
@@ -70,7 +102,7 @@ class _ServicesListState extends State<ServicesList> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          service['name'],
+                          service.serviceName,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppColors.textPrimary,
@@ -78,7 +110,8 @@ class _ServicesListState extends State<ServicesList> {
                           ),
                         ),
                         Text(
-                          service['amount'],
+                        '\$${service.price.toStringAsFixed(2)}'
+                          ,
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             color: AppColors.textSecondary,
@@ -97,7 +130,7 @@ class _ServicesListState extends State<ServicesList> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
-                              value: service['progress'],
+                              value: progress.clamp(0.0, 0.1),
                               backgroundColor: AppColors.surfaceAlt,
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                 Color(0xFF8C7B68), // Brownish accent matching image
@@ -110,7 +143,7 @@ class _ServicesListState extends State<ServicesList> {
                         SizedBox(
                           width: 24,
                           child: Text(
-                            service['count'],
+                            '$count',
                             textAlign: TextAlign.right,
                             style: const TextStyle(
                               color: AppColors.textSecondary,

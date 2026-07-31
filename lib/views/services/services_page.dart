@@ -122,7 +122,7 @@ class _ServicePageState extends State<ServicePage> {
                           category: service.designation,
                           duration: service.duration,
                           price: "₹${service.price.toStringAsFixed(0)}",
-                          bookings: "0",
+                          bookings: '${controller.bookingCounts}',
                           revenue: "₹0",
                           badge: "Active",
 

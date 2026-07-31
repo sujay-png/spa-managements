@@ -337,6 +337,11 @@ class _BookingPageState extends State<BookingPage> {
           statusrequired: "Pending",
         ),
       );
+      print("Selected therapist id = $selectedTherapistRef");
+      await context.read<StaffController>().updateJobStatus(
+    selectedTherapistRef!,
+    'Busy',
+);
 
       if (!mounted) return;
 

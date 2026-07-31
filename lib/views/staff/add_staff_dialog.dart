@@ -422,6 +422,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
         phno: phoneController.text.trim(),
         designation: designationController.text.trim(),
         specialization: specializationController.text.trim(),
+        jobStatus: status
       );
 
       await context.read<StaffController>().updatestaff(updatedStaff);
@@ -440,6 +441,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
           email: emailController.text.trim(),
           phno: phoneController.text.trim(),
           designation: designationController.text.trim(),
+        jobStatus: 'Available',
           specialization: specializationController.text.trim(),
         ),
       );

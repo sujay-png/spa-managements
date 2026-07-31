@@ -10,6 +10,7 @@ class CustomerModel {
    final  int totalVisits;
    final double spentThisMonth;
   final DateTime? lastVisit;
+  final bool isblacklisted;
    
    
    
@@ -23,7 +24,8 @@ class CustomerModel {
     required this.address,
     required this.notes, this.businessRef,  this.totalVisits=0,
      this.spentThisMonth=0.0, 
-     this.lastVisit,
+     this.lastVisit, 
+      this.isblacklisted=false,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -38,6 +40,7 @@ class CustomerModel {
       address: json['customer_address']?.toString() ?? '',
       notes: json['customer_note']?.toString() ?? '',
       businessRef: json['business_ref'] as int?,
+      isblacklisted: json['is_blacklisted'] ?? false,
     );
   }
 
@@ -50,6 +53,7 @@ class CustomerModel {
       'customer_address': address,
       'customer_note': notes,
           'business_ref': businessRef,
+         'is_blacklisted': isblacklisted,
     };
   }
 
@@ -61,6 +65,7 @@ class CustomerModel {
     DateTime? dob,
     String? address,
     String? notes,
+    bool? isBlacklisted,
   }) {
     return CustomerModel(
       id: id ?? this.id,
@@ -70,6 +75,7 @@ class CustomerModel {
       dob: dob ?? this.dob,
       address: address ?? this.address,
       notes: notes ?? this.notes,
+      isblacklisted: isBlacklisted ?? this.isblacklisted,
     );
   }
 }

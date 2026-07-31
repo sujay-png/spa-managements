@@ -64,6 +64,18 @@ Future<void> deletestaff(int id)async{
 
 }
 
+Future<void> updateJobStatus(int staffId, String status) async {
+  await _staff.updateStaffJobStatus(staffId, status);
+
+  final index = _staffs.indexWhere((e) => e.id == staffId);
+
+  if (index != -1) {
+    _staffs[index] = _staffs[index].copyWith(
+      jobStatus: status,
+    );
+    notifyListeners();
+  }
+}
   @override
   void dispose() {
     _sub?.cancel();

@@ -37,7 +37,7 @@ int get waitingBookings =>
   void loadBookings(int businessRef) {
     _sub?.cancel();
 
-    _loading = true;
+    _loading = false;
     notifyListeners();
 
   _sub = _service.watchBookings(businessRef).listen(
@@ -54,6 +54,11 @@ int get waitingBookings =>
   },
 );
   }
+
+
+  Future<void> updateStatus(int id, String status) async {
+  await _service.updateBookingStatus(id, status);
+}
 
   //======================== Search ========================
 

@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/views/service/database_service.dart';
 
-class 
-ServiceController extends ChangeNotifier {
+class ServiceController extends ChangeNotifier {
   final DatabaseService _service = DatabaseService();
 
   List<ServiceModel> _services = [];
@@ -18,6 +17,17 @@ ServiceController extends ChangeNotifier {
 
   StreamSubscription<List<ServiceModel>>? _sub;
 
+  Map<int, int> _bookingCounts = {};
+  Map<int, int> get bookingCounts => _bookingCounts;
+
+  StreamSubscription<Map<int, int>>? _countSub;
+
+  /// Returns booking count for a service
+  int getBookingCount(int? serviceId) {
+    if (serviceId == null) return 0;
+    return _bookingCounts[serviceId] ?? 0;
+  }
+
   void loadServices(int businessRef) {
     _sub?.cancel();
 
@@ -27,6 +37,18 @@ ServiceController extends ChangeNotifier {
     _sub = _service.watchServices(businessRef).listen((list) {
       _services = list;
       _loading = false;
+      notifyListeners();
+    });
+
+    // Load booking counts also
+    loadBookingCounts(businessRef);
+  }
+
+  void loadBookingCounts(int businessRef) {
+    _countSub?.cancel();
+
+    _countSub = _service.watchBookingCounts(businessRef).listen((counts) {
+      _bookingCounts = counts;
       notifyListeners();
     });
   }
@@ -48,23 +70,28 @@ ServiceController extends ChangeNotifier {
   Future<void> addService(ServiceModel service) async {
     await _service.addService(service);
   }
-  Future<void> updatedservice(ServiceModel service) async{
+
+  Future<void> updatedservice(ServiceModel service) async {
     await _service.updateService(service);
-    final index =_services.indexWhere((e)=>e.id == service.id);
-    if(index !=-1){
-      _services[index]=service;
+
+    final index = _services.indexWhere((e) => e.id == service.id);
+
+    if (index != -1) {
+      _services[index] = service;
+      notifyListeners();
     }
+  }
+
+  Future<void> deleteservice(int id) async {
+    await _service.deleteService(id);
+    _services.removeWhere((e) => e.id == id);
     notifyListeners();
   }
-Future<void> deleteservice(int id)async{
-  await _service.deleteService(id);
-  _services.removeWhere((b)=>b.id==id);
-  notifyListeners();
 
-}
   @override
   void dispose() {
     _sub?.cancel();
+    _countSub?.cancel();
     super.dispose();
   }
 }

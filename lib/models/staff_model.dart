@@ -6,6 +6,7 @@ class StaffModel {
   final String designation;
   final String specialization;
   final int? businessRef;
+  final String jobStatus; // <-- Add this
 
   const StaffModel({
     this.id,
@@ -15,19 +16,22 @@ class StaffModel {
     required this.designation,
     required this.specialization,
     this.businessRef,
+    required this.jobStatus, // <-- Add this
   });
 
   factory StaffModel.fromJson(Map<String, dynamic> json) {
     return StaffModel(
-      id: json['id'] as int,
-      name: json['name'],
-      email: json['email'],
-      phno: json['phone'],
-      designation: json['designation'],
-      specialization: json['job_title'],
+      id: json['id'] as int?,
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phno: json['phone'] ?? '',
+      designation: json['designation'] ?? '',
+      specialization: json['job_title'] ?? '',
       businessRef: json['business_ref'] as int?,
+      jobStatus: json['staff_status'] ?? 'Available', // <-- Add this
     );
   }
+
   Map<String, dynamic> toJson() {
     return {
       'name': name,
@@ -36,6 +40,7 @@ class StaffModel {
       'designation': designation,
       'job_title': specialization,
       'business_ref': businessRef,
+      'staff_status': jobStatus, // <-- Add this
     };
   }
 
@@ -46,6 +51,8 @@ class StaffModel {
     String? phno,
     String? designation,
     String? specialization,
+    int? businessRef,
+    String? jobStatus,
   }) {
     return StaffModel(
       id: id ?? this.id,
@@ -54,6 +61,8 @@ class StaffModel {
       phno: phno ?? this.phno,
       designation: designation ?? this.designation,
       specialization: specialization ?? this.specialization,
+      businessRef: businessRef ?? this.businessRef,
+      jobStatus: jobStatus ?? this.jobStatus,
     );
   }
 }

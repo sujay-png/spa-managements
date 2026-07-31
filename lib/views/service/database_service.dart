@@ -85,6 +85,20 @@ class DatabaseService {
 
  
 }
+
+Future<void> toggleBlacklistCustomer(int id, bool isBlacklisted) async {
+  try {
+    await _supabase
+        .from('Customers')
+        .update({'is_blacklisted': isBlacklisted})
+        .eq('id', id);
+
+    print("Customer blacklist status updated to: $isBlacklisted");
+  } catch (e) {
+    print("Error updating blacklist status: $e");
+    rethrow;
+  }
+}
   Future<void> deletecustomer(int id) async {
     await _supabase.from('Customers').delete().eq('id', id);
   }
@@ -158,7 +172,14 @@ Future<Map<String, dynamic>> getCustomerStats(String customerName) async {
         .update(staff.toJson())
         .eq('id', staff.id!);
   }
-
+Future<void> updateStaffJobStatus(int staffId, String status) async {
+  await Supabase.instance.client
+      .from('Therapist')
+      .update({
+        'staff_status': status,
+      })
+      .eq('id', staffId);
+}
 
   //==============================Bookings============================================
   Future<void> addBooking(BookingsModel booking) async {
@@ -205,6 +226,31 @@ Future<Map<String, dynamic>> getCustomerStats(String customerName) async {
     return data.map<String>((e) => e['confirmed_time'] as String).toList();
   }
 
+Stream<Map<int, int>> watchBookingCounts(int businessRef) {
+  return _supabase
+      .from('appointments')
+      .stream(primaryKey: ['id'])
+      .eq('business_ref', businessRef)
+      .map((rows) {
+    final counts = <int, int>{};
+    for (final row in rows) {
+      final serviceId = row['service_id'] as int?;
+      if (serviceId != null) {
+        counts[serviceId] = (counts[serviceId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  });
+}
+
+Future<void> updateBookingStatus(int id, String status) async {
+  await Supabase.instance.client
+      .from('Booking')
+      .update({
+        'booking_status': status,
+      })
+      .eq('id', id);
+}
   //=================================Service Menu========================================
    Future<ClientModel> insertClient(ClientModel client) async {
     final response = await _supabase
