@@ -6,7 +6,7 @@ import 'package:ira_spa_webapp/models/staff_model.dart';
 import 'package:provider/provider.dart';
 
 class AddStaffDialog extends StatefulWidget {
-    final StaffModel? staff; 
+  final StaffModel? staff;
   const AddStaffDialog({super.key, this.staff});
 
   @override
@@ -17,7 +17,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
   String status = "Available";
-    late final bool isEdit = widget.staff != null;
+  late final bool isEdit = widget.staff != null;
   final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
@@ -25,7 +25,6 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
   final TextEditingController specializationController =
       TextEditingController();
   @override
-
   void initState() {
     super.initState();
 
@@ -48,6 +47,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
       }
     });
   }
+
   @override
   void dispose() {
     nameController.dispose();
@@ -86,14 +86,14 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                 Text(
-  isEdit ? "Edit Staff Member" : "Add New Staff Member",
-  style: const TextStyle(
-    color: Colors.white,
-    fontSize: 20,
-    fontWeight: FontWeight.bold,
-  ),
-),
+                  Text(
+                    isEdit ? "Edit Staff Member" : "Add New Staff Member",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
                     icon: const Icon(Icons.close, color: Colors.white),
@@ -400,69 +400,71 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
 
   //================================Save logic=================================
   Future<void> _save() async {
-  if (!_formKey.currentState!.validate()) return;
-  final auth = context.read<AuthController>();
+    if (!_formKey.currentState!.validate()) return;
+    final auth = context.read<AuthController>();
 
-  if (auth.businessRef == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Business reference not found.")),
-    );
-    return;
-  }
-
-  setState(() => _saving = true);
-
-  try {
-    if (isEdit) {
-      final updatedStaff = StaffModel(
-        id: widget.staff!.id,
-        businessRef: widget.staff!.businessRef,
-        name: nameController.text.trim(),
-        email: emailController.text.trim(),
-        phno: phoneController.text.trim(),
-        designation: designationController.text.trim(),
-        specialization: specializationController.text.trim(),
-        jobStatus: status
+    if (auth.businessRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Business reference not found.")),
       );
+      return;
+    }
 
-      await context.read<StaffController>().updatestaff(updatedStaff);
+    setState(() => _saving = true);
 
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Staff updated successfully')),
-        );
-      }
-    } else {
-      await context.read<StaffController>().addStaff(
-        StaffModel(
-          businessRef: auth.businessRef!,
+    try {
+      if (isEdit) {
+        final updatedStaff = StaffModel(
+          id: widget.staff!.id,
+          businessRef: widget.staff!.businessRef,
           name: nameController.text.trim(),
           email: emailController.text.trim(),
           phno: phoneController.text.trim(),
           designation: designationController.text.trim(),
-        jobStatus: 'Available',
           specialization: specializationController.text.trim(),
-        ),
-      );
-
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Staff added successfully')),
+          jobStatus: status,
         );
+
+        await context.read<StaffController>().updatestaff(updatedStaff);
+
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Staff updated successfully')),
+          );
+        }
+      } else {
+        await context.read<StaffController>().addStaff(
+          StaffModel(
+            businessRef: auth.businessRef!,
+            name: nameController.text.trim(),
+            email: emailController.text.trim(),
+            phno: phoneController.text.trim(),
+            designation: designationController.text.trim(),
+            jobStatus: 'Available',
+            specialization: specializationController.text.trim(),
+          ),
+        );
+
+        if (mounted) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Staff added successfully')),
+          );
+        }
+      }
+    } catch (e, stack) {
+      print(e);
+      print(stack);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
       }
     }
-  } catch (e, stack) {
-    print(e);
-    print(stack);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-    }
-  } finally {
-    if (mounted) {
-      setState(() => _saving = false);
-    }
   }
-}
 }

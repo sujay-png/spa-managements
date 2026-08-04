@@ -8,7 +8,7 @@ class StaffCard extends StatelessWidget {
   final String specialization;
   final String email;
   final String phone;
-  final String rating;
+
   final String appointments;
   final String status;
   final Color statusBgColor;
@@ -24,7 +24,7 @@ class StaffCard extends StatelessWidget {
     required this.specialization,
     required this.email,
     required this.phone,
-    required this.rating,
+ 
     required this.appointments,
     required this.status,
     required this.statusBgColor,
@@ -244,42 +244,33 @@ class StaffCard extends StatelessWidget {
                     const Divider(color: Color(0xFFF0E7DE), height: 1),
 
                     /// Rating & Appointments Row
+                 
+                    /// Status Badge & Schedule Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "RATING",
-                              style: TextStyle(
-                                fontSize: 9,
-                                letterSpacing: 0.8,
-                                color: Color(0xFF9E9188),
-                                fontWeight: FontWeight.w600,
-                              ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusBgColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: statusTextColor,
                             ),
-                            const SizedBox(height: 3),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.star_rounded,
-                                  size: 15,
-                                  color: Color(0xFFFFC107),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  rating,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF332A24),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
+                           Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                     
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -306,49 +297,7 @@ class StaffCard extends StatelessWidget {
                       ],
                     ),
 
-                    /// Status Badge & Schedule Link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusBgColor,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            status,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: statusTextColor,
-                            ),
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () {},
-                          child: Row(
-                            children: const [
-                              Text(
-                                "View Schedule",
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF6B6259),
-                                ),
-                              ),
-                              SizedBox(width: 4),
-                              Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 14,
-                                color: Color(0xFF6B6259),
-                              ),
-                            ],
-                          ),
-                        ),
+                      
                       ],
                     ),
                   ],

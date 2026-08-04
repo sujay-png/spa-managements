@@ -117,13 +117,17 @@ class _ServicePageState extends State<ServicePage> {
                           ),
                       itemBuilder: (context, index) {
                         final service = controller.services[index];
+                        final bookingCount = controller.getBookingCount(
+                          service.id,
+                        );
+                        final revenue = service.price * bookingCount;
                         return ServiceCard(
                           title: service.serviceName,
                           category: service.designation,
                           duration: service.duration,
                           price: "₹${service.price.toStringAsFixed(0)}",
-                          bookings: '${controller.bookingCounts}',
-                          revenue: "₹0",
+                          bookings: '$bookingCount',
+                          revenue: "₹${revenue.toStringAsFixed(0)}",
                           badge: "Active",
 
                           onEdit: () {
@@ -193,7 +197,7 @@ class _ServicePageState extends State<ServicePage> {
   //======================================Add Service form=======================================
   void showserviceform(BuildContext context, {ServiceModel? service}) {
     final isedit = service != null;
- 
+
     if (service != null) {
       _serviceNameController.text = service.serviceName;
       _designationController.text = service.designation;
@@ -446,7 +450,6 @@ class _ServicePageState extends State<ServicePage> {
         title: const Text("Delete Service"),
         content: const Text("Are you sure you want to delete this service?"),
         actions: [
-         
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             child: const Text("Delete"),

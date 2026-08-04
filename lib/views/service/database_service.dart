@@ -102,42 +102,46 @@ Future<void> toggleBlacklistCustomer(int id, bool isBlacklisted) async {
   Future<void> deletecustomer(int id) async {
     await _supabase.from('Customers').delete().eq('id', id);
   }
-Future<Map<String, dynamic>> getCustomerStats(String customerName) async {
+Future<Map<String, Map<String, dynamic>>> getBookingStatsForBusiness(
+  int businessRef,
+) async {
   final bookings = await _supabase
-      .from('Bookings')
+      .from('Booking')
       .select()
-      .eq('customer_ref', customerName);
+      .eq('business_ref', businessRef);
 
   final now = DateTime.now();
-
-  int totalVisits = bookings.length;
-
-  double spentThisMonth = 0;
-
-  DateTime? lastVisit;
+  final Map<String, Map<String, dynamic>> statsByName = {};
 
   for (final booking in bookings) {
-    final date = DateTime.parse(booking['available_slot']);
+    final name = booking['customer_ref'] as String?;
+    if (name == null || name.isEmpty) continue;
 
-    // Last Visit
-    if (lastVisit == null || date.isAfter(lastVisit)) {
-      lastVisit = date;
-    }
+    final slot = booking['available_slot'] as String?;
+    final date = slot != null ? DateTime.parse(slot) : null;
 
-    // Spent This Month
-    if (date.year == now.year &&
-        date.month == now.month &&
-        booking['booking_status'] == 'Completed') {
-      spentThisMonth +=
-          double.tryParse(booking['service_price']?.toString() ?? '0') ?? 0;
+    final entry = statsByName.putIfAbsent(
+      name,
+      () => {'totalVisits': 0, 'spentThisMonth': 0.0, 'lastVisit': null},
+    );
+
+    entry['totalVisits'] = (entry['totalVisits'] as int) + 1;
+
+    if (date != null) {
+      final lastVisit = entry['lastVisit'] as DateTime?;
+      if (lastVisit == null || date.isAfter(lastVisit)) {
+        entry['lastVisit'] = date;
+      }
+
+      if (date.year == now.year &&
+          date.month == now.month &&
+          booking['booking_status'] == 'Completed') {
+       
+      }
     }
   }
 
-  return {
-    'totalVisits': totalVisits,
-    'spentThisMonth': spentThisMonth,
-    'lastVisit': lastVisit,
-  };
+  return statsByName;
 }
   //==============================Staff===========================================
   Future<void> addstaff(StaffModel staff) async {
@@ -179,6 +183,23 @@ Future<void> updateStaffJobStatus(int staffId, String status) async {
         'staff_status': status,
       })
       .eq('id', staffId);
+}
+
+Stream<Map<int, int>> watchStaffBookingCounts(int businessRef) {
+  return _supabase
+      .from('Booking')
+      .stream(primaryKey: ['id'])
+      .eq('business_ref', businessRef)
+      .map((rows) {
+    final counts = <int, int>{};
+    for (final row in rows) {
+      final serviceId = row['service_option_id'] as int?;
+      if (serviceId != null) {
+        counts[serviceId] = (counts[serviceId] ?? 0) + 1;
+      }
+    }
+    return counts;
+  });
 }
 
   //==============================Bookings============================================
@@ -228,13 +249,13 @@ Future<void> updateStaffJobStatus(int staffId, String status) async {
 
 Stream<Map<int, int>> watchBookingCounts(int businessRef) {
   return _supabase
-      .from('appointments')
+      .from('Booking')
       .stream(primaryKey: ['id'])
       .eq('business_ref', businessRef)
       .map((rows) {
     final counts = <int, int>{};
     for (final row in rows) {
-      final serviceId = row['service_id'] as int?;
+      final serviceId = row['service_option_id'] as int?;
       if (serviceId != null) {
         counts[serviceId] = (counts[serviceId] ?? 0) + 1;
       }

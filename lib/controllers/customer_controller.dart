@@ -35,16 +35,7 @@ class CustomerController extends ChangeNotifier {
   //=============================
 
   StreamSubscription<List<CustomerModel>>? _sub;
-  void loadcustomer(int bussinessRef) {
-    _sub?.cancel();
-    _loading = true;
-    notifyListeners();
-    _sub = _customer.watchcustomer(bussinessRef).listen((list) {
-      _cust = list;
-      _loading = false;
-      notifyListeners();
-    });
-  }
+ 
 
   List<CustomerModel> get _filteredcust {
     if (_search.isEmpty) return _cust;
@@ -94,13 +85,25 @@ class CustomerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> loadCustomerStats(String customerName) async {
-    final stats = await _customer.getCustomerStats(customerName);
+  void loadcustomer(int bussinessRef) {
+  _sub?.cancel();
+  _loading = true;
+  notifyListeners();
+  _sub = _customer.watchcustomer(bussinessRef).listen((list) async {
+    final statsByName = await _customer.getBookingStatsForBusiness(bussinessRef);
 
-    _totalVisits = stats['totalVisits'] ?? 0;
-    _spentThisMonth = stats['spentThisMonth'] ?? 0.0;
-    _lastVisit = stats['lastVisit'];
+    _cust = list.map((c) {
+      final stats = statsByName[c.name];
+      if (stats == null) return c;
+      return c.copyWith(
+        totalVisits: stats['totalVisits'] as int,
+        spentThisMonth: stats['spentThisMonth'] as double,
+        lastVisit: stats['lastVisit'] as DateTime?,
+      );
+    }).toList();
 
+    _loading = false;
     notifyListeners();
-  }
+  });
+}
 }

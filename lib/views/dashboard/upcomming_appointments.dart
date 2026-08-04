@@ -90,119 +90,119 @@ void initState() {
               ),
             )
           else
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: bookings.length,
-              itemBuilder: (context, index) {
-                final booking = bookings[index];
-
-                // Access dynamic fields directly from BookingsModel
-                final String time = booking.timeslot ?? 'N/A';
-                final String customerName = booking.customerRef ?? 'Unknown Customer';
-                final String serviceName = booking.serviceRef ?? 'Service';
-                final String staffName = booking.therapistRef ?? 'Unassigned';
-                final String status = booking.statusrequired ?? 'pending';
-
-                final bool isConfirmed = status.toLowerCase() == 'confirmed' ||
-                    status.toLowerCase() == 'completed';
-
-                return Container(
-                  decoration: BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(
-                        color: AppColors.border,
-                        width: index == bookings.length - 1 ? 0 : 1,
-                      ),
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-
-                    // 1. Time
-                    leading: SizedBox(
-                      width: 100,
-                      child: Center(
-                        child: Text(
-                          time,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
+            SingleChildScrollView(
+              child: ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: bookings.length,
+                itemBuilder: (context, index) {
+                  final booking = bookings[index];
+                  final String time = booking.timeslot ?? 'N/A';
+                  final String customerName = booking.customerRef ?? 'Unknown Customer';
+                  final String serviceName = booking.serviceRef ?? 'Service';
+                  final String staffName = booking.therapistRef ?? 'Unassigned';
+                  final String status = booking.statusrequired ?? 'pending';
+              
+                  final bool isConfirmed = status.toLowerCase() == 'confirmed' ||
+                      status.toLowerCase() == 'completed';
+              
+                  return Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: AppColors.border,
+                          width: index == bookings.length - 1 ? 0 : 1,
                         ),
                       ),
                     ),
-
-                    // 2. Client Name
-                    title: Text(
-                      customerName,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
                       ),
-                    ),
-
-                    // 3. Service Name
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        serviceName,
+              
+                      // 1. Time
+                      leading: SizedBox(
+                        width: 100,
+                        child: Center(
+                          child: Text(
+                            time,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+              
+                      // 2. Client Name
+                      title: Text(
+                        customerName,
                         style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+              
+                      // 3. Service Name
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          serviceName,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+              
+                      // 4. Staff Name + Booking Status
+                      trailing: SizedBox(
+                        width: 170,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                staffName,
+                                textAlign: TextAlign.end,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isConfirmed
+                                    ? Colors.green.withOpacity(0.12)
+                                    : Colors.orange.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                status,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: isConfirmed ? Colors.green : Colors.orange,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-
-                    // 4. Staff Name + Booking Status
-                    trailing: SizedBox(
-                      width: 170,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              staffName,
-                              textAlign: TextAlign.end,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isConfirmed
-                                  ? Colors.green.withOpacity(0.12)
-                                  : Colors.orange.withOpacity(0.12),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              status,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: isConfirmed ? Colors.green : Colors.orange,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
         ],
       ),

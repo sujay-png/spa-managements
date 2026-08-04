@@ -57,25 +57,33 @@ class CustomerModel {
     };
   }
 
-  CustomerModel copyWith({
-    int? id,
-    String? name,
-    String? email,
-    String? phoneno,
-    DateTime? dob,
-    String? address,
-    String? notes,
-    bool? isBlacklisted,
-  }) {
-    return CustomerModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      email: email ?? this.email,
-      phoneno: phoneno ?? this.phoneno,
-      dob: dob ?? this.dob,
-      address: address ?? this.address,
-      notes: notes ?? this.notes,
-      isblacklisted: isBlacklisted ?? this.isblacklisted,
-    );
-  }
+CustomerModel copyWith({
+  int? id,
+  String? name,
+  String? email,
+  String? phoneno,
+  DateTime? dob,
+  String? address,
+  String? notes,
+  int? businessRef,
+  int? totalVisits,
+  double? spentThisMonth,
+  DateTime? lastVisit,
+  bool? isBlacklisted,
+}) {
+  return CustomerModel(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    email: email ?? this.email,
+    phoneno: phoneno ?? this.phoneno,
+    dob: dob ?? this.dob,
+    address: address ?? this.address,
+    notes: notes ?? this.notes,
+    businessRef: businessRef ?? this.businessRef,
+    totalVisits: totalVisits ?? this.totalVisits,
+    spentThisMonth: spentThisMonth ?? this.spentThisMonth,
+    lastVisit: lastVisit ?? this.lastVisit,
+    isblacklisted: isBlacklisted ?? this.isblacklisted,
+  );
+}
 }

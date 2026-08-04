@@ -320,6 +320,7 @@ class _BookingPageState extends State<BookingPage> {
           customerRef: selectedCustomerName,
           serviceRef: selectedServiceName,
           therapistRef: selectedTherapistName,
+           serviceOptionId: selectedServiceRef, 
 
           customer: selectedCustomerName,
           servicename: selectedServiceName,
@@ -708,6 +709,7 @@ class _BookingPageState extends State<BookingPage> {
                                     customerRef: selectedCustomerName,
                                     serviceRef: selectedServiceName,
                                     therapistRef: selectedTherapistName,
+                                      serviceOptionId: selectedServiceRef,
 
                                     customer: selectedCustomerName,
                                     servicename: selectedServiceName,

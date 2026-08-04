@@ -15,21 +15,40 @@ class StaffController extends ChangeNotifier {
 
   String _search = '';
 
-  StreamSubscription<List<StaffModel>>? _sub;
+  StreamSubscription<List<StaffModel>>? _staffSub;
+  StreamSubscription<Map<int, int>>? _bookingCountsSub;
+  Map<int, int> _bookingCounts = {};
+  Map<int, int> get bookingCounts => _bookingCounts;
+
+  int getBookingCount(int? staffId) {
+    if (staffId == null) return 0;
+    return _bookingCounts[staffId] ?? 0;
+  }
 
   void loadStaff(int businessRef) {
-    _sub?.cancel();
+    _staffSub?.cancel();
 
     _loading = true;
     notifyListeners();
 
-    _sub = _staff.watchStaff(businessRef).listen((list) {
+    _staffSub = _staff.watchStaff(businessRef).listen((list) {
       _staffs = list;
       _loading = false;
       notifyListeners();
     });
+
   }
 
+void loadBookingCounts(int businessRef) {
+    _bookingCountsSub?.cancel();
+
+    _bookingCountsSub = _staff.watchStaffBookingCounts(businessRef).listen((counts) {
+      _bookingCounts = counts;
+      notifyListeners();
+    });
+
+    loadStaff(businessRef);
+  }
   List<StaffModel> get _filteredStaff {
     if (_search.isEmpty) return _staffs;
 
@@ -78,7 +97,8 @@ Future<void> updateJobStatus(int staffId, String status) async {
 }
   @override
   void dispose() {
-    _sub?.cancel();
+    _staffSub?.cancel();
+    _bookingCountsSub?.cancel();
     super.dispose();
   }
 }

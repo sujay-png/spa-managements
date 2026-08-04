@@ -18,20 +18,22 @@ class _StaffPageState extends State<StaffPage> {
   void _openAddStaffDialog() {
     showDialog(context: context, builder: (context) => const AddStaffDialog());
   }
- @override
-void initState() {
-  super.initState();
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final auth = context.read<AuthController>();
+  @override
+  void initState() {
+    super.initState();
 
-    if (auth.businessRef != null) {
-      context.read<StaffController>().loadStaff(auth.businessRef!);
-    } else {
-      debugPrint("Business Ref is null");
-    }
-  });
-}
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthController>();
+
+      if (auth.businessRef != null) {
+        context.read<StaffController>().loadStaff(auth.businessRef!);
+      } else {
+        debugPrint("Business Ref is null");
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final staff = context.watch<StaffController>();
@@ -124,28 +126,31 @@ void initState() {
                         specialization: staffMember.specialization,
                         email: staffMember.email,
                         phone: staffMember.phno,
-statusBgColor: staffMember.jobStatus == "Busy"
-      ? Colors.red.shade100
-      : Colors.green.shade100,
+                        statusBgColor: staffMember.jobStatus == "Busy"
+                            ? Colors.red.shade100
+                            : Colors.green.shade100,
 
-  statusTextColor: staffMember.jobStatus == "Busy"
-      ? Colors.red
-      : Colors.green,
+                        statusTextColor: staffMember.jobStatus == "Busy"
+                            ? Colors.red
+                            : Colors.green,
 
-                        // Replace these with actual values if they're available in your model
-                        rating: "0.0",
-                        appointments: "0",
+                     
+                    
+                        appointments: staff.bookingCounts[staffMember.id] != null
+                            ? staff.bookingCounts[staffMember.id].toString()
+                            : '0',
                         status: staffMember.jobStatus,
-                      
+
                         onEdit: () {
-    showDialog(
-      context: context,
-      builder: (context) => AddStaffDialog(staff: staffMember),
-    );
-  },
-  onDelete: () {
-    _deleteStaff(staffMember);
-  },
+                          showDialog(
+                            context: context,
+                            builder: (context) =>
+                                AddStaffDialog(staff: staffMember),
+                          );
+                        },
+                        onDelete: () {
+                          _deleteStaff(staffMember);
+                        },
                       );
                     },
                   ),
@@ -156,46 +161,47 @@ statusBgColor: staffMember.jobStatus == "Busy"
   }
 
   //=============================Helper function=================================
-    String _initials(String name) {
+  String _initials(String name) {
     final parts = name.trim().split(RegExp(r'\s+'));
     if (parts.isEmpty) return '';
     if (parts.length == 1) return parts[0][0].toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
-//==========================Delete =============================
-Future<void> _deleteStaff(StaffModel staffMember) async {
-  if (staffMember.id == null) return;
 
-  final confirm = await showDialog<bool>(
-    context: context,
-    builder: (_) => AlertDialog(
-      title: const Text("Delete Staff"),
-      content: const Text("Are you sure you want to delete this staff member?"),
-      actions: [
-       
-        ElevatedButton(
-          onPressed: () => Navigator.pop(context, true),
-          child: const Text("Delete"),
+  //==========================Delete =============================
+  Future<void> _deleteStaff(StaffModel staffMember) async {
+    if (staffMember.id == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Delete Staff"),
+        content: const Text(
+          "Are you sure you want to delete this staff member?",
         ),
-      ],
-    ),
-  );
-
-  if (confirm != true) return;
-  if (!mounted) return;
-
-  try {
-    await context.read<StaffController>().deletestaff(staffMember.id!);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Staff deleted successfully")),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
     );
-  } catch (e) {
+
+    if (confirm != true) return;
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Failed to delete: $e")),
-    );
+
+    try {
+      await context.read<StaffController>().deletestaff(staffMember.id!);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Staff deleted successfully")),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to delete: $e")));
+    }
   }
-}
-
 }
