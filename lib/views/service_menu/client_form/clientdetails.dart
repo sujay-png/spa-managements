@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/models/client_model.dart';
+import 'package:ira_spa_webapp/models/spa_service.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/service_menu/client_form/client_goal_concern.dart';
 import 'package:ira_spa_webapp/views/service_menu/client_form/client_health_history.dart';
 import 'package:ira_spa_webapp/views/service_menu/client_form/client_lifestyle.dart';
 import 'package:ira_spa_webapp/views/service/database_service.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ClientDetails extends StatefulWidget {
-  const ClientDetails({super.key});
+  final Map<SpaService, ServiceOption> selectedServices;
+  const ClientDetails({super.key,
+   required this.selectedServices,
+  });
 
   @override
   State<ClientDetails> createState() => _ClientDetailsState();
@@ -32,6 +38,8 @@ class _ClientDetailsState extends State<ClientDetails> {
   bool _loadingCustomers = true;
   List<ClientModel> _customersList = [];
   ClientModel? _selectedCustomer;
+  ClientModel? client;
+ 
 
   // ─── Sub-form data (updated via callbacks) ────────────────────────────────
   GoalConcernData _goalData = const GoalConcernData();
@@ -111,12 +119,24 @@ class _ClientDetailsState extends State<ClientDetails> {
 
   Future<void> _saveClient() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    
+    final auth = context.read<AuthController>();
+
+    if (auth.businessRef == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Business reference not found.")),
+      );
+      return;
+    }
+
 
     setState(() => _isSaving = true);
 
     try {
+   
       final client = ClientModel(
         // Basic details
+        businessRef: auth.businessRef!,
         date: _dobController.text.trim(),
         time: _timeController.text.trim(),
         name: _nameController.text.trim(),
@@ -136,6 +156,10 @@ class _ClientDetailsState extends State<ClientDetails> {
         // Lifestyle
         lifestyleType: _lifestyleData.lifestyleType,
         sessionFrequency: _lifestyleData.sessionFrequency,
+        serviceName: widget.selectedServices.keys.first.title,
+        serviceTime: widget.selectedServices.values.first.label,
+         
+
       );
 
       final saved = await _service.insertClient(client);

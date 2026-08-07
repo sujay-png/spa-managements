@@ -1,5 +1,6 @@
 class ClientModel {
   final int? id;
+    int? businessRef;
 
   // ── Basic Details ──────────────────────────────────────────
   final String date;
@@ -30,9 +31,12 @@ class ClientModel {
   // ── Lifestyle ─────────────────────────────────────────────
   final String? lifestyleType;
   final String? sessionFrequency;
+  final String? serviceName;
+final String? serviceTime;
 
   ClientModel({
     this.id,
+    this.businessRef,
     required this.date,
     this.time = '',
     required this.name,
@@ -55,11 +59,14 @@ class ClientModel {
     this.recentSurgery,
     this.lifestyleType,
     this.sessionFrequency,
+    this.serviceName,
+    this.serviceTime,
   });
 
   // ── Mapped to DB Schema: public.clients ───────────────────
   Map<String, dynamic> toMap() => {
         if (id != null) 'id': id,
+        'business_ref': businessRef,
         'date': date,
         'name': name,
         'email': email,
@@ -81,12 +88,15 @@ class ClientModel {
         'recent_surgery': recentSurgery,
         'lifestyle_type': lifestyleType,
         'session_frequency': sessionFrequency,
+        'service_name': serviceName,
+  'time': serviceTime,
       };
 
   // ── Mapped from DB Schema: public.clients ─────────────────
   factory ClientModel.fromMap(Map<String, dynamic> map) {
     return ClientModel(
       id: map['id'] as int?,
+      businessRef: map['business_ref'] ,
       date: map['date'] ?? '',
       time: '', // Note: DB uses appointment_datetime or date
       name: map['customer_name'] ?? map['name'] ?? '',
@@ -111,6 +121,8 @@ class ClientModel {
       recentSurgery: map['recent_surgery'] as String?,
       lifestyleType: map['lifestyle_type'] as String?,
       sessionFrequency: map['session_frequency'] as String?,
+      serviceName: map['service_name'] as String?,
+serviceTime: map['time'] as String?,
     );
   }
 

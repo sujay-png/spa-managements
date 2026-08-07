@@ -118,8 +118,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                 child: Customerstats(
                                   title: 'Total Customers',
                                   value: '${customer.totalcustomer}',
-                                  badge: '+8.2% this month',
-                                  badgeColor: Colors.green,
+                                
                                 ),
                               ),
                               const SizedBox(width: 15),
@@ -127,8 +126,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                 child: Customerstats(
                                   title: 'Active Members',
                                   value: '${customer.totalcustomer}',
-                                  badge: '+5.4% this month',
-                                  badgeColor: Colors.green,
+                                  
                                 ),
                               ),
                               const SizedBox(width: 15),
@@ -136,8 +134,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                 child: Customerstats(
                                   title: 'New This Month',
                                   value: "${customer.newThisMonth}",
-                                  badge: '+12% from last month',
-                                  badgeColor: Colors.green,
+                               
                                 ),
                               ),
                             ],

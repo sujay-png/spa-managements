@@ -274,8 +274,8 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                       color: AppColors.textSecondary,
                                     ),
                                     const SizedBox(width: 4),
-                                     Text(
-                                 '${item.totalVisits}',
+                                    Text(
+                                      '${item.totalVisits}',
                                       style: TextStyle(
                                         color: AppColors.textPrimary,
                                         fontSize: 12,
@@ -296,8 +296,8 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                       color: AppColors.textSecondary,
                                     ),
                                     const SizedBox(width: 4),
-                                     Text(
-                  item.spentThisMonth.toStringAsFixed(2),
+                                    Text(
+                                      item.spentThisMonth.toStringAsFixed(2),
 
                                       style: TextStyle(
                                         color: AppColors.textSecondary,
@@ -311,9 +311,9 @@ class _CustomerTabelState extends State<CustomerTabel> {
                               Expanded(
                                 flex: 3,
                                 child: Text(
-                     item.lastVisit != null
-      ? '${item.lastVisit!.day}/${item.lastVisit!.month}/${item.lastVisit!.year}'
-      : '-',
+                                  item.lastVisit != null
+                                      ? '${item.lastVisit!.day}/${item.lastVisit!.month}/${item.lastVisit!.year}'
+                                      : '-',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textPrimary,

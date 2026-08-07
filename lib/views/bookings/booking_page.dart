@@ -210,10 +210,6 @@ class _BookingPageState extends State<BookingPage> {
                             ),
                           ),
 
-                       
-
-                        
-
                           const SizedBox(width: 12),
 
                           /// Export Button
@@ -255,8 +251,8 @@ class _BookingPageState extends State<BookingPage> {
                       onEdit: (booking) {
                         showBookingDialog(context, booking: booking);
                       },
-                      ondelete: (booking){
-                        showBookingDialog(context,booking: booking);
+                      ondelete: (booking) {
+                        showBookingDialog(context, booking: booking);
                       },
                     ),
                   ],
@@ -317,10 +313,10 @@ class _BookingPageState extends State<BookingPage> {
     try {
       await context.read<BookingController>().addBooking(
         BookingsModel(
-          customerRef: selectedCustomerName,
-          serviceRef: selectedServiceName,
-          therapistRef: selectedTherapistName,
-           serviceOptionId: selectedServiceRef, 
+          customerRef: selectedCustomerRef,
+          serviceRef: selectedServiceRef,
+          therapistRef: selectedTherapistRef,
+        
 
           customer: selectedCustomerName,
           servicename: selectedServiceName,
@@ -340,9 +336,9 @@ class _BookingPageState extends State<BookingPage> {
       );
       print("Selected therapist id = $selectedTherapistRef");
       await context.read<StaffController>().updateJobStatus(
-    selectedTherapistRef!,
-    'Busy',
-);
+        selectedTherapistRef!,
+        'Busy',
+      );
 
       if (!mounted) return;
 
@@ -412,28 +408,48 @@ class _BookingPageState extends State<BookingPage> {
               orElse: () => customerController.customers.first,
             );
 
-            selectedService = serviceController.services.firstWhere(
-              (e) => e.serviceName == booking.servicename,
-              orElse: () => serviceController.services.first,
-            );
+           selectedService = serviceController.services.cast<ServiceModel?>().firstWhere(
+  (e) =>
+      e != null &&
+      e.serviceName.trim().toLowerCase() ==
+          booking.servicename.trim().toLowerCase(),
+  orElse: () => null,
+);
 
-            selectedStaff = staffcontroller.staffs.firstWhere(
-              (e) => e.name == booking.therapistname,
-              orElse: () => staffcontroller.staffs.first,
-            );
+if (selectedService != null) {
+  selectedServiceRef = selectedService!.id;
+  selectedServiceName = selectedService!.serviceName;
+  selectedServiceDuration = selectedService!.duration;
+  selectedServicePrice = selectedService!.price.toString();
+}
+        selectedStaff = staffcontroller.staffs.cast<StaffModel?>().firstWhere(
+  (e) => e != null && e.name == booking.therapistname,
+  orElse: () => null,
+);
 
+if (selectedStaff != null) {
+  selectedTherapistRef = selectedStaff!.id;
+  selectedTherapistName = selectedStaff!.name;
+}
             // ADD THESE LINES
-            selectedCustomerRef = selectedCustomer!.id;
-            selectedServiceRef = selectedService!.id;
-            selectedTherapistRef = selectedStaff!.id;
+          selectedCustomerRef = selectedCustomer?.id;
 
-            selectedCustomerName = selectedCustomer!.name;
-            selectedServiceName = selectedService!.serviceName;
-            selectedTherapistName = selectedStaff!.name;
+selectedServiceRef = selectedService?.id;
+selectedTherapistRef = selectedStaff?.id;
 
-            selectedCustomerPhone = selectedCustomer!.phoneno;
-            selectedServiceDuration = selectedService!.duration;
-            selectedServicePrice = selectedService!.price.toString();
+selectedCustomerName = selectedCustomer?.name ?? '';
+
+selectedServiceName = selectedService?.serviceName ?? booking.servicename;
+
+selectedTherapistName =
+    selectedStaff?.name ?? booking.therapistname;
+
+selectedCustomerPhone = selectedCustomer?.phoneno;
+
+selectedServiceDuration = selectedService?.duration;
+
+selectedServicePrice =
+    selectedService?.price.toString() ?? booking.servicePrice;
             initialized = true;
           }
 
@@ -518,29 +534,40 @@ class _BookingPageState extends State<BookingPage> {
                       const SizedBox(height: 16),
                       label(Icons.content_cut, 'SERVICE'),
                       const SizedBox(height: 8),
-                      serviceController.loading
-                          ? Center(child: CircularProgressIndicator())
-                          : DropdownButtonFormField<ServiceModel>(
-                              value: selectedService,
-                              items: serviceController.services.map((c) {
-                                return DropdownMenuItem(
-                                  value: c,
-                                  child: Text(c.serviceName),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedService = value;
 
-                                  selectedServiceRef = value?.id;
-                                  selectedServiceName =
-                                      value?.serviceName ?? '';
-                                  selectedServiceDuration = value?.duration;
-                                  selectedServicePrice = value?.price
-                                      ?.toString();
-                                });
-                              },
+                      if (isedit)
+                        TextFormField(
+                          initialValue: booking!.servicename,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                          ),
+                        )
+                      else
+                        DropdownButtonFormField<ServiceModel>(
+                          value: selectedService,
+                          items: serviceController.services.map((service) {
+                            return DropdownMenuItem<ServiceModel>(
+                              value: service,
+                              child: Text(service.serviceName),
+                            );
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+
+                            setState(() {
+                              selectedService = value;
+                              selectedServiceRef = value.id;
+                              selectedServiceName = value.serviceName;
+                              selectedServiceDuration = value.duration;
+                              selectedServicePrice = value.price.toString();
+                            });
+                          },
+                        ),
                       const SizedBox(height: 16),
                       label(Icons.person_outline, 'THERAPIST'),
                       const SizedBox(height: 8),
@@ -587,7 +614,10 @@ class _BookingPageState extends State<BookingPage> {
                                   );
                                   if (picked != null) {
                                     bookedSlots = await DatabaseService()
-                                        .getbookedtimeslots(picked);
+                                        .getBookedTimeSlots(
+                                          picked,
+                                          selectedTherapistRef!,
+                                        );
 
                                     setState(() {
                                       selectedDate = picked;
@@ -688,65 +718,78 @@ class _BookingPageState extends State<BookingPage> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              onPressed: () async {
-                                if (selectedCustomer == null ||
-                                    selectedService == null ||
-                                    selectedTherapistName == null ||
-                                    selectedTimeSlot.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Please fill all required fields",
-                                      ),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                if (isedit) {
-                                  final updatedBooking = BookingsModel(
-                                    id: booking!.id,
+                             onPressed: () async {
+  if (selectedCustomer == null ||
+      selectedTherapistRef == null ||
+      selectedTimeSlot.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Please fill all required fields"),
+      ),
+    );
+    return;
+  }
+if (isedit) {
+  final updatedBooking = BookingsModel(
+    id: booking!.id,
 
-                                    customerRef: selectedCustomerName,
-                                    serviceRef: selectedServiceName,
-                                    therapistRef: selectedTherapistName,
-                                      serviceOptionId: selectedServiceRef,
+    // Keep existing customer & service
+    customerRef: booking.customerRef,
+    serviceRef: booking.serviceRef,
+    serviceOptionId: booking.serviceOptionId,
 
-                                    customer: selectedCustomerName,
-                                    servicename: selectedServiceName,
-                                    therapistname: selectedTherapistName,
+    customer: booking.customer,
+    servicename: booking.servicename,
 
-                                    custphone: selectedCustomerPhone,
-                                    serviceDuration: selectedServiceDuration,
-                                    servicePrice: selectedServicePrice,
+    // Change only therapist
+    therapistRef: selectedTherapistRef,
+    therapistname: selectedTherapistName,
 
-                                    bookingdate: selectedDate,
-                                    timeslot: selectedTimeSlot,
-                                    bookingdetails: notesCtrl.text.trim(),
+    custphone: booking.custphone,
+    serviceDuration: booking.serviceDuration,
+    servicePrice: booking.servicePrice,
 
-                                    businessRef: booking.businessRef,
+    bookingdate: selectedDate,
+    timeslot: selectedTimeSlot,
+    bookingdetails: notesCtrl.text.trim(),
 
-                                    statusrequired: booking.statusrequired,
-                                  );
+    businessRef: booking.businessRef,
+    statusrequired: booking.statusrequired,
+  );
 
-                                  await context
-                                      .read<BookingController>()
-                                      .updateBooking(updatedBooking);
+  // First update booking
+  await context.read<BookingController>().updateBooking(updatedBooking);
 
-                                  if (!mounted) return;
+  // Make previous therapist available
+  if (booking.therapistRef != null &&
+      booking.therapistRef != selectedTherapistRef) {
+    await context.read<StaffController>().updateJobStatus(
+      booking.therapistRef!,
+      "Available",
+    );
+  }
 
-                                  Navigator.pop(context);
+  // Make new therapist busy
+  if (selectedTherapistRef != null) {
+    await context.read<StaffController>().updateJobStatus(
+      selectedTherapistRef!,
+      "Busy",
+    );
+  }
 
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Booking updated successfully",
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  _save();
-                                }
-                              },
+  if (!mounted) return;
+
+  Navigator.pop(context);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Booking updated successfully"),
+    ),
+  );
+} else {
+  _save();
+}
+},
                               child: Text(
                                 isedit ? 'Update bookings' : 'Create Booking',
                                 style: TextStyle(

@@ -4,15 +4,13 @@ import 'package:ira_spa_webapp/theme/app_theme.dart';
 class Customerstats extends StatelessWidget {
   final String title;
   final String value;
-  final String badge;
-  final Color badgeColor;
+
 
   const Customerstats({
     super.key,
     required this.title,
     required this.value,
-    required this.badge,
-    required this.badgeColor,
+  
 
   });
 
@@ -58,24 +56,7 @@ class Customerstats extends StatelessWidget {
               height: 1,
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 6,
-            ),
-            decoration: BoxDecoration(
-              color: badgeColor.withOpacity(.12),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Text(
-              badge,
-              style: TextStyle(
-                color: badgeColor,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ),
+        
         ],
       ),
     );

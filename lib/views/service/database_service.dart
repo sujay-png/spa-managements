@@ -185,19 +185,28 @@ Future<void> updateStaffJobStatus(int staffId, String status) async {
       .eq('id', staffId);
 }
 
-Stream<Map<int, int>> watchStaffBookingCounts(int businessRef) {
+Stream<Map<String, int>> watchStaffBookingCounts(int businessRef) {
   return _supabase
       .from('Booking')
       .stream(primaryKey: ['id'])
       .eq('business_ref', businessRef)
       .map((rows) {
-    final counts = <int, int>{};
+    final counts = <String, int>{};
+
     for (final row in rows) {
-      final serviceId = row['service_option_id'] as int?;
-      if (serviceId != null) {
-        counts[serviceId] = (counts[serviceId] ?? 0) + 1;
+      final therapistName = (row['therapist'] as String?)?.trim().toLowerCase();
+      final status = (row['booking_status'] as String?)?.trim().toLowerCase() ?? '';
+
+      // Ignore completed or cancelled bookings
+      if (status == 'completed' || status == 'cancelled') {
+        continue;
+      }
+
+      if (therapistName != null && therapistName.isNotEmpty) {
+        counts[therapistName] = (counts[therapistName] ?? 0) + 1;
       }
     }
+
     return counts;
   });
 }
@@ -234,19 +243,24 @@ Stream<Map<int, int>> watchStaffBookingCounts(int businessRef) {
     await _supabase.from('Booking').delete().eq('id', id);
   }
 
-  Future<List<String>> getbookedtimeslots(DateTime date) async {
-    final start = DateTime(date.year, date.month, date.day);
-    final end = start.add(const Duration(days: 1));
+  Future<List<String>> getBookedTimeSlots(
+  DateTime date,
+  int therapistId,
+) async {
+  final start = DateTime(date.year, date.month, date.day);
+  final end = start.add(const Duration(days: 1));
 
-    final data = await _supabase
-        .from('Booking')
-        .select('confirmed_time')
-        .gte('available_slot', start.toIso8601String())
-        .lt('available_slot', end.toIso8601String());
+  final data = await _supabase
+      .from('Booking')
+      .select('confirmed_time')
+      .eq('therapist_ref', therapistId)
+      .gte('available_slot', start.toIso8601String())
+      .lt('available_slot', end.toIso8601String());
 
-    return data.map<String>((e) => e['confirmed_time'] as String).toList();
-  }
-
+  return data
+      .map<String>((e) => e['confirmed_time'] as String)
+      .toList();
+}
 Stream<Map<int, int>> watchBookingCounts(int businessRef) {
   return _supabase
       .from('Booking')
@@ -273,15 +287,28 @@ Future<void> updateBookingStatus(int id, String status) async {
       .eq('id', id);
 }
   //=================================Service Menu========================================
-   Future<ClientModel> insertClient(ClientModel client) async {
-    final response = await _supabase
-        .from('clients')
-        .insert(client.toMap())
-        .select()
-        .single();
-    return ClientModel.fromMap(response);
-  }
+Future<ClientModel> insertClient(ClientModel client) async {
+  // Save client
+  final clientResponse = await _supabase
+      .from('clients')
+      .insert(client.toMap())
+      .select()
+      .single();
 
+  // Save booking
+  await _supabase.from('Booking').insert({
+    'business_ref': client.businessRef,
+    'customer_ref': client.name,
+    'services': client.serviceName,
+    'available_slot': client.appointmentDatetime,
+    'confirmed_time': client.time,
+    'cust_phno': client.phone,
+    'location': client.location,
+   
+  });
+
+  return ClientModel.fromMap(clientResponse);
+}
 Future<List<ClientModel>> getAllCustomers() async {
   final response = await _supabase
       .from('Customers')

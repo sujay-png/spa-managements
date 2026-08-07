@@ -27,7 +27,7 @@ class _StaffPageState extends State<StaffPage> {
       final auth = context.read<AuthController>();
 
       if (auth.businessRef != null) {
-        context.read<StaffController>().loadStaff(auth.businessRef!);
+        context.read<StaffController>().loadBookingCounts(auth.businessRef!);
       } else {
         debugPrint("Business Ref is null");
       }
@@ -136,9 +136,7 @@ class _StaffPageState extends State<StaffPage> {
 
                      
                     
-                        appointments: staff.bookingCounts[staffMember.id] != null
-                            ? staff.bookingCounts[staffMember.id].toString()
-                            : '0',
+                      appointments: staff.getBookingCount(staffMember.name).toString(),
                         status: staffMember.jobStatus,
 
                         onEdit: () {

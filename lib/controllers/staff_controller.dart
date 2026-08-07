@@ -16,14 +16,14 @@ class StaffController extends ChangeNotifier {
   String _search = '';
 
   StreamSubscription<List<StaffModel>>? _staffSub;
-  StreamSubscription<Map<int, int>>? _bookingCountsSub;
-  Map<int, int> _bookingCounts = {};
-  Map<int, int> get bookingCounts => _bookingCounts;
+StreamSubscription<Map<String, int>>? _bookingCountsSub;
+Map<String, int> _bookingCounts = {};
+Map<String, int> get bookingCounts => _bookingCounts;
 
-  int getBookingCount(int? staffId) {
-    if (staffId == null) return 0;
-    return _bookingCounts[staffId] ?? 0;
-  }
+ int getBookingCount(String? staffName) {
+  if (staffName == null || staffName.trim().isEmpty) return 0;
+  return _bookingCounts[staffName.trim().toLowerCase()] ?? 0;
+}
 
   void loadStaff(int businessRef) {
     _staffSub?.cancel();
@@ -40,15 +40,23 @@ class StaffController extends ChangeNotifier {
   }
 
 void loadBookingCounts(int businessRef) {
-    _bookingCountsSub?.cancel();
+  
+  _bookingCountsSub?.cancel();
 
-    _bookingCountsSub = _staff.watchStaffBookingCounts(businessRef).listen((counts) {
+  
+  _bookingCountsSub = _staff.watchStaffBookingCounts(businessRef).listen(
+    (counts) {
       _bookingCounts = counts;
       notifyListeners();
-    });
+    },
+    onError: (error) {
+      debugPrint("Error fetching booking counts: $error");
+    },
+  );
 
-    loadStaff(businessRef);
-  }
+  // 3. Trigger staff list loading
+  loadStaff(businessRef);
+}
   List<StaffModel> get _filteredStaff {
     if (_search.isEmpty) return _staffs;
 

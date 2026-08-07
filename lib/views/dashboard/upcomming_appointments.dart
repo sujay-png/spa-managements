@@ -97,11 +97,11 @@ void initState() {
                 itemCount: bookings.length,
                 itemBuilder: (context, index) {
                   final booking = bookings[index];
-                  final String time = booking.timeslot ?? 'N/A';
-                  final String customerName = booking.customerRef ?? 'Unknown Customer';
-                  final String serviceName = booking.serviceRef ?? 'Service';
-                  final String staffName = booking.therapistRef ?? 'Unassigned';
-                  final String status = booking.statusrequired ?? 'pending';
+                  final String time = booking.timeslot?.toString() ?? 'N/A';
+                  final String customerName = booking.customerRef?.toString() ?? 'Unknown Customer';
+                  final String serviceName = booking.serviceRef?.toString() ?? 'Service';
+                  final String staffName = booking.therapistRef?.toString() ?? 'Unassigned';
+                  final String status = booking.statusrequired?.toString() ?? 'pending';
               
                   final bool isConfirmed = status.toLowerCase() == 'confirmed' ||
                       status.toLowerCase() == 'completed';

@@ -63,8 +63,7 @@ class _DashboardState extends State<Dashboard> {
                     child: DashboardStats(
                       title: "Total Revenue",
                     value: "₹${bookingcontroller.totalRevenue.toStringAsFixed(0)}",
-                      badge: "+12.5%",
-                      badgeColor: Colors.green,
+                    
                       icon: Icons.attach_money,
                     ),
                   ),
@@ -75,8 +74,7 @@ class _DashboardState extends State<Dashboard> {
                     child: DashboardStats(
                       title: "Today's Bookings",
                       value: "${bookingcontroller.totalBookings}",
-                      badge: "+3 from yesterday",
-                      badgeColor: Colors.green,
+                    
                       icon: Icons.calendar_today_outlined,
                     ),
                   ),
@@ -87,8 +85,7 @@ class _DashboardState extends State<Dashboard> {
                     child: DashboardStats(
                       title: "Total Customers",
                       value: "${customercontroller.totalcustomer}",
-                      badge: "+8.2%",
-                      badgeColor: Colors.green,
+                    
                       icon: Icons.groups_outlined,
                     ),
                   ),
@@ -99,8 +96,7 @@ class _DashboardState extends State<Dashboard> {
                     child: DashboardStats(
                       title: "Avg. Wait Time",
                       value: "${bookingcontroller.waitingBookings}",
-                      badge: "-2 min",
-                      badgeColor: Colors.blue,
+                    
                       icon: Icons.schedule_outlined,
                     ),
                   ),

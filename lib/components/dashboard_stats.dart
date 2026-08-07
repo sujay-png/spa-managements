@@ -4,16 +4,14 @@ import 'package:ira_spa_webapp/theme/app_theme.dart';
 class DashboardStats extends StatelessWidget {
   final String title;
   final String value;
-  final String badge;
-  final Color badgeColor;
+
   final IconData icon;
 
   const DashboardStats({
     super.key,
     required this.title,
     required this.value,
-    required this.badge,
-    required this.badgeColor,
+  
     required this.icon,
   });
 
@@ -56,24 +54,6 @@ class DashboardStats extends StatelessWidget {
 
               const Spacer(),
 
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: badgeColor.withOpacity(.12),
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text(
-                  badge,
-                  style: TextStyle(
-                    color: badgeColor,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
             ],
           ),
 

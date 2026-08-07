@@ -208,6 +208,7 @@ class SelectionPanel extends StatelessWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
+                   
                   showDialog(
                     context: context,
                     // This makes the background dark behind the popup
@@ -222,7 +223,9 @@ class SelectionPanel extends StatelessWidget {
                         ),
                         child: ConstrainedBox(
                           constraints:  BoxConstraints(maxWidth: 850),
-                          child:  ClientDetails()
+                          child:  ClientDetails(
+                             selectedServices: selectedServices,
+                          )
                         ),
                       );
                     },
