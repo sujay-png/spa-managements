@@ -10,6 +10,12 @@ class ClientModel {
   final String phone;
   final String location;
   final String loyaltyCardNo;
+  final int? customerId;
+  final String? signatureUrl;
+  final String? dob;
+  final String? status;
+  final int? therapistId;
+  final String? appointmentDatetime;
 
   // ── Goals & Concerns ──────────────────────────────────────
   final String? massageGoal;
@@ -28,13 +34,19 @@ class ClientModel {
   ClientModel({
     this.id,
     required this.date,
-    required this.time,
+    this.time = '',
     required this.name,
     required this.age,
     required this.email,
     required this.phone,
     required this.location,
     required this.loyaltyCardNo,
+    this.customerId,
+    this.signatureUrl,
+    this.dob,
+    this.status,
+    this.therapistId,
+    this.appointmentDatetime,
     this.massageGoal,
     this.bodyFocusArea,
     this.skinAllergy,
@@ -45,50 +57,71 @@ class ClientModel {
     this.sessionFrequency,
   });
 
-  // ✅ FIXED MAPPING
+  // ── Mapped to DB Schema: public.clients ───────────────────
   Map<String, dynamic> toMap() => {
-    if (id != null) 'id': id,
+        if (id != null) 'id': id,
+        'date': date,
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'location': location,
+        'loyalty_card_no': loyaltyCardNo,
+        'age': age,
+        'customer_id': customerId,
+        'signature_url': signatureUrl,
+        'dob': dob,
+        if (status != null) 'status': status,
+        'therapist_id': therapistId,
+        'appointment_datetime': appointmentDatetime,
+        'massage_goal': massageGoal,
+        'body_focus_area': bodyFocusArea,
+        'skin_allergy': skinAllergy,
+        'is_pregnant': isPregnant,
+        'cardiac_problems': cardiacProblems,
+        'recent_surgery': recentSurgery,
+        'lifestyle_type': lifestyleType,
+        'session_frequency': sessionFrequency,
+      };
 
-    // 🔥 IMPORTANT: Match DB column names
-    'customer_name': name,
-    'customer_phone': phone,
-    'customer_email': email,
-    'customer_address': location,
+  // ── Mapped from DB Schema: public.clients ─────────────────
+  factory ClientModel.fromMap(Map<String, dynamic> map) {
+    return ClientModel(
+      id: map['id'] as int?,
+      date: map['date'] ?? '',
+      time: '', // Note: DB uses appointment_datetime or date
+      name: map['customer_name'] ?? map['name'] ?? '',
+    phone: map['customer_phone'] ?? map['phone'] ?? '',
+    email: map['customer_email'] ?? map['email'] ?? '',
+    location: map['customer_address'] ?? map['location'] ?? '',
+    
+      age: map['age']?.toString() ?? '',
+  
+      loyaltyCardNo: map['loyalty_card_no'] ?? '',
+      customerId: map['customer_id'] as int?,
+      signatureUrl: map['signature_url'] as String?,
+      dob: map['dob'] as String?,
+      status: map['status'] as String?,
+      therapistId: map['therapist_id'] as int?,
+      appointmentDatetime: map['appointment_datetime'] as String?,
+      massageGoal: map['massage_goal'] as String?,
+      bodyFocusArea: map['body_focus_area'] as String?,
+      skinAllergy: map['skin_allergy'] as String?,
+      isPregnant: map['is_pregnant'] as String?,
+      cardiacProblems: map['cardiac_problems'] as String?,
+      recentSurgery: map['recent_surgery'] as String?,
+      lifestyleType: map['lifestyle_type'] as String?,
+      sessionFrequency: map['session_frequency'] as String?,
+    );
+  }
 
-    // Optional fields
-    'date': date,
-    'time': time,
-    'age': age,
-    'loyalty_card_no': loyaltyCardNo,
+ @override
+bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is ClientModel &&
+        runtimeType == other.runtimeType &&
+        id == other.id &&
+        phone == other.phone;
 
-    'massage_goal': massageGoal,
-    'body_focus_area': bodyFocusArea,
-    'skin_allergy': skinAllergy,
-    'is_pregnant': isPregnant,
-    'cardiac_problems': cardiacProblems,
-    'recent_surgery': recentSurgery,
-    'lifestyle_type': lifestyleType,
-    'session_frequency': sessionFrequency,
-  };
-
-  // ✅ FIXED FROM MAP
-  factory ClientModel.fromMap(Map<String, dynamic> map) => ClientModel(
-    id: map['id'] as int?,
-    date: map['date'] ?? '',
-    time: map['time'] ?? '',
-    name: map['customer_name'] ?? '',
-    age: map['age'] ?? '',
-    email: map['customer_email'] ?? '',
-    phone: map['customer_phone'] ?? '',
-    location: map['customer_address'] ?? '',
-    loyaltyCardNo: map['loyalty_card_no'] ?? '',
-    massageGoal: map['massage_goal'],
-    bodyFocusArea: map['body_focus_area'],
-    skinAllergy: map['skin_allergy'],
-    isPregnant: map['is_pregnant'],
-    cardiacProblems: map['cardiac_problems'],
-    recentSurgery: map['recent_surgery'],
-    lifestyleType: map['lifestyle_type'],
-    sessionFrequency: map['session_frequency'],
-  );
+@override
+int get hashCode => id.hashCode ^ phone.hashCode;
 }

@@ -21,7 +21,10 @@ int get totalBookings => _bookings.length;
 //================total revenue======================
 double get totalRevenue {
   return _bookings.fold(0.0, (sum, booking) {
-    final price = double.tryParse(booking.servicePrice ?? '0') ?? 0;
+    final rawPrice = booking.servicePrice ?? '0';
+    // Removes currency symbols, spaces, commas, etc.
+    final sanitizedPrice = rawPrice.replaceAll(RegExp(r'[^0-9.]'), '');
+    final price = double.tryParse(sanitizedPrice) ?? 0.0;
     return sum + price;
   });
 }
@@ -30,30 +33,29 @@ int get waitingBookings =>
     _bookings.where((b) => b.statusrequired.toLowerCase() == 'pending').length;
   StreamSubscription<List<BookingsModel>>? _sub;
 
-  
+ 
 
   //======================== Load Bookings ========================
 
-  void loadBookings(int businessRef) {
-    _sub?.cancel();
+ void loadBookings(int businessRef) {
+  _sub?.cancel();
 
-    _loading = false;
-    notifyListeners();
+  _loading = true; // Set to true initially
+  notifyListeners();
 
   _sub = _service.watchBookings(businessRef).listen(
-  (list) {
-    print("Bookings fetched: ${list.length}");
-    print(list);
-
-    _bookings = list;
-    _loading = false;
-    notifyListeners();
-  },
-  onError: (e) {
-    print(e);
-  },
-);
-  }
+    (list) {
+      _bookings = list;
+      _loading = false;
+      notifyListeners();
+    },
+    onError: (e) {
+      print("Error fetching bookings: $e");
+      _loading = false;
+      notifyListeners();
+    },
+  );
+}
 
 
   Future<void> updateStatus(int id, String status) async {

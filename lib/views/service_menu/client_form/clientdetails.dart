@@ -26,7 +26,7 @@ class _ClientDetailsState extends State<ClientDetails> {
   final _phoneController = TextEditingController();
   final _locationController = TextEditingController();
   final _loyaltyCardController = TextEditingController();
-final _service=DatabaseService();
+  final _service = DatabaseService();
   DateTime? _selectedDate;
   bool _isSaving = false;
   bool _loadingCustomers = true;
@@ -89,12 +89,21 @@ final _service=DatabaseService();
   void _onCustomerSelected(ClientModel? customer) {
     setState(() {
       _selectedCustomer = customer;
-      _nameController.text = customer?.name ?? '';
-      _phoneController.text = customer?.phone ?? '';
-      _emailController.text = customer?.email ?? '';
-      _locationController.text = customer?.location ?? '';
-      _ageController.text = customer?.age ?? '';
-      _loyaltyCardController.text = customer?.loyaltyCardNo ?? '';
+      if (customer != null) {
+        _nameController.text = customer.name;
+        _phoneController.text = customer.phone;
+        _emailController.text = customer.email;
+        _locationController.text = customer.location;
+        _ageController.text = customer.age;
+        _loyaltyCardController.text = customer.loyaltyCardNo;
+      } else {
+        _nameController.clear();
+        _phoneController.clear();
+        _emailController.clear();
+        _locationController.clear();
+        _ageController.clear();
+        _loyaltyCardController.clear();
+      }
     });
   }
 
@@ -176,8 +185,7 @@ final _service=DatabaseService();
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(16)
-              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
               color: AppColors.textSecondary,
             ),
             child: Row(
@@ -292,21 +300,28 @@ final _service=DatabaseService();
                                 )
                               : DropdownButtonFormField<ClientModel>(
                                   value: _selectedCustomer,
+                                  isExpanded: true,
                                   decoration: InputDecoration(
                                     labelText: 'Select Customer',
+                                    prefixIcon: const Icon(
+                                      Icons.person_search_outlined,
+                                    ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                   ),
                                   items: _customersList.map((customer) {
-                                    return DropdownMenuItem(
+                                    return DropdownMenuItem<ClientModel>(
                                       value: customer,
-                                      child: Text(customer.name),
+                                      child: Text(
+                                        '${customer.name}',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     );
                                   }).toList(),
                                   onChanged: _onCustomerSelected,
                                   validator: (value) => value == null
-                                      ? 'Select a customer'
+                                      ? 'Please select a customer'
                                       : null,
                                 ),
                         ),

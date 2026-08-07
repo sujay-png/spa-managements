@@ -102,6 +102,8 @@ String get statusLabel {
         : null,
 
     duration: map['duration'],
+    // Inside BookingsModel.fromMap:
+servicePrice: map['service_price']?.toString() ?? map['servicePrice']?.toString() ?? '0',
     serviceOptionId: map['service_option_id'],
     emailSent: map['email_sent'] ?? false,
   );

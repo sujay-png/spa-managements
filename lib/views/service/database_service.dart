@@ -282,11 +282,14 @@ Future<void> updateBookingStatus(int id, String status) async {
     return ClientModel.fromMap(response);
   }
 
-  Future<List<ClientModel>> getAllCustomers() async {
-    final response = await _supabase.from('clients').select();
+Future<List<ClientModel>> getAllCustomers() async {
+  final response = await _supabase
+      .from('Customers')
+      .select('id, customer_name, customer_phone, customer_email, customer_address');
 
-    return (response as List).map((e) => ClientModel.fromMap(e)).toList();
-  }
+  final data = response as List<dynamic>;
+  return data.map((json) => ClientModel.fromMap(json)).toList();
+}
 
   // ─── READ ─────────────────────────────────────────────────────────────────
   Future<List<ClientModel>> getAllClients() async {

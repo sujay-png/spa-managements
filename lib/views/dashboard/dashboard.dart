@@ -17,13 +17,11 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
- 
-
   @override
   Widget build(BuildContext context) {
-    final authController =context.watch<AuthController>();
-    final bookingcontroller=context.watch<BookingController>();
-    final customercontroller=context.watch<CustomerController>();
+    final authController = context.watch<AuthController>();
+    final bookingcontroller = context.watch<BookingController>();
+    final customercontroller = context.watch<CustomerController>();
     final displayName = authController.userName ?? '';
     return Scaffold(
       body: SingleChildScrollView(
@@ -64,7 +62,7 @@ class _DashboardState extends State<Dashboard> {
                   Expanded(
                     child: DashboardStats(
                       title: "Total Revenue",
-                      value: "${bookingcontroller.totalRevenue}",
+                    value: "₹${bookingcontroller.totalRevenue.toStringAsFixed(0)}",
                       badge: "+12.5%",
                       badgeColor: Colors.green,
                       icon: Icons.attach_money,
@@ -111,15 +109,14 @@ class _DashboardState extends State<Dashboard> {
 
               //========================================List Tille==============================================================
               Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 15,
                 children: [
-                  
-                   Expanded(child: UpcommingAppointments(),),
-                   Expanded(child: ServicesList(),)
+                  Expanded(child: UpcommingAppointments()),
+                  Expanded(child: ServicesList()),
                 ],
-                
               ),
-           
             ],
           ),
         ),
