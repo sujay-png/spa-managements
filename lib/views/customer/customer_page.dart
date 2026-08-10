@@ -125,7 +125,7 @@ class _CustomerPageState extends State<CustomerPage> {
                               Expanded(
                                 child: Customerstats(
                                   title: 'Active Members',
-                                  value: '${customer.totalcustomer}',
+                                  value: '${customer.activeMembers}',
                                   
                                 ),
                               ),

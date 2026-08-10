@@ -11,6 +11,7 @@ class CustomerModel {
    final double spentThisMonth;
   final DateTime? lastVisit;
   final bool isblacklisted;
+  final DateTime? createdAt; // New field for join/created date
    
    
    
@@ -26,6 +27,7 @@ class CustomerModel {
      this.spentThisMonth=0.0, 
      this.lastVisit, 
       this.isblacklisted=false,
+      this.createdAt,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,9 @@ class CustomerModel {
       notes: json['customer_note']?.toString() ?? '',
       businessRef: json['business_ref'] as int?,
       isblacklisted: json['is_blacklisted'] ?? false,
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'].toString())
+          : null,
     );
   }
 
@@ -54,6 +59,7 @@ class CustomerModel {
       'customer_note': notes,
           'business_ref': businessRef,
          'is_blacklisted': isblacklisted,
+         'created_at': createdAt?.toIso8601String(),
     };
   }
 
@@ -70,6 +76,7 @@ CustomerModel copyWith({
   double? spentThisMonth,
   DateTime? lastVisit,
   bool? isBlacklisted,
+  DateTime? createdAt,
 }) {
   return CustomerModel(
     id: id ?? this.id,
@@ -84,6 +91,7 @@ CustomerModel copyWith({
     spentThisMonth: spentThisMonth ?? this.spentThisMonth,
     lastVisit: lastVisit ?? this.lastVisit,
     isblacklisted: isBlacklisted ?? this.isblacklisted,
+    createdAt: createdAt ?? this.createdAt,
   );
 }
 }

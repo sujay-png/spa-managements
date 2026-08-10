@@ -22,16 +22,17 @@ class CustomerController extends ChangeNotifier {
 
   //=====================Total customer=============================
   int get totalcustomer => _cust.length;
-
+int get activeMembers => _cust.where((c) => !c.isblacklisted).length;
   //=======================Customer new this month========================
   int get newThisMonth {
-    final now = DateTime.now();
+  final now = DateTime.now();
 
-    return _cust.where((customer) {
-      if (customer.dob == null) return false;
-      return false;
-    }).length;
-  }
+  return _cust.where((customer) {
+    final created = customer.createdAt;
+    if (created == null) return false;
+    return created.year == now.year && created.month == now.month;
+  }).length;
+}
   //=============================
 
   StreamSubscription<List<CustomerModel>>? _sub;

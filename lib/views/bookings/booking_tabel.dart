@@ -169,10 +169,7 @@ class _BookingTabelState extends State<BookingTabel> {
                   itemBuilder: (context, index) {
                     final BookingsModel item = paginatedAppointments[index];
 
-                    final isConfirmed =
-                        item.statusrequired.toLowerCase() == 'confirmed';
-                    final isPending =
-                        item.statusrequired.toLowerCase() == 'pending';
+                  
                     final customer = customers
                         .where((c) => c.name == item.customer)
                         .firstOrNull;
@@ -189,7 +186,7 @@ class _BookingTabelState extends State<BookingTabel> {
                     }
 
                     final serviceDuration = service?.duration ?? "-";
-                    final servicePrice = service?.price.toString() ?? "-";
+                
 
                     return Container(
                       padding: const EdgeInsets.symmetric(
@@ -331,7 +328,7 @@ class _BookingTabelState extends State<BookingTabel> {
                             ),
                           ),
 
-                          /// Price
+                         
 
                           /// Status
                           Expanded(

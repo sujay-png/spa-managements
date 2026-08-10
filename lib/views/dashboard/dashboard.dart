@@ -59,16 +59,7 @@ class _DashboardState extends State<Dashboard> {
               //=========================Dashboard stats======================================
               Row(
                 children: [
-                  Expanded(
-                    child: DashboardStats(
-                      title: "Total Revenue",
-                    value: "₹${bookingcontroller.totalRevenue.toStringAsFixed(0)}",
-                    
-                      icon: Icons.attach_money,
-                    ),
-                  ),
-
-                  const SizedBox(width: 20),
+                 
 
                   Expanded(
                     child: DashboardStats(
