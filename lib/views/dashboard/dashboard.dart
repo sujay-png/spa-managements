@@ -59,13 +59,11 @@ class _DashboardState extends State<Dashboard> {
               //=========================Dashboard stats======================================
               Row(
                 children: [
-                 
-
                   Expanded(
                     child: DashboardStats(
                       title: "Today's Bookings",
                       value: "${bookingcontroller.totalBookings}",
-                    
+
                       icon: Icons.calendar_today_outlined,
                     ),
                   ),
@@ -76,7 +74,7 @@ class _DashboardState extends State<Dashboard> {
                     child: DashboardStats(
                       title: "Total Customers",
                       value: "${customercontroller.totalcustomer}",
-                    
+
                       icon: Icons.groups_outlined,
                     ),
                   ),
@@ -87,7 +85,7 @@ class _DashboardState extends State<Dashboard> {
                     child: DashboardStats(
                       title: "Avg. Wait Time",
                       value: "${bookingcontroller.waitingBookings}",
-                    
+
                       icon: Icons.schedule_outlined,
                     ),
                   ),
