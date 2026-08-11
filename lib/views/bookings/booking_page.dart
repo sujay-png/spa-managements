@@ -213,36 +213,7 @@ class _BookingPageState extends State<BookingPage> {
                           const SizedBox(width: 12),
 
                           /// Export Button
-                          SizedBox(
-                            height: 46,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.textPrimary,
-                                backgroundColor: AppColors.surface,
-                                minimumSize: const Size(15, 50),
-                                side: const BorderSide(color: AppColors.border),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.download_outlined,
-                                size: 18,
-                                color: AppColors.textSecondary,
-                              ),
-                              label: const Text(
-                                'Export',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
+                  
                         ],
                       ),
                     ),
