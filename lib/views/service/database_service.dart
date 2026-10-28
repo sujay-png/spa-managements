@@ -41,7 +41,10 @@ class DatabaseService {
     try {
       final response = await _supabase
           .from('Customers')
-          .insert(customer.toJson())
+          .insert({
+            ...customer.toJson(),
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          })
           .select();
 
       print("Inserted Customer: $response");

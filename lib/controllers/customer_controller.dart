@@ -80,7 +80,7 @@ class CustomerController extends ChangeNotifier {
   }
 
   Future<void> deletecustomer(int id) async {
-    await _customer.deleteBooking(id);
+    await _customer.deletecustomer(id);
     _cust.removeWhere((b) => b.id == id);
     notifyListeners();
   }

@@ -496,7 +496,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Delete customer"),
-        content: const Text("Are you sure you want to delete this booking?"),
+        content: const Text("Are you sure you want to delete this customer?"),
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
