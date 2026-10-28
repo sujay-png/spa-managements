@@ -96,7 +96,8 @@ class BookingsModel {
           : null,
 
       duration: map['duration'],
-     
+      serviceDuration: map['duration']?.toString(),
+      servicePrice: map['service_price']?.toString() ?? map['price']?.toString(),
       serviceOptionId: map['service_option_id'],
       emailSent: map['email_sent'] ?? false,
     );

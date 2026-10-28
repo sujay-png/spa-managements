@@ -97,10 +97,16 @@ void initState() {
                 itemCount: bookings.length,
                 itemBuilder: (context, index) {
                   final booking = bookings[index];
-                  final String time = booking.timeslot?.toString() ?? 'N/A';
-                  final String customerName = booking.customerRef?.toString() ?? 'Unknown Customer';
-                  final String serviceName = booking.serviceRef?.toString() ?? 'Service';
-                  final String staffName = booking.therapistRef?.toString() ?? 'Unassigned';
+                  final String time = booking.timeslot.isNotEmpty ? booking.timeslot : 'N/A';
+                  final String customerName = booking.customer.trim().isNotEmpty
+                      ? booking.customer
+                      : (booking.customerRef != null ? 'Customer #${booking.customerRef}' : 'Unknown Customer');
+                  final String serviceName = booking.servicename.trim().isNotEmpty
+                      ? booking.servicename
+                      : (booking.serviceRef != null ? 'Service #${booking.serviceRef}' : 'Service');
+                  final String staffName = booking.therapistname.trim().isNotEmpty
+                      ? booking.therapistname
+                      : (booking.therapistRef != null ? 'Staff #${booking.therapistRef}' : 'Unassigned');
                   final String status = booking.statusrequired?.toString() ?? 'pending';
               
                   final bool isConfirmed = status.toLowerCase() == 'confirmed' ||

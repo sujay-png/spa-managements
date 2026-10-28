@@ -4,6 +4,7 @@ import 'package:ira_spa_webapp/components/dashboard_stats.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:ira_spa_webapp/controllers/customer_controller.dart';
+import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/dashboard/services_list.dart';
 import 'package:ira_spa_webapp/views/dashboard/upcomming_appointments.dart';
@@ -22,6 +23,7 @@ class _DashboardState extends State<Dashboard> {
     final authController = context.watch<AuthController>();
     final bookingcontroller = context.watch<BookingController>();
     final customercontroller = context.watch<CustomerController>();
+    final servicecontroller = context.watch<ServiceController>();
     final displayName = authController.userName ?? '';
     return Scaffold(
       body: SingleChildScrollView(
@@ -62,8 +64,7 @@ class _DashboardState extends State<Dashboard> {
                   Expanded(
                     child: DashboardStats(
                       title: "Total Revenue",
-                    value: "₹${bookingcontroller.totalRevenue.toStringAsFixed(0)}",
-                    
+                      value: "₹${bookingcontroller.calculateRevenue(servicecontroller.services).toStringAsFixed(0)}",
                       icon: Icons.attach_money,
                     ),
                   ),

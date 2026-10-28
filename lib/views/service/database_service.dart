@@ -315,10 +315,13 @@ Future<ClientModel> insertClient(ClientModel client) async {
 Future<List<ClientModel>> getAllCustomers() async {
   final response = await _supabase
       .from('Customers')
-      .select('id, customer_name, customer_phone, customer_email, customer_address');
+      .select('id, customer_name, customer_phone, customer_email, customer_address, is_blacklisted');
 
   final data = response as List<dynamic>;
-  return data.map((json) => ClientModel.fromMap(json)).toList();
+  return data
+      .where((json) => json['is_blacklisted'] != true)
+      .map((json) => ClientModel.fromMap(json))
+      .toList();
 }
 
   // ─── READ ─────────────────────────────────────────────────────────────────

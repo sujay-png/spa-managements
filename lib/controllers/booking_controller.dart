@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:ira_spa_webapp/models/bookings_model.dart';
+import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/views/service/database_service.dart';
 
 class BookingController extends ChangeNotifier {
@@ -19,15 +20,32 @@ class BookingController extends ChangeNotifier {
   //===================total bookings============
 int get totalBookings => _bookings.length;
 //================total revenue======================
-double get totalRevenue {
+double calculateRevenue(List<ServiceModel> services) {
   return _bookings.fold(0.0, (sum, booking) {
-    final rawPrice = booking.servicePrice ?? '0';
-    // Removes currency symbols, spaces, commas, etc.
-    final sanitizedPrice = rawPrice.replaceAll(RegExp(r'[^0-9.]'), '');
-    final price = double.tryParse(sanitizedPrice) ?? 0.0;
-    return sum + price;
+    // 1. If servicePrice is directly on booking
+    if (booking.servicePrice != null && booking.servicePrice!.isNotEmpty) {
+      final sanitizedPrice =
+          booking.servicePrice!.replaceAll(RegExp(r'[^0-9.]'), '');
+      final price = double.tryParse(sanitizedPrice);
+      if (price != null && price > 0) {
+        return sum + price;
+      }
+    }
+    // 2. Otherwise look up matching service price by ID or Name
+    final matched = services.where((s) {
+      if (booking.serviceOptionId != null &&
+          s.id == booking.serviceOptionId) {
+        return true;
+      }
+      return s.serviceName.trim().toLowerCase() ==
+          booking.servicename.trim().toLowerCase();
+    }).firstOrNull;
+
+    return sum + (matched?.price ?? 0.0);
   });
 }
+
+double get totalRevenue => calculateRevenue([]);
 //======Average time wait=================
 int get waitingBookings =>
     _bookings.where((b) => b.statusrequired.toLowerCase() == 'pending').length;

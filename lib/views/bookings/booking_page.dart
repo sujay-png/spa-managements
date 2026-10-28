@@ -308,6 +308,18 @@ class _BookingPageState extends State<BookingPage> {
       return;
     }
 
+    final customerCtrl = context.read<CustomerController>();
+    if (selectedCustomerRef != null &&
+        customerCtrl.customers
+            .any((c) => c.id == selectedCustomerRef && c.isblacklisted)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Cannot create booking for a blocked customer."),
+        ),
+      );
+      return;
+    }
+
     setState(() => _saving = true);
 
     try {
@@ -315,6 +327,7 @@ class _BookingPageState extends State<BookingPage> {
         BookingsModel(
           customerRef: selectedCustomerRef,
           serviceRef: selectedServiceRef,
+          serviceOptionId: selectedServiceRef,
           therapistRef: selectedTherapistRef,
         
 
@@ -403,10 +416,12 @@ class _BookingPageState extends State<BookingPage> {
           final serviceController = context.read<ServiceController>();
           final staffcontroller = context.read<StaffController>();
           if (booking != null && !initialized) {
-            selectedCustomer = customerController.customers.firstWhere(
-              (e) => e.name == booking.customer,
-              orElse: () => customerController.customers.first,
-            );
+            selectedCustomer = customerController.customers
+                .cast<CustomerModel?>()
+                .firstWhere(
+                  (e) => e != null && e.name == booking.customer,
+                  orElse: () => null,
+                );
 
            selectedService = serviceController.services.cast<ServiceModel?>().firstWhere(
   (e) =>
@@ -509,19 +524,64 @@ selectedServicePrice =
                           ? const Center(child: CircularProgressIndicator())
                           : DropdownButtonFormField<CustomerModel>(
                               value: selectedCustomer,
-                              items: customerController.customers.map((c) {
+                              items: customerController.customers
+                                  .where((c) =>
+                                      !c.isblacklisted ||
+                                      c.id == selectedCustomer?.id)
+                                  .map((c) {
                                 return DropdownMenuItem(
+                                  enabled: !c.isblacklisted,
                                   value: c,
-                                  child: Text(c.name),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        c.name,
+                                        style: TextStyle(
+                                          color: c.isblacklisted
+                                              ? Colors.grey
+                                              : AppColors.textPrimary,
+                                        ),
+                                      ),
+                                      if (c.isblacklisted)
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.red.withOpacity(0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                            border: Border.all(
+                                              color: Colors.red.shade300,
+                                            ),
+                                          ),
+                                          child: const Text(
+                                            'Blocked',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 );
                               }).toList(),
                               validator: (value) {
                                 if (value == null) {
                                   return 'Plz select customer';
                                 }
+                                if (value.isblacklisted) {
+                                  return 'This customer is blocked and cannot be selected';
+                                }
                                 return null;
                               },
                               onChanged: (value) {
+                                if (value != null && value.isblacklisted) return;
                                 setState(() {
                                   selectedCustomer = value;
 
@@ -581,13 +641,25 @@ selectedServicePrice =
                                   child: Text(c.name),
                                 );
                               }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedStaff = value;
+                              onChanged: (value) async {
+                                selectedStaff = value;
+                                selectedTherapistRef = value?.id;
+                                selectedTherapistName = value?.name ?? '';
 
-                                  selectedTherapistRef = value?.id;
-                                  selectedTherapistName = value?.name ?? '';
-                                });
+                                if (selectedTherapistRef != null &&
+                                    dateCtrl.text.isNotEmpty) {
+                                  try {
+                                    bookedSlots = await DatabaseService()
+                                        .getBookedTimeSlots(
+                                          selectedDate,
+                                          selectedTherapistRef!,
+                                        );
+                                  } catch (e) {
+                                    debugPrint("Error fetching booked slots: $e");
+                                    bookedSlots = [];
+                                  }
+                                }
+                                setState(() {});
                               },
                             ),
                       const SizedBox(height: 16),
@@ -608,16 +680,25 @@ selectedServicePrice =
                                 onTap: () async {
                                   final picked = await showDatePicker(
                                     context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(1100),
-                                    lastDate: DateTime(2030),
+                                    initialDate: selectedDate,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2035),
                                   );
                                   if (picked != null) {
-                                    bookedSlots = await DatabaseService()
-                                        .getBookedTimeSlots(
-                                          picked,
-                                          selectedTherapistRef!,
-                                        );
+                                    if (selectedTherapistRef != null) {
+                                      try {
+                                        bookedSlots = await DatabaseService()
+                                            .getBookedTimeSlots(
+                                              picked,
+                                              selectedTherapistRef!,
+                                            );
+                                      } catch (e) {
+                                        debugPrint("Error fetching booked slots: $e");
+                                        bookedSlots = [];
+                                      }
+                                    } else {
+                                      bookedSlots = [];
+                                    }
 
                                     setState(() {
                                       selectedDate = picked;
@@ -725,6 +806,14 @@ selectedServicePrice =
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("Please fill all required fields"),
+      ),
+    );
+    return;
+  }
+  if (selectedCustomer?.isblacklisted == true) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Cannot create booking for a blocked customer"),
       ),
     );
     return;

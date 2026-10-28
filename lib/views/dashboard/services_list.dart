@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
+import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -26,16 +28,29 @@ void initState() {
 
   @override
   Widget build(BuildContext context) {
-    final servicelist=context.watch<ServiceController>();
-        final services = servicelist.services;
+    final servicelist = context.watch<ServiceController>();
+    final services = servicelist.services;
     final bookingCounts = servicelist.bookingCounts;
+    final bookingcontroller = context.watch<BookingController>();
+    final bookings = bookingcontroller.bookings;
 
-     final maxCount = bookingCounts.values.isEmpty
+    int getCount(ServiceModel service) {
+      final dbCount = bookingCounts[service.id];
+      if (dbCount != null && dbCount > 0) return dbCount;
+
+      return bookings.where((b) {
+        if (b.serviceOptionId != null && b.serviceOptionId == service.id) {
+          return true;
+        }
+        return b.servicename.trim().toLowerCase() ==
+            service.serviceName.trim().toLowerCase();
+      }).length;
+    }
+
+    final counts = services.map((s) => getCount(s)).toList();
+    final maxCount = counts.isEmpty
         ? 1
-        : bookingCounts.values
-            .reduce((a, b) => a > b ? a : b)
-            .clamp(1, double.infinity)
-            .toInt();
+        : counts.reduce((a, b) => a > b ? a : b).clamp(1, 999999);
 
     return Container(
       decoration: BoxDecoration(
@@ -88,8 +103,8 @@ void initState() {
                       itemCount: services.length,
                       itemBuilder: (context, index) {
                         final service = services[index];
-                        final count = bookingCounts[service.id] ?? 0;
-                        final progress = count / maxCount;
+                        final count = getCount(service);
+                        final progress = maxCount > 0 ? (count / maxCount) : 0.0;
 
 
               return Padding(
@@ -130,7 +145,7 @@ void initState() {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
-                              value: progress.clamp(0.0, 0.1),
+                              value: progress.clamp(0.0, 1.0),
                               backgroundColor: AppColors.surfaceAlt,
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                 Color(0xFF8C7B68), // Brownish accent matching image
