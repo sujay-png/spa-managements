@@ -50,17 +50,22 @@ class CustomerModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
+    final data = <String, dynamic>{
       'customer_name': name,
       'customer_email': email,
       'customer_phone': phoneno,
-          'customer_dob': dob?.toIso8601String().split('T').first,
+      'customer_dob': dob?.toIso8601String().split('T').first,
       'customer_address': address,
       'customer_note': notes,
-          'business_ref': businessRef,
-         'is_blacklisted': isblacklisted,
-         'created_at': createdAt?.toIso8601String(),
+      'business_ref': businessRef,
+      'is_blacklisted': isblacklisted,
     };
+
+    if (createdAt != null) {
+      data['created_at'] = createdAt!.toIso8601String();
+    }
+
+    return data;
   }
 
 CustomerModel copyWith({
