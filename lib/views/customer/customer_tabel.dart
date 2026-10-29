@@ -5,6 +5,7 @@ import 'package:ira_spa_webapp/controllers/customer_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/models/customer_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:ira_spa_webapp/theme/responsive.dart';
 import 'package:provider/provider.dart';
 
 class CustomerTabel extends StatefulWidget {
@@ -65,7 +66,8 @@ class _CustomerTabelState extends State<CustomerTabel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Table Header Row
-          Container(
+          if (!context.isMobile)
+            Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
             decoration: const BoxDecoration(
               border: Border(bottom: BorderSide(color: AppColors.border)),
@@ -188,7 +190,9 @@ class _CustomerTabelState extends State<CustomerTabel> {
                               ),
                             ),
                           ),
-                          child: Row(
+                          child: context.isMobile
+                              ? _mobileCustomerRow(context, item)
+                              : Row(
                             children: [
                               //====================== Cust ID ======================
                               Expanded(
@@ -416,8 +420,10 @@ class _CustomerTabelState extends State<CustomerTabel> {
             decoration: const BoxDecoration(
               border: Border(top: BorderSide(color: AppColors.border)),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              runSpacing: 12,
+              spacing: 12,
               children: [
                 Text(
                   customers.isEmpty
@@ -429,6 +435,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
                   ),
                 ),
                 Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     OutlinedButton(
                       onPressed: _currentPage > 0
@@ -484,6 +491,119 @@ class _CustomerTabelState extends State<CustomerTabel> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _mobileCustomerRow(BuildContext context, CustomerModel item) {
+    final lastVisit = item.lastVisit == null
+        ? 'No visits yet'
+        : '${item.lastVisit!.day}/${item.lastVisit!.month}/${item.lastVisit!.year}';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.border,
+                child: Text(
+                  _initials(item.name),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      _formatCustomerId(item.id),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    widget.onEdit(item);
+                  } else if (value == 'delete') {
+                    _deletecustomer(item);
+                  } else if (item.id != null) {
+                    context.read<CustomerController>().toggleBlacklistCustomer(
+                          item.id!,
+                          item.isblacklisted,
+                        );
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Delete'),
+                  ),
+                  PopupMenuItem(
+                    value: 'block',
+                    child: Text(item.isblacklisted ? 'Unblock Customer' : 'Block Customer'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            item.email,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            item.phoneno,
+            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: [
+              _mobileDetail('Visits', '${item.totalVisits}'),
+              _mobileDetail('Spent', '\u{20B9}${item.spentThisMonth.toStringAsFixed(2)}'),
+              _mobileDetail('Last visit', lastVisit),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mobileDetail(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+        ),
+        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+      ],
     );
   }
 

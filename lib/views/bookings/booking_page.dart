@@ -91,7 +91,10 @@ class _BookingPageState extends State<BookingPage> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    Row(
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.spaceBetween,
                       children: [
                         Text(
                           'Manage all your spa appointments',
@@ -102,7 +105,6 @@ class _BookingPageState extends State<BookingPage> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        Spacer(),
                         SizedBox(
                           width: 200,
                           child: ElevatedButton.icon(
@@ -300,6 +302,7 @@ class _BookingPageState extends State<BookingPage> {
           timeslot: selectedTimeSlot,
           bookingdetails: notesController.text.trim(),
           businessRef: auth.businessRef!,
+          serviceOptionId: selectedServiceRef,
 
           statusrequired: "Pending",
         ),

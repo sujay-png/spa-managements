@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/models/spa_service.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 
-
 class HoverableServiceCard extends StatefulWidget {
   final SpaService service;
   final bool isSelected;
@@ -34,22 +33,20 @@ class _HoverableServiceCardState extends State<HoverableServiceCard> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(20),
         width: double.infinity,
-        height: 220,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: widget.isSelected
                 ? AppColors.primary
-                : (_isHovering
-                      ? AppColors.surfaceAlt
-                      : AppColors.warning
-),
+                : (_isHovering ? AppColors.surfaceAlt : AppColors.warning),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color:AppColors.primary.withOpacity(_isHovering || widget.isSelected ? 0.06 : 0.02),
+              color: AppColors.primary.withValues(
+                alpha: _isHovering || widget.isSelected ? 0.06 : 0.02,
+              ),
               blurRadius: _isHovering ? 15 : 10,
               offset: const Offset(0, 4),
             ),
@@ -57,6 +54,7 @@ class _HoverableServiceCardState extends State<HoverableServiceCard> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               widget.service.title,
@@ -77,9 +75,9 @@ class _HoverableServiceCardState extends State<HoverableServiceCard> {
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
-            const Spacer(),
+            const SizedBox(height: 16),
             Wrap(
-              spacing: 24,
+              spacing: 20,
               runSpacing: 12,
               children: widget.service.options.map((option) {
                 final bool isOptionSelected = widget.selectedOption == option;

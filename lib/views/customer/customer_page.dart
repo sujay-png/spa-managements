@@ -41,7 +41,7 @@ class _CustomerPageState extends State<CustomerPage> {
   bool _saving = false;
   @override
   Widget build(BuildContext context) {
-    final customer =context.read<CustomerController>();
+    final customer = context.watch<CustomerController>();
     return Scaffold(
       body: Form(
         key: _formKey,
@@ -65,7 +65,10 @@ class _CustomerPageState extends State<CustomerPage> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    Row(
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.spaceBetween,
                       children: [
                         Text(
                           'Manage your customer relationships',
@@ -76,7 +79,6 @@ class _CustomerPageState extends State<CustomerPage> {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        Spacer(),
                         SizedBox(
                           width: 200,
                           child: ElevatedButton.icon(
@@ -111,33 +113,56 @@ class _CustomerPageState extends State<CustomerPage> {
                     //===========================customer stats==============================================
                     const SizedBox(height: 15),
                     Padding(
-                          padding: const EdgeInsets.all(23),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Customerstats(
-                                  title: 'Total Customers',
-                                  value: '${customer.totalcustomer}',
-                                
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                child: Customerstats(
-                                  title: 'Active Members',
-                                  value: '${customer.activeMembers}',
-                                  
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                child: Customerstats(
-                                  title: 'New This Month',
-                                  value: "${customer.newThisMonth}",
-                               
-                                ),
-                              ),
-                            ],
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final isMobile = constraints.maxWidth < 500;
+                              if (isMobile) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    Customerstats(
+                                      title: 'Total Customers',
+                                      value: '${customer.totalcustomer}',
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Customerstats(
+                                      title: 'Active Members',
+                                      value: '${customer.activeMembers}',
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Customerstats(
+                                      title: 'New This Month',
+                                      value: '${customer.newThisMonth}',
+                                    ),
+                                  ],
+                                );
+                              }
+                              return Row(
+                                children: [
+                                  Expanded(
+                                    child: Customerstats(
+                                      title: 'Total Customers',
+                                      value: '${customer.totalcustomer}',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Customerstats(
+                                      title: 'Active Members',
+                                      value: '${customer.activeMembers}',
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Customerstats(
+                                      title: 'New This Month',
+                                      value: '${customer.newThisMonth}',
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                     //======================Search bar filter and export button==================================

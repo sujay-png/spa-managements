@@ -261,21 +261,11 @@ Stream<Map<String, int>> watchStaffBookingCounts(int businessRef) {
       .map<String>((e) => e['confirmed_time'] as String)
       .toList();
 }
-Stream<Map<int, int>> watchBookingCounts(int businessRef) {
+Stream<List<Map<String, dynamic>>> watchBookingCounts(int businessRef) {
   return _supabase
       .from('Booking')
       .stream(primaryKey: ['id'])
-      .eq('business_ref', businessRef)
-      .map((rows) {
-    final counts = <int, int>{};
-    for (final row in rows) {
-      final serviceId = row['service_option_id'] as int?;
-      if (serviceId != null) {
-        counts[serviceId] = (counts[serviceId] ?? 0) + 1;
-      }
-    }
-    return counts;
-  });
+      .eq('business_ref', businessRef);
 }
 
 Future<void> updateBookingStatus(int id, String status) async {

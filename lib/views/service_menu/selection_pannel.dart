@@ -35,11 +35,11 @@ class SelectionPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AppColors.border,
             blurRadius: 20,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -61,33 +61,34 @@ class SelectionPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 24),
 
-          Flexible(
-            child: selectedServices.isEmpty
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      SizedBox(width: double.infinity),
-                      Text(
-                        'No services selected yet',
-                        style: TextStyle(
-                          color: Color(0xFF6B6E82),
-                          fontSize: 14,
-                        ),
+          selectedServices.isEmpty
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    SizedBox(width: double.infinity),
+                    Text(
+                      'No services selected yet',
+                      style: TextStyle(
+                        color: Color(0xFF6B6E82),
+                        fontSize: 14,
                       ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Click on services to add them',
-                        style: TextStyle(
-                          color: Color(0xFFA0A3B1),
-                          fontSize: 13,
-                        ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Click on services to add them',
+                      style: TextStyle(
+                        color: Color(0xFFA0A3B1),
+                        fontSize: 13,
                       ),
-                      SizedBox(height: 10),
-                    ],
-                  )
-                : SingleChildScrollView(
+                    ),
+                    SizedBox(height: 10),
+                  ],
+                )
+              : ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: selectedServices.entries.map((entry) {
@@ -159,7 +160,7 @@ class SelectionPanel extends StatelessWidget {
                       }).toList(),
                     ),
                   ),
-          ),
+                ),
 
           if (selectedServices.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -208,24 +209,21 @@ class SelectionPanel extends StatelessWidget {
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
                 onTap: () {
-                   
                   showDialog(
                     context: context,
-                    // This makes the background dark behind the popup
                     barrierDismissible: true,
                     builder: (BuildContext context) {
                       return Dialog(
-                        backgroundColor: Colors
-                            .transparent, // Keeps your form's custom styling
+                        backgroundColor: Colors.transparent,
                         insetPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 24,
                         ),
                         child: ConstrainedBox(
-                          constraints:  BoxConstraints(maxWidth: 850),
-                          child:  ClientDetails(
-                             selectedServices: selectedServices,
-                          )
+                          constraints: const BoxConstraints(maxWidth: 850),
+                          child: ClientDetails(
+                            selectedServices: selectedServices,
+                          ),
                         ),
                       );
                     },

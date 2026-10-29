@@ -4,6 +4,7 @@ import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/staff_controller.dart';
 import 'package:ira_spa_webapp/models/staff_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:ira_spa_webapp/theme/responsive.dart';
 import 'package:provider/provider.dart';
 import 'add_staff_dialog.dart';
 
@@ -109,12 +110,11 @@ class _StaffPageState extends State<StaffPage> {
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     itemCount: staff.staffs.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: context.responsive(mobile: 1, tablet: 2, desktop: 3),
                           crossAxisSpacing: 10,
                           mainAxisSpacing: 10,
-                          childAspectRatio: 1.2,
+                          childAspectRatio: context.responsive(mobile: 0.7, tablet: 1.0, desktop: 1.1),
                         ),
                     itemBuilder: (context, index) {
                       final staffMember = staff.staffs[index];

@@ -20,12 +20,44 @@ class ServiceController extends ChangeNotifier {
   Map<int, int> _bookingCounts = {};
   Map<int, int> get bookingCounts => _bookingCounts;
 
-  StreamSubscription<Map<int, int>>? _countSub;
+  List<Map<String, dynamic>> _rawBookingRows = [];
+  StreamSubscription<List<Map<String, dynamic>>>? _countSub;
 
   /// Returns booking count for a service
   int getBookingCount(int? serviceId) {
     if (serviceId == null) return 0;
     return _bookingCounts[serviceId] ?? 0;
+  }
+
+  void _recalculateBookingCounts() {
+    final counts = <int, int>{};
+    for (final row in _rawBookingRows) {
+      int? serviceId;
+
+      // 1. Try from service_option_id or service_id
+      final rawId = row['service_option_id'] ?? row['service_id'];
+      if (rawId != null) {
+        serviceId = int.tryParse(rawId.toString());
+      }
+
+      // 2. Fallback: match by service name (case-insensitive) against loaded services
+      if (serviceId == null) {
+        final serviceName = (row['services'] as String?)?.trim().toLowerCase();
+        if (serviceName != null && serviceName.isNotEmpty) {
+          final matched = _services.where(
+            (s) => s.serviceName.trim().toLowerCase() == serviceName,
+          ).firstOrNull;
+          serviceId = matched?.id;
+        }
+      }
+
+      if (serviceId != null) {
+        counts[serviceId] = (counts[serviceId] ?? 0) + 1;
+      }
+    }
+
+    _bookingCounts = counts;
+    notifyListeners();
   }
 
   void loadServices(int businessRef) {
@@ -37,6 +69,7 @@ class ServiceController extends ChangeNotifier {
     _sub = _service.watchServices(businessRef).listen((list) {
       _services = list;
       _loading = false;
+      _recalculateBookingCounts();
       notifyListeners();
     });
 
@@ -47,9 +80,9 @@ class ServiceController extends ChangeNotifier {
   void loadBookingCounts(int businessRef) {
     _countSub?.cancel();
 
-    _countSub = _service.watchBookingCounts(businessRef).listen((counts) {
-      _bookingCounts = counts;
-      notifyListeners();
+    _countSub = _service.watchBookingCounts(businessRef).listen((rows) {
+      _rawBookingRows = rows;
+      _recalculateBookingCounts();
     });
   }
 

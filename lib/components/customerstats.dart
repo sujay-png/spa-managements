@@ -5,58 +5,55 @@ class Customerstats extends StatelessWidget {
   final String title;
   final String value;
 
-
   const Customerstats({
     super.key,
     required this.title,
     required this.value,
-  
-
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(25),
+      width: double.infinity,
+      constraints: const BoxConstraints(minHeight: 120),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
         color: AppColors.surface,
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.04),
+            color: Colors.black.withValues(alpha: .04),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
-        spacing: 15,
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title.toUpperCase(),
-            style: TextStyle(
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 12,
-              letterSpacing: 1.4,
+              fontSize: 11,
+              letterSpacing: 1.2,
               fontWeight: FontWeight.w500,
             ),
           ),
-
-          const SizedBox(height: 10),
-
+          const SizedBox(height: 8),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 25,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
-              height: 1,
+              height: 1.1,
             ),
           ),
-        
         ],
       ),
     );

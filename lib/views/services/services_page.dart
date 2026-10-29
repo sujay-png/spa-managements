@@ -4,6 +4,7 @@ import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:ira_spa_webapp/theme/responsive.dart';
 import 'package:provider/provider.dart';
 
 class ServicePage extends StatefulWidget {
@@ -60,14 +61,15 @@ class _ServicePageState extends State<ServicePage> {
                 ),
               ),
 
-              Row(
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                alignment: WrapAlignment.spaceBetween,
                 children: [
                   const Text(
                     "Manage your spa services and treatment",
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
-                  const Spacer(flex: 50),
-
                   SizedBox(
                     width: 165,
 
@@ -108,12 +110,11 @@ class _ServicePageState extends State<ServicePage> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: controller.services.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: context.responsive(mobile: 1, tablet: 2, desktop: 3),
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
-                            childAspectRatio: 1.45,
+                            childAspectRatio: context.responsive(mobile: 0.8, tablet: 1.1, desktop: 1.2),
                           ),
                       itemBuilder: (context, index) {
                         final service = controller.services[index];
