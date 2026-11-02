@@ -12,6 +12,8 @@ class ServicesList extends StatefulWidget {
 }
 
 class _ServicesListState extends State<ServicesList> {
+  int? _loadedBusinessRef;
+
   @override
   void initState() {
     super.initState();
@@ -19,9 +21,22 @@ class _ServicesListState extends State<ServicesList> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthController>();
       if (auth.businessRef != null) {
+        _loadedBusinessRef = auth.businessRef;
         context.read<ServiceController>().loadServices(auth.businessRef!);
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthController>();
+    if (auth.businessRef != null && auth.businessRef != _loadedBusinessRef) {
+      _loadedBusinessRef = auth.businessRef;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ServiceController>().loadServices(auth.businessRef!);
+      });
+    }
   }
 
   @override
@@ -93,7 +108,8 @@ class _ServicesListState extends State<ServicesList> {
                       itemBuilder: (context, index) {
                         final service = services[index];
                         final count = bookingCounts[service.id] ?? 0;
-                        final progress = count / maxCount;
+                        final revenue = servicelist.getRevenue(service);
+                        final progress = maxCount > 0 ? (count / maxCount) : 0.0;
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(
@@ -134,34 +150,41 @@ class _ServicesListState extends State<ServicesList> {
 
                               const SizedBox(height: 8),
 
-                              /// Custom Progress Bar & Count Row
+                              /// Progress Bar
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: progress.clamp(0.0, 1.0),
+                                  backgroundColor: AppColors.surfaceAlt,
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                    Color(0xFF8C7B68),
+                                  ),
+                                  minHeight: 6,
+                                ),
+                              ),
+
+                              const SizedBox(height: 6),
+
+                              /// Bookings Count & Revenue Row
                               Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: LinearProgressIndicator(
-                                        value: progress.clamp(0.0, 1.0),
-                                        backgroundColor: AppColors.surfaceAlt,
-                                        valueColor:
-                                            const AlwaysStoppedAnimation<Color>(
-                                          Color(0xFF8C7B68),
-                                        ),
-                                        minHeight: 6,
-                                      ),
+                                  Text(
+                                    '$count ${count == 1 ? "booking" : "bookings"}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
-                                  SizedBox(
-                                    width: 24,
-                                    child: Text(
-                                      '$count',
-                                      textAlign: TextAlign.right,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.textSecondary,
-                                      ),
+                                  Text(
+                                    'Revenue: \u{20B9}${revenue.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF66564A),
                                     ),
                                   ),
                                 ],

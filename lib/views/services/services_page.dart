@@ -22,19 +22,33 @@ class _ServicePageState extends State<ServicePage> {
   final _designationController = TextEditingController();
   final _durationController = TextEditingController();
   final _priceController = TextEditingController();
+  int? _loadedBusinessRef;
+
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = context.read<AuthController>();
-
       if (auth.businessRef != null) {
+        _loadedBusinessRef = auth.businessRef;
         context.read<ServiceController>().loadServices(auth.businessRef!);
       } else {
         debugPrint("Business Ref is null");
       }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthController>();
+    if (auth.businessRef != null && auth.businessRef != _loadedBusinessRef) {
+      _loadedBusinessRef = auth.businessRef;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<ServiceController>().loadServices(auth.businessRef!);
+      });
+    }
   }
 
   bool _saving = false;
@@ -114,14 +128,14 @@ class _ServicePageState extends State<ServicePage> {
                             crossAxisCount: context.responsive(mobile: 1, tablet: 2, desktop: 3),
                             crossAxisSpacing: 16,
                             mainAxisSpacing: 16,
-                            childAspectRatio: context.responsive(mobile: 0.8, tablet: 1.1, desktop: 1.2),
+                            childAspectRatio: context.responsive(mobile: 0.9, tablet: 1.05, desktop: 1.15),
                           ),
                       itemBuilder: (context, index) {
                         final service = controller.services[index];
                         final bookingCount = controller.getBookingCount(
                           service.id,
                         );
-                        final revenue = service.price * bookingCount;
+                        final revenue = controller.getRevenue(service);
                         return ServiceCard(
                           title: service.serviceName,
                           category: service.designation,

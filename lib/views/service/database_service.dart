@@ -14,6 +14,20 @@ class DatabaseService {
   }
 
   //Watch Service
+  Future<List<ServiceModel>> getServices(int businessRef) async {
+    try {
+      final data = await _supabase
+          .from('services')
+          .select()
+          .eq('business_ref', businessRef)
+          .order('created_at', ascending: false);
+      return (data as List).map((e) => ServiceModel.fromJson(e)).toList();
+    } catch (e) {
+      print('Error fetching services: $e');
+      return [];
+    }
+  }
+
   Stream<List<ServiceModel>> watchServices(int businessRef) {
     return _supabase
         .from('services')
@@ -261,6 +275,33 @@ Stream<Map<String, int>> watchStaffBookingCounts(int businessRef) {
       .map<String>((e) => e['confirmed_time'] as String)
       .toList();
 }
+Future<List<BookingsModel>> getBookings(int businessRef) async {
+  try {
+    final data = await _supabase
+        .from('Booking')
+        .select()
+        .eq('business_ref', businessRef)
+        .order('created_at', ascending: false);
+    return (data as List).map((e) => BookingsModel.fromMap(e)).toList();
+  } catch (e) {
+    print('Error fetching bookings: $e');
+    return [];
+  }
+}
+
+Future<List<Map<String, dynamic>>> getBookingCounts(int businessRef) async {
+  try {
+    final data = await _supabase
+        .from('Booking')
+        .select()
+        .eq('business_ref', businessRef);
+    return List<Map<String, dynamic>>.from(data);
+  } catch (e) {
+    print('Error fetching booking counts: $e');
+    return [];
+  }
+}
+
 Stream<List<Map<String, dynamic>>> watchBookingCounts(int businessRef) {
   return _supabase
       .from('Booking')

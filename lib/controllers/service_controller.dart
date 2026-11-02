@@ -20,6 +20,9 @@ class ServiceController extends ChangeNotifier {
   Map<int, int> _bookingCounts = {};
   Map<int, int> get bookingCounts => _bookingCounts;
 
+  Map<int, double> _revenueByService = {};
+  Map<int, double> get revenueByService => _revenueByService;
+
   List<Map<String, dynamic>> _rawBookingRows = [];
   StreamSubscription<List<Map<String, dynamic>>>? _countSub;
 
@@ -29,61 +32,134 @@ class ServiceController extends ChangeNotifier {
     return _bookingCounts[serviceId] ?? 0;
   }
 
+  /// Returns calculated revenue for a service
+  double getRevenue(ServiceModel service) {
+    if (service.id == null) return 0.0;
+    if (_revenueByService.containsKey(service.id)) {
+      return _revenueByService[service.id]!;
+    }
+    return service.price * getBookingCount(service.id);
+  }
+
   void _recalculateBookingCounts() {
     final counts = <int, int>{};
-    for (final row in _rawBookingRows) {
-      int? serviceId;
+    final revenues = <int, double>{};
 
-      // 1. Try from service_option_id or service_id
+    for (final row in _rawBookingRows) {
+      int? matchedServiceId;
+      ServiceModel? matchedService;
+
+      // 1. First, check if row has a service_option_id or service_id matching a loaded service
       final rawId = row['service_option_id'] ?? row['service_id'];
       if (rawId != null) {
-        serviceId = int.tryParse(rawId.toString());
-      }
-
-      // 2. Fallback: match by service name (case-insensitive) against loaded services
-      if (serviceId == null) {
-        final serviceName = (row['services'] as String?)?.trim().toLowerCase();
-        if (serviceName != null && serviceName.isNotEmpty) {
-          final matched = _services.where(
-            (s) => s.serviceName.trim().toLowerCase() == serviceName,
-          ).firstOrNull;
-          serviceId = matched?.id;
+        final parsedId = int.tryParse(rawId.toString());
+        if (parsedId != null) {
+          matchedService = _services.where((s) => s.id == parsedId).firstOrNull;
+          if (matchedService != null) {
+            matchedServiceId = matchedService.id;
+          }
         }
       }
 
-      if (serviceId != null) {
-        counts[serviceId] = (counts[serviceId] ?? 0) + 1;
+      // 2. Fallback: match by service name (case-insensitive, trimmed, or partial match)
+      if (matchedServiceId == null) {
+        final rawServiceName = (row['services'] as String?)?.trim().toLowerCase();
+        if (rawServiceName != null && rawServiceName.isNotEmpty) {
+          matchedService = _services.where((s) {
+            final name = s.serviceName.trim().toLowerCase();
+            return name == rawServiceName ||
+                rawServiceName.contains(name) ||
+                name.contains(rawServiceName);
+          }).firstOrNull;
+
+          matchedServiceId = matchedService?.id;
+        }
+      }
+
+      if (matchedServiceId != null && matchedService != null) {
+        counts[matchedServiceId] = (counts[matchedServiceId] ?? 0) + 1;
+
+        // Determine price for this booking
+        double price = matchedService.price;
+        final rawPrice = row['price'] ?? row['service_price'] ?? row['confirmed_price'];
+        if (rawPrice != null) {
+          final sanitized = rawPrice.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+          final parsed = double.tryParse(sanitized);
+          if (parsed != null && parsed > 0) {
+            price = parsed;
+          }
+        }
+
+        revenues[matchedServiceId] = (revenues[matchedServiceId] ?? 0.0) + price;
       }
     }
 
     _bookingCounts = counts;
+    _revenueByService = revenues;
     notifyListeners();
   }
 
-  void loadServices(int businessRef) {
+  Future<void> loadServices(int businessRef) async {
     _sub?.cancel();
 
     _loading = true;
     notifyListeners();
 
-    _sub = _service.watchServices(businessRef).listen((list) {
-      _services = list;
-      _loading = false;
-      _recalculateBookingCounts();
-      notifyListeners();
-    });
+    // 1. Fetch immediately via direct REST call for 100% reliable instant loading
+    try {
+      final directList = await _service.getServices(businessRef);
+      if (directList.isNotEmpty) {
+        _services = directList;
+        _loading = false;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Direct services fetch error: $e");
+    }
 
-    // Load booking counts also
-    loadBookingCounts(businessRef);
+    // 2. Also subscribe to Realtime stream for live changes
+    _sub = _service.watchServices(businessRef).listen(
+      (list) {
+        _services = list;
+        _loading = false;
+        _recalculateBookingCounts();
+        notifyListeners();
+      },
+      onError: (e) {
+        debugPrint("Services stream error: $e");
+        _loading = false;
+        notifyListeners();
+      },
+    );
+
+    // 3. Load booking counts
+    await loadBookingCounts(businessRef);
   }
 
-  void loadBookingCounts(int businessRef) {
+  Future<void> loadBookingCounts(int businessRef) async {
     _countSub?.cancel();
 
-    _countSub = _service.watchBookingCounts(businessRef).listen((rows) {
-      _rawBookingRows = rows;
-      _recalculateBookingCounts();
-    });
+    // 1. Fetch immediately via direct REST call
+    try {
+      final rows = await _service.getBookingCounts(businessRef);
+      if (rows.isNotEmpty || _rawBookingRows.isEmpty) {
+        _rawBookingRows = rows;
+        _recalculateBookingCounts();
+      }
+    } catch (e) {
+      debugPrint("Direct booking rows fetch error: $e");
+    }
+
+    // 2. Also subscribe to Realtime stream for live changes
+    _countSub = _service.watchBookingCounts(businessRef).listen(
+      (rows) {
+        _rawBookingRows = rows;
+        _recalculateBookingCounts();
+      },
+      onError: (e) {
+        debugPrint("Booking stream error (fallback active): $e");
+      },
+    );
   }
 
   List<ServiceModel> get _filteredServices {

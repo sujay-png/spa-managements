@@ -17,85 +17,96 @@ class BookingController extends ChangeNotifier {
   String _search = '';
   String _statusFilter = 'All';
   //===================total bookings============
-int get totalBookings => _bookings.length;
-//================total revenue======================
-double get totalRevenue {
-  return _bookings.fold(0.0, (sum, booking) {
-    final rawPrice = booking.servicePrice ?? '0';
-    // Removes currency symbols, spaces, commas, etc.
-    final sanitizedPrice = rawPrice.replaceAll(RegExp(r'[^0-9.]'), '');
-    final price = double.tryParse(sanitizedPrice) ?? 0.0;
-    return sum + price;
-  });
-}
-//======Average time wait=================
-int get waitingBookings =>
-    _bookings.where((b) => b.statusrequired.toLowerCase() == 'pending').length;
-  StreamSubscription<List<BookingsModel>>? _sub;
+  int get totalBookings => _bookings.length;
+  //================total revenue======================
+  double get totalRevenue {
+    return _bookings.fold(0.0, (sum, booking) {
+      final rawPrice = booking.servicePrice ?? '0';
+      // Removes currency symbols, spaces, commas, etc.
+      final sanitizedPrice = rawPrice.replaceAll(RegExp(r'[^0-9.]'), '');
+      final price = double.tryParse(sanitizedPrice) ?? 0.0;
+      return sum + price;
+    });
+  }
 
- 
+  //======Average time wait=================
+  int get waitingBookings =>
+      _bookings.where((b) => b.statusrequired.toLowerCase() == 'pending').length;
+  StreamSubscription<List<BookingsModel>>? _sub;
 
   //======================== Load Bookings ========================
 
- void loadBookings(int businessRef) {
-  _sub?.cancel();
+  Future<void> loadBookings(int businessRef) async {
+    _sub?.cancel();
 
-  _loading = true; // Set to true initially
-  notifyListeners();
+    _loading = true;
+    notifyListeners();
 
-  _sub = _service.watchBookings(businessRef).listen(
-    (list) {
-      _bookings = list;
-      _loading = false;
-      notifyListeners();
-    },
-    onError: (e) {
-      print("Error fetching bookings: $e");
-      _loading = false;
-      notifyListeners();
-    },
-  );
-}
+    // 1. Fetch immediately via direct REST for instant and reliable load
+    try {
+      final directList = await _service.getBookings(businessRef);
+      if (directList.isNotEmpty) {
+        _bookings = directList;
+        _loading = false;
+        notifyListeners();
+      }
+    } catch (e) {
+      print("Direct bookings fetch error: $e");
+    }
 
+    // 2. Also subscribe to Realtime stream
+    _sub = _service.watchBookings(businessRef).listen(
+      (list) {
+        _bookings = list;
+        _loading = false;
+        notifyListeners();
+      },
+      onError: (e) {
+        print("Error fetching bookings stream: $e");
+        _loading = false;
+        notifyListeners();
+      },
+    );
+  }
 
   Future<void> updateStatus(int id, String status) async {
-  await _service.updateBookingStatus(id, status);
-}
+    await _service.updateBookingStatus(id, status);
+  }
 
   //======================== Search ========================
 
- List<BookingsModel> get _filteredBookings {
-  List<BookingsModel> filtered = _bookings;
+  List<BookingsModel> get _filteredBookings {
+    List<BookingsModel> filtered = _bookings;
 
-  // Search
-  if (_search.isNotEmpty) {
-    filtered = filtered.where((booking) {
-      return booking.customer.toLowerCase().contains(_search) ||
-          booking.servicename.toLowerCase().contains(_search) ||
-          booking.therapistname.toLowerCase().contains(_search);
-    }).toList();
+    // Search
+    if (_search.isNotEmpty) {
+      filtered = filtered.where((booking) {
+        return booking.customer.toLowerCase().contains(_search) ||
+            booking.servicename.toLowerCase().contains(_search) ||
+            booking.therapistname.toLowerCase().contains(_search);
+      }).toList();
+    }
+
+    // Status Filter
+    if (_statusFilter != 'All') {
+      filtered = filtered.where((booking) {
+        return booking.statusrequired.toLowerCase() ==
+            _statusFilter.toLowerCase();
+      }).toList();
+    }
+
+    return filtered;
   }
 
-  // Status Filter
-  if (_statusFilter != 'All') {
-    filtered = filtered.where((booking) {
-      return booking.statusrequired.toLowerCase() ==
-          _statusFilter.toLowerCase();
-    }).toList();
+  void filterStatus(String value) {
+    _statusFilter = value;
+    notifyListeners();
   }
 
-  return filtered;
-}
-void filterStatus(String value) {
-  _statusFilter = value;
-  notifyListeners();
-}
   void search(String value) {
     _search = value.toLowerCase();
     notifyListeners();
   }
-
- 
 
   //======================== CRUD ========================
 
@@ -103,23 +114,23 @@ void filterStatus(String value) {
     await _service.addBooking(booking);
   }
 
-Future<void> updateBooking(BookingsModel booking) async {
-  await _service.updateBooking(booking);
+  Future<void> updateBooking(BookingsModel booking) async {
+    await _service.updateBooking(booking);
 
-  final index = _bookings.indexWhere((e) => e.id == booking.id);
+    final index = _bookings.indexWhere((e) => e.id == booking.id);
 
-  if (index != -1) {
-    _bookings[index] = booking;
+    if (index != -1) {
+      _bookings[index] = booking;
+    }
+
+    notifyListeners();
   }
 
-  notifyListeners();
-}
-
   Future<void> deleteBooking(int id) async {
-  await _service.deleteBooking(id);
-  _bookings.removeWhere((b) => b.id == id);
-  notifyListeners();
-}
+    await _service.deleteBooking(id);
+    _bookings.removeWhere((b) => b.id == id);
+    notifyListeners();
+  }
 
   @override
   void dispose() {

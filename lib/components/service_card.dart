@@ -10,7 +10,6 @@ class ServiceCard extends StatelessWidget {
   final String revenue;
   final String badge;
 
-  
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -20,12 +19,11 @@ class ServiceCard extends StatelessWidget {
     required this.category,
     required this.duration,
     required this.price,
-
     required this.bookings,
     required this.revenue,
     required this.badge,
-
- required this.onEdit,required  this.onDelete,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
@@ -38,7 +36,7 @@ class ServiceCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE8DDD2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -55,12 +53,16 @@ class ServiceCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C221E),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C221E),
+                      ),
                     ),
                   ),
                   SizedBox(
@@ -69,7 +71,7 @@ class ServiceCard extends StatelessWidget {
                       icon: const Icon(Icons.more_vert, size: 18),
                       onSelected: (value) {
                         if (value == 'edit') {
-                         onEdit.call();
+                          onEdit.call();
                         } else if (value == 'delete') {
                           onDelete.call();
                         }
@@ -119,9 +121,9 @@ class ServiceCard extends StatelessWidget {
                 ),
                 child: Text(
                   category,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
-                    color: const Color(0xFF796D64),
+                    color: Color(0xFF796D64),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -129,7 +131,7 @@ class ServiceCard extends StatelessWidget {
             ],
           ),
 
-          Spacer(flex: 3),
+          const SizedBox(height: 12),
 
           /// Duration & Price Boxes
           Row(
@@ -139,7 +141,7 @@ class ServiceCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 9,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF7F3EE),
@@ -166,12 +168,16 @@ class ServiceCard extends StatelessWidget {
                             color: Color(0xFF544436),
                           ),
                           const SizedBox(width: 4),
-                          Text(
-                            duration,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF332A24),
+                          Expanded(
+                            child: Text(
+                              duration,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF332A24),
+                              ),
                             ),
                           ),
                         ],
@@ -180,13 +186,13 @@ class ServiceCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 flex: 5,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: 9,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF7F3EE),
@@ -207,10 +213,12 @@ class ServiceCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         price,
-                        style: TextStyle(
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF9D785A),
+                          color: Color(0xFF9D785A),
                         ),
                       ),
                     ],
@@ -220,15 +228,12 @@ class ServiceCard extends StatelessWidget {
             ],
           ),
 
-          Spacer(flex: 2),
+          const SizedBox(height: 10),
 
-          /// Divider with Spacing
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(color: Color(0xFFF0E7DE), height: 1, thickness: 1),
-          ),
+          /// Divider
+          const Divider(color: Color(0xFFF0E7DE), height: 1, thickness: 1),
 
-          Spacer(flex: 1),
+          const SizedBox(height: 10),
 
           /// Bookings & Revenue
           Row(
@@ -286,7 +291,7 @@ class ServiceCard extends StatelessWidget {
             ],
           ),
 
-          const Spacer(flex: 9),
+          const Spacer(),
 
           /// Bottom Status Badge
           Container(
@@ -297,8 +302,8 @@ class ServiceCard extends StatelessWidget {
             ),
             child: Text(
               badge,
-              style: TextStyle(
-                color: const Color(0xFF108A00),
+              style: const TextStyle(
+                color: Color(0xFF108A00),
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
               ),
