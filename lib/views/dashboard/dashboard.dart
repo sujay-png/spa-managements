@@ -5,6 +5,7 @@ import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:ira_spa_webapp/controllers/customer_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
+import 'package:ira_spa_webapp/controllers/staff_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/dashboard/services_list.dart';
 import 'package:ira_spa_webapp/views/dashboard/upcomming_appointments.dart';
@@ -18,6 +19,25 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  int? _loadedBusinessRef;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthController>();
+    if (auth.businessRef != null && auth.businessRef != _loadedBusinessRef) {
+      _loadedBusinessRef = auth.businessRef;
+      final ref = auth.businessRef!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<ServiceController>().loadServices(ref);
+        context.read<BookingController>().loadBookings(ref);
+        context.read<CustomerController>().loadcustomer(ref);
+        context.read<StaffController>().loadStaff(ref);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authController = context.watch<AuthController>();

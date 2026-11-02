@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/components/service_card.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
@@ -30,16 +32,53 @@ class _ServicePageState extends State<ServicePage> {
 
       if (auth.businessRef != null) {
         context.read<ServiceController>().loadServices(auth.businessRef!);
+        context.read<BookingController>().loadBookings(auth.businessRef!);
       } else {
         debugPrint("Business Ref is null");
       }
     });
   }
 
+  int? _loadedBusinessRef;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthController>();
+    if (auth.businessRef != null && auth.businessRef != _loadedBusinessRef) {
+      _loadedBusinessRef = auth.businessRef;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<ServiceController>().loadServices(auth.businessRef!);
+        context.read<BookingController>().loadBookings(auth.businessRef!);
+      });
+    }
+  }
+
   bool _saving = false;
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<ServiceController>();
+    final bookingCtrl = context.watch<BookingController>();
+    final auth = context.watch<AuthController>();
+
+    int getServiceCount(ServiceModel service) {
+      final ctrlCount = controller.getBookingCount(service.id);
+      if (ctrlCount > 0) return ctrlCount;
+      final sName = service.serviceName.trim().toLowerCase();
+      return bookingCtrl.bookings.where((b) {
+        if (service.id != null && (b.serviceRef == service.id || b.serviceOptionId == service.id)) return true;
+        final bName = b.servicename.trim().toLowerCase();
+        if (sName.isEmpty || bName.isEmpty) return false;
+        return bName == sName || bName.contains(sName) || sName.contains(bName);
+      }).length;
+    }
+
+    double getServiceRevenue(ServiceModel service, int count) {
+      final ctrlRev = controller.getRevenue(service);
+      if (ctrlRev > 0) return ctrlRev;
+      return service.price * count;
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -67,6 +106,22 @@ class _ServicePageState extends State<ServicePage> {
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                   const Spacer(flex: 50),
+                  IconButton(
+                    tooltip: 'Refresh Data',
+                    icon: const Icon(Icons.refresh, color: AppColors.textSecondary),
+                    onPressed: () async {
+                      final ref = auth.businessRef;
+                      if (ref != null) {
+                        await controller.loadServices(ref);
+                        await bookingCtrl.loadBookings(ref);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Refreshed: ' + controller.services.length.toString() + ' services, ' + bookingCtrl.bookings.length.toString() + ' bookings found in database')),
+                        );
+                      }
+                    },
+                  ),
+                  const SizedBox(width: 8),
 
                   SizedBox(
                     width: 165,
@@ -117,10 +172,8 @@ class _ServicePageState extends State<ServicePage> {
                           ),
                       itemBuilder: (context, index) {
                         final service = controller.services[index];
-                        final bookingCount = controller.getBookingCount(
-                          service.id,
-                        );
-                        final revenue = service.price * bookingCount;
+                        final bookingCount = getServiceCount(service);
+                        final revenue = getServiceRevenue(service, bookingCount);
                         return ServiceCard(
                           title: service.serviceName,
                           category: service.designation,
@@ -465,13 +518,50 @@ class _ServicePageState extends State<ServicePage> {
       await context.read<ServiceController>().deleteservice(service.id!);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Service deleted successfully")),
+        const SnackBar(content: Text('Service deleted successfully')),
       );
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      if (e.code == '23503') {
+        final unlink = await showDialog<bool>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Service Linked to Bookings'),
+            content: const Text(
+              'This service cannot be deleted because existing bookings are linked to it. Do you want to unlink those bookings and delete this service?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Unlink & Delete', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+        if (unlink == true && mounted) {
+          try {
+            await Supabase.instance.client.from('Booking').update({'service_id': null}).eq('service_id', service.id!);
+            await context.read<ServiceController>().deleteservice(service.id!);
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Service unlinked and deleted successfully')),
+            );
+          } catch (err) {
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: ' + err.toString())));
+          }
+        }
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: ' + e.message)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Failed to delete: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: ' + e.toString())));
     }
   }
 

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
+import 'package:ira_spa_webapp/controllers/customer_controller.dart';
+import 'package:ira_spa_webapp/controllers/service_controller.dart';
+import 'package:ira_spa_webapp/controllers/staff_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/bookings/booking_page.dart';
 import 'package:ira_spa_webapp/views/customer/customer_page.dart';
@@ -21,6 +25,25 @@ class _ShellrouteState extends State<Shellroute> {
   int _index = 0;
   final double _mobileBreakpoint = 600;
   bool _isexpanded = false;
+  int? _loadedBusinessRef;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthController>();
+    if (auth.businessRef != null && auth.businessRef != _loadedBusinessRef) {
+      _loadedBusinessRef = auth.businessRef;
+      final ref = auth.businessRef!;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<ServiceController>().loadServices(ref);
+        context.read<BookingController>().loadBookings(ref);
+        context.read<CustomerController>().loadcustomer(ref);
+        context.read<StaffController>().loadStaff(ref);
+      });
+    }
+  }
+
   static const _pages = [
     Dashboard(),
     BookingPage(),

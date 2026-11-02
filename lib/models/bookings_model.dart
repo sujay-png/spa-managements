@@ -65,65 +65,83 @@ class BookingsModel {
   }
 
   factory BookingsModel.fromMap(Map<String, dynamic> map) {
+    DateTime? parseDate(dynamic value) {
+      if (value == null) return null;
+      if (value is DateTime) return value;
+      return DateTime.tryParse(value.toString());
+    }
+
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      return int.tryParse(value.toString());
+    }
+
+    final rawPrice = map['total_amount'] ??
+        map['rate'] ??
+        map['paid_amount'] ??
+        map['price'] ??
+        map['service_price'];
+
     return BookingsModel(
-      id: map['id'],
-      businessRef: map['business_ref'],
+      id: parseInt(map['id']),
+      businessRef: parseInt(map['business_ref']),
 
       // IDs
-      customerRef: map['customer_id'],
-      serviceRef: map['service_id'],
-      therapistRef: map['therapist_id'],
+      customerRef: parseInt(map['customer_id'] ?? map['customer_ref']),
+      serviceRef: parseInt(map['service_id'] ?? map['service_option_id']),
+      therapistRef: parseInt(map['staff_id'] ?? map['therapist_id']),
 
       // Names
-      customer: map['customer_ref'] ?? '',
-      servicename: map['services'] ?? '',
-      therapistname: map['therapist'] ?? '',
+      customer: map['customer_ref']?.toString() ?? '',
+      servicename: map['services']?.toString() ?? '',
+      therapistname: map['therapist']?.toString() ?? '',
 
-      bookingdate: map['available_slot'] != null
-          ? DateTime.parse(map['available_slot'])
-          : DateTime.now(),
+      bookingdate: parseDate(map['available_slot']) ??
+          parseDate(map['check_in_at']) ??
+          DateTime.now(),
 
-      timeslot: map['confirmed_time'] ?? '',
-      bookingdetails: map['requirements_booking'] ?? '',
-      statusrequired: map['booking_status'] ?? 'Pending',
+      timeslot: map['confirmed_time']?.toString() ?? '',
+      bookingdetails: map['requirements_booking']?.toString() ?? '',
+      statusrequired: map['booking_status']?.toString() ?? 'Pending',
 
-      startTime: map['start_time'] != null
-          ? DateTime.parse(map['start_time'])
-          : null,
+      startTime: parseDate(map['start_time']),
+      endTime: parseDate(map['end_time']),
 
-      endTime: map['end_time'] != null
-          ? DateTime.parse(map['end_time'])
-          : null,
-
-      duration: map['duration'],
+      duration: parseInt(map['duration']),
       serviceDuration: map['duration']?.toString(),
-      servicePrice: map['service_price']?.toString() ?? map['price']?.toString(),
-      serviceOptionId: map['service_option_id'],
-      emailSent: map['email_sent'] ?? false,
+      servicePrice: rawPrice?.toString(),
+      serviceOptionId: parseInt(map['service_option_id'] ?? map['service_id']),
+      emailSent: map['email_sent'] == true,
     );
   }
 
   Map<String, dynamic> toMap() {
+    double? parsedPrice;
+    if (servicePrice != null && servicePrice!.isNotEmpty) {
+      final sanitized = servicePrice!.replaceAll(RegExp(r'[^0-9.]'), '');
+      parsedPrice = double.tryParse(sanitized);
+    }
+
     return {
-      "business_ref": businessRef,
-
-    
-
-      // Names
+      if (businessRef != null) "business_ref": businessRef,
+      if (customerRef != null) "customer_id": customerRef,
+      if (serviceRef != null) "service_id": serviceRef,
+      if (therapistRef != null) "staff_id": therapistRef,
       "customer_ref": customer,
       "services": servicename,
       "therapist": therapistname,
-
       "available_slot": bookingdate.toIso8601String(),
       "confirmed_time": timeslot,
       "requirements_booking": bookingdetails,
       "booking_status": statusrequired,
-      "start_time": startTime?.toIso8601String(),
-      "end_time": endTime?.toIso8601String(),
-      "duration": duration,
-      "service_option_id": serviceOptionId,
+      if (startTime != null) "start_time": startTime!.toIso8601String(),
+      if (endTime != null) "end_time": endTime!.toIso8601String(),
+      if (duration != null) "duration": duration,
+      if (serviceOptionId != null) "service_option_id": serviceOptionId,
       "email_sent": emailSent,
-     
+      if (parsedPrice != null) "rate": parsedPrice,
+      if (parsedPrice != null) "total_amount": parsedPrice,
     };
   }
 }

@@ -14,15 +14,33 @@ class UpcommingAppointments extends StatefulWidget {
 
 class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
 
-  @override
-void initState() {
-  super.initState();
+  int? _loadedBusinessRef;
 
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    final auth=context.read<AuthController>();
-    context.read<BookingController>().loadBookings(auth.businessRef!);
-  });
-}
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthController>();
+      if (auth.businessRef != null) {
+        _loadedBusinessRef = auth.businessRef;
+        context.read<BookingController>().loadBookings(auth.businessRef!);
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthController>();
+    if (auth.businessRef != null && auth.businessRef != _loadedBusinessRef) {
+      _loadedBusinessRef = auth.businessRef;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<BookingController>().loadBookings(auth.businessRef!);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

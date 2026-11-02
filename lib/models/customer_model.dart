@@ -54,6 +54,7 @@ class CustomerModel {
       'customer_note': notes,
           'business_ref': businessRef,
          'is_blacklisted': isblacklisted,
+      'created_at': DateTime.now().toUtc().toIso8601String(),
     };
   }
 

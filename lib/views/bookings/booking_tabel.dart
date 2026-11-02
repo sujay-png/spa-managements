@@ -19,6 +19,21 @@ class BookingTabel extends StatefulWidget {
 }
 
 class _BookingTabelState extends State<BookingTabel> {
+  int? _loadedBusinessRef;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final auth = context.watch<AuthController>();
+    if (auth.businessRef != null && auth.businessRef != _loadedBusinessRef) {
+      _loadedBusinessRef = auth.businessRef;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        context.read<BookingController>().loadBookings(auth.businessRef!);
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();

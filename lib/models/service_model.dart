@@ -12,17 +12,31 @@ class ServiceModel {
     required this.designation,
     required this.duration,
     required this.price,
-     this.businessRef,
+    this.businessRef,
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      return int.tryParse(value.toString());
+    }
+
+    double parseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is double) return value;
+      if (value is int) return value.toDouble();
+      final sanitized = value.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+      return double.tryParse(sanitized) ?? 0.0;
+    }
+
     return ServiceModel(
-      id: json['id'] as int?,
+      id: parseInt(json['id']),
       serviceName: json['service_name']?.toString() ?? '',
       designation: json['designation']?.toString() ?? '',
       duration: json['duration']?.toString() ?? '',
-          businessRef: json['business_ref'] as int?,
-      price: double.tryParse(json['price'].toString()) ?? 0.0,
+      businessRef: parseInt(json['business_ref']),
+      price: parseDouble(json['price']),
     );
   }
 

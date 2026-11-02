@@ -19,7 +19,7 @@ class DatabaseService {
         .from('services')
         .stream(primaryKey: ['id'])
         .eq('business_ref', businessRef)
-        .order('created_at', ascending: false)
+        
         .map((data) {
           return data.map((e) => ServiceModel.fromJson(e)).toList();
         });
@@ -59,7 +59,7 @@ class DatabaseService {
         .from('Customers')
         .stream(primaryKey: ['id'])
         .eq('business_ref', businessRef)
-        .order('created_at', ascending: false)
+        
         .map((data) {
           return data.map((e) => CustomerModel.fromJson(e)).toList();
         });
@@ -165,7 +165,7 @@ Future<Map<String, Map<String, dynamic>>> getBookingStatsForBusiness(
         .from('Therapist')
         .stream(primaryKey: ['id'])
         .eq('business_ref', businessRef)
-        .order('created_at', ascending: false)
+        
         .map((data) {
           return data.map((e) => StaffModel.fromJson(e)).toList();
         });
@@ -224,7 +224,7 @@ Stream<Map<String, int>> watchStaffBookingCounts(int businessRef) {
         .from('Booking')
         .stream(primaryKey: ['id'])
         .eq('business_ref', businessRef)
-        .order('created_at', ascending: false)
+        
         .map((data) => data.map((e) => BookingsModel.fromMap(e)).toList());
   }
 
