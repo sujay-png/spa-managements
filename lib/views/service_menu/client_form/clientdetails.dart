@@ -39,7 +39,6 @@ class _ClientDetailsState extends State<ClientDetails> {
   List<ClientModel> _customersList = [];
   ClientModel? _selectedCustomer;
   ClientModel? client;
- 
 
   // ─── Sub-form data (updated via callbacks) ────────────────────────────────
   GoalConcernData _goalData = const GoalConcernData();
@@ -118,7 +117,16 @@ class _ClientDetailsState extends State<ClientDetails> {
   // ─── Save everything to Supabase ─────────────────────────────────────────
 
   Future<void> _saveClient() async {
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+    final formValid = _formKey.currentState?.validate() ?? false;
+    if (!formValid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all required fields (Date, Time, Customer, Phone).'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
     
     final auth = context.read<AuthController>();
 
@@ -129,11 +137,9 @@ class _ClientDetailsState extends State<ClientDetails> {
       return;
     }
 
-
     setState(() => _isSaving = true);
 
     try {
-   
       final client = ClientModel(
         // Basic details
         businessRef: auth.businessRef!,
@@ -158,8 +164,6 @@ class _ClientDetailsState extends State<ClientDetails> {
         sessionFrequency: _lifestyleData.sessionFrequency,
         serviceName: widget.selectedServices.keys.first.title,
         serviceTime: widget.selectedServices.values.first.label,
-         
-
       );
 
       final saved = await _service.insertClient(client);
@@ -247,7 +251,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Date & Time
+                    // Date & Time (Both Required)
                     Row(
                       children: [
                         Expanded(
@@ -257,8 +261,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                             hint: 'dd/mm/yyyy',
                             controller: _dobController,
                             readOnly: true,
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? 'Select a date'
+                            isRequired: true,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Please select a date'
                                 : null,
                             onTap: () async {
                               final now = DateTime.now();
@@ -285,8 +290,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                             hint: '00:00 AM/PM',
                             controller: _timeController,
                             readOnly: true,
-                            validator: (v) => (v == null || v.isEmpty)
-                                ? 'Select a time'
+                            isRequired: true,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Please select a time'
                                 : null,
                             onTap: () async {
                               final picked = await showTimePicker(
@@ -305,7 +311,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                     ),
                     const SizedBox(height: 25),
 
-                    // Select Customer & Age
+                    // Select Customer (Required) & Age (Optional)
                     Row(
                       children: [
                         Expanded(
@@ -326,7 +332,20 @@ class _ClientDetailsState extends State<ClientDetails> {
                                   value: _selectedCustomer,
                                   isExpanded: true,
                                   decoration: InputDecoration(
-                                    labelText: 'Select Customer',
+                                    label: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Text('Select Customer'),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          '*',
+                                          style: TextStyle(
+                                            color: Colors.red,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                     prefixIcon: const Icon(
                                       Icons.person_search_outlined,
                                     ),
@@ -338,7 +357,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                                     return DropdownMenuItem<ClientModel>(
                                       value: customer,
                                       child: Text(
-                                        '${customer.name}',
+                                        customer.name,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     );
@@ -357,16 +376,14 @@ class _ClientDetailsState extends State<ClientDetails> {
                             hint: 'Enter age',
                             controller: _ageController,
                             keyboardType: TextInputType.number,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Enter age'
-                                : null,
+                            isRequired: false,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 25),
 
-                    // Email & Phone
+                    // Email (Optional) & Phone (Required)
                     Row(
                       children: [
                         Expanded(
@@ -376,11 +393,14 @@ class _ClientDetailsState extends State<ClientDetails> {
                             hint: 'customer@email.com',
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            isRequired: false,
                             validator: (v) {
-                              if (v == null || v.trim().isEmpty) {
-                                return 'Enter email';
+                              if (v != null && v.trim().isNotEmpty) {
+                                if (!RegExp(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$')
+                                    .hasMatch(v.trim())) {
+                                  return 'Enter a valid email address';
+                                }
                               }
-                              if (!v.contains('@')) return 'Invalid email';
                               return null;
                             },
                           ),
@@ -393,8 +413,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                             hint: '+1 234 567 8900',
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
+                            isRequired: true,
                             validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Enter phone'
+                                ? 'Please enter phone'
                                 : null,
                           ),
                         ),
@@ -402,35 +423,32 @@ class _ClientDetailsState extends State<ClientDetails> {
                     ),
                     const SizedBox(height: 25),
 
-                    // Location
+                    // Location (Optional)
                     _buildInputField(
                       label: 'Location',
                       icon: Icons.location_on_outlined,
                       hint: 'Enter location address',
                       controller: _locationController,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Enter location'
-                          : null,
+                      isRequired: false,
                     ),
                     const SizedBox(height: 25),
 
-                    // Loyalty Card
+                    // Loyalty Card (Optional)
                     _buildInputField(
                       label: 'Loyalty Card No',
                       icon: Icons.badge_outlined,
                       hint: 'Enter card number',
                       controller: _loyaltyCardController,
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Enter card number'
-                          : null,
+                      isRequired: false,
                     ),
                     const SizedBox(height: 28),
 
                     const Divider(),
                     const SizedBox(height: 12),
 
-                    // ── Goals & Concerns ─────────────────────────────────
+                    // ── Goals & Concerns (Optional) ──────────────────────
                     ClientgoalConcern(
+                      initialData: _goalData,
                       onChanged: (data) => setState(() => _goalData = data),
                     ),
                     const SizedBox(height: 20),
@@ -438,8 +456,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                     const Divider(),
                     const SizedBox(height: 12),
 
-                    // ── Health History ───────────────────────────────────
+                    // ── Health History (Optional) ────────────────────────
                     ClientHealthHistory(
+                      initialData: _healthData,
                       onChanged: (data) => setState(() => _healthData = data),
                     ),
                     const SizedBox(height: 20),
@@ -447,8 +466,9 @@ class _ClientDetailsState extends State<ClientDetails> {
                     const Divider(),
                     const SizedBox(height: 12),
 
-                    // ── Lifestyle ────────────────────────────────────────
+                    // ── Lifestyle (Optional) ─────────────────────────────
                     ClientLifestyle(
+                      initialData: _lifestyleData,
                       onChanged: (data) =>
                           setState(() => _lifestyleData = data),
                     ),
@@ -508,6 +528,7 @@ class _ClientDetailsState extends State<ClientDetails> {
     VoidCallback? onTap,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    bool isRequired = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,6 +545,17 @@ class _ClientDetailsState extends State<ClientDetails> {
                 color: Color(0xFF4A4A4A),
               ),
             ),
+            if (isRequired) ...[
+              const SizedBox(width: 4),
+              const Text(
+                '*',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ],
         ),
         const SizedBox(height: 10),

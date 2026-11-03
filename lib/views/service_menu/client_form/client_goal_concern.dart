@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 
 class GoalConcernData {
-  // 1. Changed to Lists to hold multiple values
   final List<String> massageGoals;
   final List<String> bodyFocusAreas;
 
@@ -10,21 +9,36 @@ class GoalConcernData {
     this.massageGoals = const [],
     this.bodyFocusAreas = const [],
   });
+
+  bool get isValid => true;
 }
 
 class ClientgoalConcern extends StatefulWidget {
   final ValueChanged<GoalConcernData> onChanged;
+  final GoalConcernData? initialData;
 
-  const ClientgoalConcern({super.key, required this.onChanged});
+  const ClientgoalConcern({
+    super.key,
+    required this.onChanged,
+    this.initialData,
+  });
 
   @override
   State<ClientgoalConcern> createState() => _ClientgoalConcernState();
 }
 
 class _ClientgoalConcernState extends State<ClientgoalConcern> {
-  // 2. Initialize as empty lists
   List<String> _selectedGoals = [];
   List<String> _selectedFocusAreas = [];
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialData != null) {
+      _selectedGoals = List.from(widget.initialData!.massageGoals);
+      _selectedFocusAreas = List.from(widget.initialData!.bodyFocusAreas);
+    }
+  }
 
   void _notify() {
     widget.onChanged(GoalConcernData(
@@ -33,7 +47,6 @@ class _ClientgoalConcernState extends State<ClientgoalConcern> {
     ));
   }
 
-  // 3. Helper logic to toggle items in a list
   void _toggleSelection(List<String> list, String value, bool isGoals) {
     setState(() {
       if (list.contains(value)) {
@@ -56,36 +69,36 @@ class _ClientgoalConcernState extends State<ClientgoalConcern> {
             'Goals & Concerns',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary
+                  color: AppColors.textPrimary,
                 ),
           ),
         ),
         _buildQuestionSection(
-          context,
-          'What result do you want from massage session(s)?',
-          ['Relaxation', 'Aroma relax', 'Stress relief', 'Pain relief'],
-          _selectedGoals, // Pass the list
-          (v) => _toggleSelection(_selectedGoals, v!, true),
+          context: context,
+          question: 'What result do you want from massage session(s)?',
+          options: const ['Relaxation', 'Aroma relax', 'Stress relief', 'Pain relief'],
+          selectedItems: _selectedGoals,
+          onSelect: (v) => _toggleSelection(_selectedGoals, v!, true),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         _buildQuestionSection(
-          context,
-          'Would you like us to focus more on any specific parts of the body?',
-          ['Head', 'Neck', 'Back', 'Legs'],
-          _selectedFocusAreas, // Pass the list
-          (v) => _toggleSelection(_selectedFocusAreas, v!, false),
+          context: context,
+          question: 'Would you like us to focus more on any specific parts of the body?',
+          options: const ['Head', 'Neck', 'Back', 'Legs'],
+          selectedItems: _selectedFocusAreas,
+          onSelect: (v) => _toggleSelection(_selectedFocusAreas, v!, false),
         ),
       ],
     );
   }
 
-  Widget _buildQuestionSection(
-    BuildContext context,
-    String question,
-    List<String> options,
-    List<String> selectedItems, // Changed type to List
-    void Function(String?) onSelect,
-  ) {
+  Widget _buildQuestionSection({
+    required BuildContext context,
+    required String question,
+    required List<String> options,
+    required List<String> selectedItems,
+    required void Function(String?) onSelect,
+  }) {
     return Padding(
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -105,8 +118,7 @@ class _ClientgoalConcernState extends State<ClientgoalConcern> {
             children: options
                 .map((option) => _IndividualCheckbox(
                       label: option,
-                      // 4. Check if the list contains the option
-                      isChecked: selectedItems.contains(option), 
+                      isChecked: selectedItems.contains(option),
                       onTap: () => onSelect(option),
                     ))
                 .toList(),
@@ -132,20 +144,22 @@ class _IndividualCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 150,
-      child: InkWell( // Added InkWell so clicking the text also toggles
+      child: InkWell(
         onTap: onTap,
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Flexible(
-              child: Text(label,
-                  style: Theme.of(context).textTheme.labelLarge),
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
             ),
             Checkbox(
               value: isChecked,
               onChanged: (_) => onTap(),
               side: const BorderSide(color: Colors.black54),
-              activeColor: AppColors.textPrimary
+              activeColor: AppColors.textPrimary,
             ),
           ],
         ),

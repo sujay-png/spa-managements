@@ -14,12 +14,19 @@ class HealthHistoryData {
     this.cardiacProblems,
     this.recentSurgery,
   });
+
+  bool get isValid => true;
 }
 
 class ClientHealthHistory extends StatefulWidget {
   final ValueChanged<HealthHistoryData> onChanged;
+  final HealthHistoryData? initialData;
 
-  const ClientHealthHistory({super.key, required this.onChanged});
+  const ClientHealthHistory({
+    super.key,
+    required this.onChanged,
+    this.initialData,
+  });
 
   @override
   State<ClientHealthHistory> createState() => _ClientHealthHistoryState();
@@ -30,6 +37,17 @@ class _ClientHealthHistoryState extends State<ClientHealthHistory> {
   String? _isPregnant;
   String? _cardiacProblems;
   String? _recentSurgery;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialData != null) {
+      _skinAllergy = widget.initialData!.skinAllergy;
+      _isPregnant = widget.initialData!.isPregnant;
+      _cardiacProblems = widget.initialData!.cardiacProblems;
+      _recentSurgery = widget.initialData!.recentSurgery;
+    }
+  }
 
   void _notify() {
     widget.onChanged(HealthHistoryData(
@@ -44,13 +62,13 @@ class _ClientHealthHistoryState extends State<ClientHealthHistory> {
   Widget build(BuildContext context) {
     final questions = [
       ('Are you allergic to any skin care products or oils?', _skinAllergy,
-          (v) => setState(() { _skinAllergy = v; _notify(); })),
+          (String? v) => setState(() { _skinAllergy = v; _notify(); })),
       ('Are you pregnant?', _isPregnant,
-          (v) => setState(() { _isPregnant = v; _notify(); })),
+          (String? v) => setState(() { _isPregnant = v; _notify(); })),
       ('Do you have any cardiac / respiratory problems?', _cardiacProblems,
-          (v) => setState(() { _cardiacProblems = v; _notify(); })),
+          (String? v) => setState(() { _cardiacProblems = v; _notify(); })),
       ('Have you undergone surgery or recent accident?', _recentSurgery,
-          (v) => setState(() { _recentSurgery = v; _notify(); })),
+          (String? v) => setState(() { _recentSurgery = v; _notify(); })),
     ];
 
     return Column(
@@ -62,7 +80,7 @@ class _ClientHealthHistoryState extends State<ClientHealthHistory> {
             'Health History',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary
+                  color: AppColors.textPrimary,
                 ),
           ),
         ),
@@ -78,13 +96,15 @@ class _ClientHealthHistoryState extends State<ClientHealthHistory> {
     void Function(String?) onSelect,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Flexible(
-            child: Text(question,
-                style: Theme.of(context).textTheme.titleMedium),
+            child: Text(
+              question,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
           ),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -97,10 +117,12 @@ class _ClientHealthHistoryState extends State<ClientHealthHistory> {
                     visualDensity: VisualDensity.compact,
                     value: selected == label,
                     checkColor: Colors.white,
-                    activeColor: Colors.purple,
+                    activeColor: AppColors.textPrimary,
                     side: const BorderSide(color: Colors.black54),
-                    onChanged: (checked) =>
-                        onSelect(checked == true ? label : null),
+                    onChanged: (checked) {
+                      final newVal = checked == true ? label : null;
+                      onSelect(newVal);
+                    },
                   ),
                 ],
               );

@@ -6,12 +6,19 @@ class LifestyleData {
   final String? sessionFrequency;
 
   const LifestyleData({this.lifestyleType, this.sessionFrequency});
+
+  bool get isValid => true;
 }
 
 class ClientLifestyle extends StatefulWidget {
   final ValueChanged<LifestyleData> onChanged;
+  final LifestyleData? initialData;
 
-  const ClientLifestyle({super.key, required this.onChanged});
+  const ClientLifestyle({
+    super.key,
+    required this.onChanged,
+    this.initialData,
+  });
 
   @override
   State<ClientLifestyle> createState() => _ClientLifestyleState();
@@ -20,6 +27,15 @@ class ClientLifestyle extends StatefulWidget {
 class _ClientLifestyleState extends State<ClientLifestyle> {
   String? _lifestyleType;
   String? _sessionFrequency;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialData != null) {
+      _lifestyleType = widget.initialData!.lifestyleType;
+      _sessionFrequency = widget.initialData!.sessionFrequency;
+    }
+  }
 
   void _notify() {
     widget.onChanged(LifestyleData(
@@ -39,7 +55,7 @@ class _ClientLifestyleState extends State<ClientLifestyle> {
             'Lifestyle',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color:AppColors.textPrimary
+                  color: AppColors.textPrimary,
                 ),
           ),
         ),
@@ -89,7 +105,10 @@ class _ClientLifestyleState extends State<ClientLifestyle> {
                 .map((option) => _IndividualCheckbox(
                       label: option,
                       isChecked: selected == option,
-                      onTap: () => onSelect(option),
+                      onTap: () {
+                        final newVal = selected == option ? null : option;
+                        onSelect(newVal);
+                      },
                     ))
                 .toList(),
           ),
@@ -114,19 +133,25 @@ class _IndividualCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 180,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-              child: Text(label,
-                  style: Theme.of(context).textTheme.labelLarge)),
-          Checkbox(
-            value: isChecked,
-            onChanged: (_) => onTap(),
-            side: const BorderSide(color: Colors.black54),
-            activeColor: Colors.purple,
-          ),
-        ],
+      child: InkWell(
+        onTap: onTap,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
+            ),
+            Checkbox(
+              value: isChecked,
+              onChanged: (_) => onTap(),
+              side: const BorderSide(color: Colors.black54),
+              activeColor: AppColors.textPrimary,
+            ),
+          ],
+        ),
       ),
     );
   }
