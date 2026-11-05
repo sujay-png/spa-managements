@@ -172,49 +172,7 @@ class _CustomerPageState extends State<CustomerPage> {
 
                           const SizedBox(width: 12),
 
-                          /// Filter Button
-                          SizedBox(
-                            height: 46,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(
-                                Icons.filter_alt_outlined,
-                                size: 18,
-                              ),
-                              label: const Text("Filter"),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(width: 12),
-
-                          /// Export Button
-                          SizedBox(
-                            height: 46,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(
-                                Icons.download_outlined,
-                                size: 18,
-                              ),
-                              label: const Text("Export"),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            ),
-                          ),
+                         
                         ],
                       ),
                     ),

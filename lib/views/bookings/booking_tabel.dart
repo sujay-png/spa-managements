@@ -1,3 +1,4 @@
+import 'package:ira_spa_webapp/views/bookings/payment_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/booking_controller.dart';
@@ -140,6 +141,18 @@ class _BookingTabelState extends State<BookingTabel> {
                 Expanded(
                   flex: 2,
                   child: Text(
+                    'PAYMENT STATUS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
                     'DATE & TIME',
                     style: TextStyle(
                       fontSize: 11,
@@ -153,7 +166,7 @@ class _BookingTabelState extends State<BookingTabel> {
                 Expanded(
                   flex: 1,
                   child: Text(
-                    'STATUS',
+                    ' SERVICE STATUS',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
@@ -299,6 +312,92 @@ class _BookingTabelState extends State<BookingTabel> {
                               ),
                             ),
                           ),
+                          Expanded(
+                            flex: 2,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Tooltip(
+                                message: 'Click to record or update payment',
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(6),
+                                  onTap: () async {
+                                    final paymentResult =
+                                        await showPaymentConfirmationDialog(
+                                      context: context,
+                                      item: item,
+                                      service: service,
+                                    );
+
+                                    if (paymentResult != null) {
+                                      if (!mounted) return;
+                                      await context
+                                          .read<BookingController>()
+                                          .completeBookingWithPayment(
+                                            id: item.id!,
+                                            rate: paymentResult.rate,
+                                            totalAmount:
+                                                paymentResult.totalAmount,
+                                            paymentMethod:
+                                                paymentResult.paymentMethod,
+                                            withGst: paymentResult.withGst,
+                                            gstAmount: paymentResult.gstAmount,
+                                          );
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Payment confirmed (₹${paymentResult.totalAmount.toStringAsFixed(2)} via ${paymentResult.paymentMethod}) & marked as Completed',
+                                            ),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          item.paymentStatusLabel.toLowerCase() ==
+                                              'paid'
+                                          ? Colors.green.withOpacity(0.12)
+                                          : item.paymentStatusLabel.toLowerCase() ==
+                                                'pending'
+                                          ? Colors.orange.withOpacity(0.12)
+                                          : Colors.red.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      item.paymentStatusLabel.isNotEmpty
+                                          ? (item.paymentMethod != null &&
+                                                  item.paymentMethod!.isNotEmpty
+                                              ? '${item.paymentStatusLabel} (${item.paymentMethod})'
+                                              : item.paymentStatusLabel)
+                                          : 'Unpaid',
+                                      style: TextStyle(
+                                        color:
+                                            item.paymentStatusLabel.toLowerCase() ==
+                                                'paid'
+                                            ? Colors.green.shade700
+                                            : item.paymentStatusLabel
+                                                      .toLowerCase() ==
+                                                  'pending'
+                                            ? Colors.orange.shade800
+                                            : Colors.red.shade700,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
 
                           /// Date & Time
                           Expanded(
@@ -352,16 +451,19 @@ class _BookingTabelState extends State<BookingTabel> {
                           Expanded(
                             flex: 1,
                             child: DropdownButtonFormField<String>(
-                              value: item.statusLabel,
+                              key: UniqueKey(),
+                              value:
+                                  (item.statusLabel == 'Completed' ||
+                                      item.statusLabel == 'Pending')
+                                  ? item.statusLabel
+                                  : 'Pending',
                               decoration: InputDecoration(
                                 contentPadding: const EdgeInsets.symmetric(
-                                 horizontal: 12,
-                              vertical: 6,
+                                  horizontal: 12,
+                                  vertical: 6,
                                 ),
                                 filled: true,
-                                fillColor: item.statusLabel == "Confirmed"
-                                    ? Colors.green.withOpacity(.12)
-                                    : item.statusLabel == "Pending"
+                                fillColor: item.statusLabel == "Pending"
                                     ? Colors.orange.withOpacity(.12)
                                     : Colors.blue.withOpacity(.12),
                                 border: OutlineInputBorder(
@@ -382,9 +484,7 @@ class _BookingTabelState extends State<BookingTabel> {
                                 size: 18,
                               ),
                               style: TextStyle(
-                                color: item.statusLabel == "Confirmed"
-                                    ? Colors.green
-                                    : item.statusLabel == "Pending"
+                                color: item.statusLabel == "Pending"
                                     ? Colors.orange
                                     : Colors.blue,
                                 fontWeight: FontWeight.w600,
@@ -392,26 +492,61 @@ class _BookingTabelState extends State<BookingTabel> {
                               ),
                               items: const [
                                 DropdownMenuItem(
-                                  value: "Confirmed",
-                                  child: Text("Confirmed"),
-                                ),
-                                DropdownMenuItem(
                                   value: "Pending",
                                   child: Text("Pending"),
                                 ),
+
                                 DropdownMenuItem(
                                   value: "Completed",
                                   child: Text("Completed"),
                                 ),
                               ],
-                              onChanged: (value) {
+                              onChanged: (value) async {
                                 if (value == null) return;
+                                if (value == item.statusLabel) return;
 
-                                // Update status here
-                                context.read<BookingController>().updateStatus(
-                                  item.id!,
-                                  value,
-                                );
+                                if (value == "Completed") {
+                                  final paymentResult =
+                                      await showPaymentConfirmationDialog(
+                                        context: context,
+                                        item: item,
+                                        service: service,
+                                      );
+
+                                  if (paymentResult != null) {
+                                    if (!mounted) return;
+                                    await context
+                                        .read<BookingController>()
+                                        .completeBookingWithPayment(
+                                          id: item.id!,
+                                          rate: paymentResult.rate,
+                                          totalAmount:
+                                              paymentResult.totalAmount,
+                                          paymentMethod:
+                                              paymentResult.paymentMethod,
+                                          withGst: paymentResult.withGst,
+                                          gstAmount: paymentResult.gstAmount,
+                                        );
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Payment confirmed (₹${paymentResult.totalAmount.toStringAsFixed(2)} via ${paymentResult.paymentMethod}) & marked as Completed',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    }
+                                  } else {
+                                    if (mounted) setState(() {});
+                                  }
+                                } else {
+                                  await context
+                                      .read<BookingController>()
+                                      .updateStatus(item.id!, value);
+                                }
                               },
                             ),
                           ),

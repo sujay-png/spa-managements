@@ -120,18 +120,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
                     ),
                   ),
                 ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'TOTAL SPENT',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
+     
                 Expanded(
                   flex: 3,
                   child: Text(
@@ -285,28 +274,7 @@ class _CustomerTabelState extends State<CustomerTabel> {
                                   ],
                                 ),
                               ),
-                              //====================== Total Spent ======================
-                              Expanded(
-                                flex: 3,
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.access_time,
-                                      size: 12,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      item.spentThisMonth.toStringAsFixed(2),
-
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              
                               //====================== Last Visit ======================
                               Expanded(
                                 flex: 3,

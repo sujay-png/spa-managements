@@ -5,12 +5,12 @@ class ServiceCard extends StatelessWidget {
   final String category;
   final String duration;
   final String price;
+  final String? description;
 
-  final String bookings;
-  final String revenue;
-  final String badge;
+  final String? bookings;
+  final String? revenue;
+  final String? badge;
 
-  
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
@@ -20,29 +20,23 @@ class ServiceCard extends StatelessWidget {
     required this.category,
     required this.duration,
     required this.price,
-
-    required this.bookings,
-    required this.revenue,
-    required this.badge,
-
- required this.onEdit,required  this.onDelete,
+     this.description,
+     this.bookings,
+     this.revenue,
+     this.badge,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE8DDD2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+     
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,8 +46,7 @@ class ServiceCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
                 children: [
                   Text(
                     title,
@@ -63,13 +56,38 @@ class ServiceCard extends StatelessWidget {
                       color: Color(0xFF2C221E),
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description ?? '',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF796D64),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C221E),
+                      ),
+                    ),
+                  ),
                   SizedBox(
                     width: 30,
                     child: PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert, size: 18),
                       onSelected: (value) {
                         if (value == 'edit') {
-                         onEdit.call();
+                          onEdit.call();
                         } else if (value == 'delete') {
                           onDelete.call();
                         }
@@ -119,9 +137,9 @@ class ServiceCard extends StatelessWidget {
                 ),
                 child: Text(
                   category,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
-                    color: const Color(0xFF796D64),
+                    color: Color(0xFF796D64),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -129,7 +147,7 @@ class ServiceCard extends StatelessWidget {
             ],
           ),
 
-          Spacer(flex: 3),
+          const Spacer(flex: 3),
 
           /// Duration & Price Boxes
           Row(
@@ -207,10 +225,10 @@ class ServiceCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         price,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
-                          color: const Color(0xFF9D785A),
+                          color: Color(0xFF9D785A),
                         ),
                       ),
                     ],
@@ -220,7 +238,7 @@ class ServiceCard extends StatelessWidget {
             ],
           ),
 
-          Spacer(flex: 2),
+          const Spacer(flex: 2),
 
           /// Divider with Spacing
           const Padding(
@@ -228,7 +246,7 @@ class ServiceCard extends StatelessWidget {
             child: Divider(color: Color(0xFFF0E7DE), height: 1, thickness: 1),
           ),
 
-          Spacer(flex: 1),
+          const Spacer(flex: 1),
 
           /// Bookings & Revenue
           Row(
@@ -248,7 +266,7 @@ class ServiceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      bookings,
+                      bookings ?? '',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -273,7 +291,7 @@ class ServiceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      revenue,
+                      revenue?? '',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -296,9 +314,9 @@ class ServiceCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              badge,
-              style: TextStyle(
-                color: const Color(0xFF108A00),
+              badge ?? '',
+              style: const TextStyle(
+                color: Color(0xFF108A00),
                 fontWeight: FontWeight.w600,
                 fontSize: 11,
               ),

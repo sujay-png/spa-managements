@@ -18,7 +18,8 @@ class BookingsModel {
   String timeslot;
   String bookingdetails;
   String statusrequired;
-
+  String? paymentStatus;
+  String? paymentMethod;
   DateTime? startTime;
   DateTime? endTime;
   int? duration;
@@ -46,6 +47,8 @@ class BookingsModel {
     this.duration,
     this.serviceOptionId,
     this.emailSent = false,
+    this.paymentStatus,
+    this.paymentMethod,
   });
 
   String get statusLabel {
@@ -61,6 +64,19 @@ class BookingsModel {
         return 'Cancelled';
       default:
         return statusrequired;
+    }
+  }
+
+  String get paymentStatusLabel {
+    switch (paymentStatus?.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'paid':
+        return 'Paid';
+      case 'unpaid':
+        return 'Unpaid';
+      default:
+        return paymentStatus ?? '';
     }
   }
 
@@ -113,6 +129,8 @@ class BookingsModel {
       servicePrice: rawPrice?.toString(),
       serviceOptionId: parseInt(map['service_option_id'] ?? map['service_id']),
       emailSent: map['email_sent'] == true,
+      paymentStatus: map['payment_status']?.toString() ?? 'Pending',
+      paymentMethod: map['payment_method']?.toString(),
     );
   }
 
@@ -135,6 +153,8 @@ class BookingsModel {
       "confirmed_time": timeslot,
       "requirements_booking": bookingdetails,
       "booking_status": statusrequired,
+      "payment_status": paymentStatus ?? 'unpaid',
+      if (paymentMethod != null) "payment_method": paymentMethod,
       if (startTime != null) "start_time": startTime!.toIso8601String(),
       if (endTime != null) "end_time": endTime!.toIso8601String(),
       if (duration != null) "duration": duration,
@@ -142,6 +162,8 @@ class BookingsModel {
       "email_sent": emailSent,
       if (parsedPrice != null) "rate": parsedPrice,
       if (parsedPrice != null) "total_amount": parsedPrice,
+      if (parsedPrice != null && paymentStatus?.toLowerCase() == 'paid')
+        "paid_amount": parsedPrice,
     };
   }
 }

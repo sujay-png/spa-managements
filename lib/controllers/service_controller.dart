@@ -259,6 +259,15 @@ class ServiceController extends ChangeNotifier {
     }
   }
 
+  /// Saves multiple duration/price options for the same service as separate rows.
+  Future<void> addServiceWithOptions(List<ServiceModel> options) async {
+    for (final option in options) {
+      await _service.addService(option);
+    }
+    final ref = options.first.businessRef;
+    if (ref != null) await loadServices(ref);
+  }
+
   Future<void> updatedservice(ServiceModel service) async {
     await _service.updateService(service);
 

@@ -211,38 +211,6 @@ class _BookingPageState extends State<BookingPage> {
                           ),
 
                           const SizedBox(width: 12),
-
-                          /// Export Button
-                          SizedBox(
-                            height: 46,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.textPrimary,
-                                backgroundColor: AppColors.surface,
-                                minimumSize: const Size(15, 50),
-                                side: const BorderSide(color: AppColors.border),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.download_outlined,
-                                size: 18,
-                                color: AppColors.textSecondary,
-                              ),
-                              label: const Text(
-                                'Export',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -310,8 +278,9 @@ class _BookingPageState extends State<BookingPage> {
 
     final customerCtrl = context.read<CustomerController>();
     if (selectedCustomerRef != null &&
-        customerCtrl.customers
-            .any((c) => c.id == selectedCustomerRef && c.isblacklisted)) {
+        customerCtrl.customers.any(
+          (c) => c.id == selectedCustomerRef && c.isblacklisted,
+        )) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Cannot create booking for a blocked customer."),
@@ -329,22 +298,18 @@ class _BookingPageState extends State<BookingPage> {
           serviceRef: selectedServiceRef,
           serviceOptionId: selectedServiceRef,
           therapistRef: selectedTherapistRef,
-        
-
           customer: selectedCustomerName,
           servicename: selectedServiceName,
           therapistname: selectedTherapistName,
-
           custphone: selectedCustomerPhone,
           serviceDuration: selectedServiceDuration,
           servicePrice: selectedServicePrice,
-
           bookingdate: selectedDate,
           timeslot: selectedTimeSlot,
           bookingdetails: notesController.text.trim(),
           businessRef: auth.businessRef!,
-
           statusrequired: "Pending",
+          paymentStatus: "unpaid",
         ),
       );
       print("Selected therapist id = $selectedTherapistRef");
@@ -378,7 +343,8 @@ class _BookingPageState extends State<BookingPage> {
 
   //================================Booking Form===========================================================
   void showBookingDialog(BuildContext context, {BookingsModel? booking}) {
-    List<String> bookedSlots = [];
+    Map<String, int> slotBookingCounts = {};
+    const int maxCapacityPerSlot = 4;
     CustomerModel? selectedCustomer;
     ServiceModel? selectedService;
     StaffModel? selectedStaff;
@@ -386,6 +352,7 @@ class _BookingPageState extends State<BookingPage> {
     final dateCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     bool initialized = false;
+    bool slotsLoaded = false;
 
     if (booking != null) {
       selectedCustomerName = booking.customer;
@@ -406,6 +373,11 @@ class _BookingPageState extends State<BookingPage> {
           "${booking.bookingdate.day.toString().padLeft(2, '0')}-"
           "${booking.bookingdate.month.toString().padLeft(2, '0')}-"
           "${booking.bookingdate.year}";
+    } else {
+      dateCtrl.text =
+          "${selectedDate.day.toString().padLeft(2, '0')}-"
+          "${selectedDate.month.toString().padLeft(2, '0')}-"
+          "${selectedDate.year}";
     }
 
     showDialog(
@@ -423,49 +395,63 @@ class _BookingPageState extends State<BookingPage> {
                   orElse: () => null,
                 );
 
-           selectedService = serviceController.services.cast<ServiceModel?>().firstWhere(
-  (e) =>
-      e != null &&
-      e.serviceName.trim().toLowerCase() ==
-          booking.servicename.trim().toLowerCase(),
-  orElse: () => null,
-);
+            selectedService = serviceController.services
+                .cast<ServiceModel?>()
+                .firstWhere(
+                  (e) =>
+                      e != null &&
+                      e.serviceName.trim().toLowerCase() ==
+                          booking.servicename.trim().toLowerCase(),
+                  orElse: () => null,
+                );
 
-if (selectedService != null) {
-  selectedServiceRef = selectedService!.id;
-  selectedServiceName = selectedService!.serviceName;
-  selectedServiceDuration = selectedService!.duration;
-  selectedServicePrice = selectedService!.price.toString();
-}
-        selectedStaff = staffcontroller.staffs.cast<StaffModel?>().firstWhere(
-  (e) => e != null && e.name == booking.therapistname,
-  orElse: () => null,
-);
+            if (selectedService != null) {
+              selectedServiceRef = selectedService!.id;
+              selectedServiceName = selectedService!.serviceName;
+              selectedServiceDuration = selectedService!.duration;
+              selectedServicePrice = selectedService!.price.toString();
+            }
+            selectedStaff = staffcontroller.staffs
+                .cast<StaffModel?>()
+                .firstWhere(
+                  (e) => e != null && e.name == booking.therapistname,
+                  orElse: () => null,
+                );
 
-if (selectedStaff != null) {
-  selectedTherapistRef = selectedStaff!.id;
-  selectedTherapistName = selectedStaff!.name;
-}
+            if (selectedStaff != null) {
+              selectedTherapistRef = selectedStaff!.id;
+              selectedTherapistName = selectedStaff!.name;
+            }
             // ADD THESE LINES
-          selectedCustomerRef = selectedCustomer?.id;
+            selectedCustomerRef = selectedCustomer?.id;
 
-selectedServiceRef = selectedService?.id;
-selectedTherapistRef = selectedStaff?.id;
+            selectedServiceRef = selectedService?.id;
+            selectedTherapistRef = selectedStaff?.id;
 
-selectedCustomerName = selectedCustomer?.name ?? '';
+            selectedCustomerName = selectedCustomer?.name ?? '';
 
-selectedServiceName = selectedService?.serviceName ?? booking.servicename;
+            selectedServiceName =
+                selectedService?.serviceName ?? booking.servicename;
 
-selectedTherapistName =
-    selectedStaff?.name ?? booking.therapistname;
+            selectedTherapistName =
+                selectedStaff?.name ?? booking.therapistname;
 
-selectedCustomerPhone = selectedCustomer?.phoneno;
+            selectedCustomerPhone = selectedCustomer?.phoneno;
 
-selectedServiceDuration = selectedService?.duration;
+            selectedServiceDuration = selectedService?.duration;
 
-selectedServicePrice =
-    selectedService?.price.toString() ?? booking.servicePrice;
+            selectedServicePrice =
+                selectedService?.price.toString() ?? booking.servicePrice;
             initialized = true;
+          }
+
+          if (!slotsLoaded) {
+            slotsLoaded = true;
+            DatabaseService().getSlotBookingCounts(selectedDate).then((counts) {
+              setState(() {
+                slotBookingCounts = counts;
+              });
+            }).catchError((_) {});
           }
 
           return Dialog(
@@ -525,52 +511,58 @@ selectedServicePrice =
                           : DropdownButtonFormField<CustomerModel>(
                               value: selectedCustomer,
                               items: customerController.customers
-                                  .where((c) =>
-                                      !c.isblacklisted ||
-                                      c.id == selectedCustomer?.id)
+                                  .where(
+                                    (c) =>
+                                        !c.isblacklisted ||
+                                        c.id == selectedCustomer?.id,
+                                  )
                                   .map((c) {
-                                return DropdownMenuItem(
-                                  enabled: !c.isblacklisted,
-                                  value: c,
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        c.name,
-                                        style: TextStyle(
-                                          color: c.isblacklisted
-                                              ? Colors.grey
-                                              : AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      if (c.isblacklisted)
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.withOpacity(0.1),
-                                            borderRadius:
-                                                BorderRadius.circular(4),
-                                            border: Border.all(
-                                              color: Colors.red.shade300,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'Blocked',
+                                    return DropdownMenuItem(
+                                      enabled: !c.isblacklisted,
+                                      value: c,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            c.name,
                                             style: TextStyle(
-                                              color: Colors.red,
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
+                                              color: c.isblacklisted
+                                                  ? Colors.grey
+                                                  : AppColors.textPrimary,
                                             ),
                                           ),
-                                        ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
+                                          if (c.isblacklisted)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 6,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red.withOpacity(
+                                                  0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                                border: Border.all(
+                                                  color: Colors.red.shade300,
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                'Blocked',
+                                                style: TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    );
+                                  })
+                                  .toList(),
                               validator: (value) {
                                 if (value == null) {
                                   return 'Plz select customer';
@@ -581,7 +573,8 @@ selectedServicePrice =
                                 return null;
                               },
                               onChanged: (value) {
-                                if (value != null && value.isblacklisted) return;
+                                if (value != null && value.isblacklisted)
+                                  return;
                                 setState(() {
                                   selectedCustomer = value;
 
@@ -646,17 +639,16 @@ selectedServicePrice =
                                 selectedTherapistRef = value?.id;
                                 selectedTherapistName = value?.name ?? '';
 
-                                if (selectedTherapistRef != null &&
-                                    dateCtrl.text.isNotEmpty) {
+                                if (dateCtrl.text.isNotEmpty) {
                                   try {
-                                    bookedSlots = await DatabaseService()
-                                        .getBookedTimeSlots(
-                                          selectedDate,
-                                          selectedTherapistRef!,
-                                        );
+                                    slotBookingCounts =
+                                        await DatabaseService()
+                                            .getSlotBookingCounts(selectedDate);
                                   } catch (e) {
-                                    debugPrint("Error fetching booked slots: $e");
-                                    bookedSlots = [];
+                                    debugPrint(
+                                      "Error fetching slot counts: $e",
+                                    );
+                                    slotBookingCounts = {};
                                   }
                                 }
                                 setState(() {});
@@ -685,19 +677,15 @@ selectedServicePrice =
                                     lastDate: DateTime(2035),
                                   );
                                   if (picked != null) {
-                                    if (selectedTherapistRef != null) {
-                                      try {
-                                        bookedSlots = await DatabaseService()
-                                            .getBookedTimeSlots(
-                                              picked,
-                                              selectedTherapistRef!,
-                                            );
-                                      } catch (e) {
-                                        debugPrint("Error fetching booked slots: $e");
-                                        bookedSlots = [];
-                                      }
-                                    } else {
-                                      bookedSlots = [];
+                                    try {
+                                      slotBookingCounts =
+                                          await DatabaseService()
+                                              .getSlotBookingCounts(picked);
+                                    } catch (e) {
+                                      debugPrint(
+                                        "Error fetching slot counts: $e",
+                                      );
+                                      slotBookingCounts = {};
                                     }
 
                                     setState(() {
@@ -719,23 +707,76 @@ selectedServicePrice =
                             children: [
                               label(Icons.access_time, 'TIME SLOT'),
                               const SizedBox(height: 8),
-
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
                                 children: timeSlots.map((slot) {
-                                  final isBooked = bookedSlots.contains(slot);
+                                  final cleanSlot = slot
+                                      .replaceAll(RegExp(r'\s+'), ' ')
+                                      .trim()
+                                      .toLowerCase();
+
+                                  // In-memory count from BookingController
+                                  int inMemoryCount = 0;
+                                  final allBookings =
+                                      context.read<BookingController>().bookings;
+                                  for (final b in allBookings) {
+                                    if (b.statusrequired.toLowerCase() ==
+                                        'cancelled') {
+                                      continue;
+                                    }
+                                    if (DateUtils.isSameDay(
+                                      b.bookingdate,
+                                      selectedDate,
+                                    )) {
+                                      final bSlot = b.timeslot
+                                          .replaceAll(RegExp(r'\s+'), ' ')
+                                          .trim()
+                                          .toLowerCase();
+                                      if (bSlot == cleanSlot) {
+                                        inMemoryCount++;
+                                      }
+                                    }
+                                  }
+
+                                  // Count from database query
+                                  int dbCount = 0;
+                                  for (final entry in slotBookingCounts.entries) {
+                                    final entrySlot = entry.key
+                                        .replaceAll(RegExp(r'\s+'), ' ')
+                                        .trim()
+                                        .toLowerCase();
+                                    if (entrySlot == cleanSlot) {
+                                      dbCount = entry.value;
+                                      break;
+                                    }
+                                  }
+
+                                  final count = inMemoryCount > dbCount
+                                      ? inMemoryCount
+                                      : dbCount;
+                                  final isCurrentBookingSlot = isedit &&
+                                      booking.timeslot == slot &&
+                                      DateUtils.isSameDay(
+                                        booking.bookingdate,
+                                        selectedDate,
+                                      );
+                                  final isFull = count >= maxCapacityPerSlot &&
+                                      !isCurrentBookingSlot;
                                   final isExpired = isSlotExpired(slot);
 
+                                  final labelText = isFull
+                                      ? "$slot (Full)"
+                                      : count > 0
+                                      ? "$slot ($count/$maxCapacityPerSlot)"
+                                      : slot;
+
                                   return ChoiceChip(
-                                    label: Text(
-                                      isBooked ? "$slot (Booked)" : slot,
-                                    ),
+                                    label: Text(labelText),
                                     selected: selectedTime == slot,
                                     selectedColor: const Color(0xFF8B7D76),
                                     disabledColor: Colors.grey.shade300,
-
-                                    onSelected: (isBooked || isExpired)
+                                    onSelected: (isFull || isExpired)
                                         ? null
                                         : (_) {
                                             setState(() {
@@ -799,86 +840,101 @@ selectedServicePrice =
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                             onPressed: () async {
-  if (selectedCustomer == null ||
-      selectedTherapistRef == null ||
-      selectedTimeSlot.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Please fill all required fields"),
-      ),
-    );
-    return;
-  }
-  if (selectedCustomer?.isblacklisted == true) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Cannot create booking for a blocked customer"),
-      ),
-    );
-    return;
-  }
-if (isedit) {
-  final updatedBooking = BookingsModel(
-    id: booking!.id,
+                              onPressed: () async {
+                                if (selectedCustomer == null ||
+                                    selectedTherapistRef == null ||
+                                    selectedTimeSlot.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Please fill all required fields",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (selectedCustomer?.isblacklisted == true) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Cannot create booking for a blocked customer",
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                if (isedit) {
+                                  final updatedBooking = BookingsModel(
+                                    id: booking!.id,
 
-    // Keep existing customer & service
-    customerRef: booking.customerRef,
-    serviceRef: booking.serviceRef,
-    serviceOptionId: booking.serviceOptionId,
+                                    // Keep existing customer & service
+                                    customerRef: booking.customerRef,
+                                    serviceRef: booking.serviceRef,
+                                    serviceOptionId: booking.serviceOptionId,
 
-    customer: booking.customer,
-    servicename: booking.servicename,
+                                    customer: booking.customer,
+                                    servicename: booking.servicename,
 
-    // Change only therapist
-    therapistRef: selectedTherapistRef,
-    therapistname: selectedTherapistName,
+                                    // Change only therapist
+                                    therapistRef: selectedTherapistRef,
+                                    therapistname: selectedTherapistName,
 
-    custphone: booking.custphone,
-    serviceDuration: booking.serviceDuration,
-    servicePrice: booking.servicePrice,
+                                    custphone: booking.custphone,
+                                    serviceDuration: booking.serviceDuration,
+                                    servicePrice: booking.servicePrice,
 
-    bookingdate: selectedDate,
-    timeslot: selectedTimeSlot,
-    bookingdetails: notesCtrl.text.trim(),
+                                    bookingdate: selectedDate,
+                                    timeslot: selectedTimeSlot,
+                                    bookingdetails: notesCtrl.text.trim(),
 
-    businessRef: booking.businessRef,
-    statusrequired: booking.statusrequired,
-  );
+                                    businessRef: booking.businessRef,
+                                    statusrequired: booking.statusrequired,
+                                    paymentStatus: booking.paymentStatus,
+                                    paymentMethod: booking.paymentMethod,
+                                  );
 
-  // First update booking
-  await context.read<BookingController>().updateBooking(updatedBooking);
+                                  // First update booking
+                                  await context
+                                      .read<BookingController>()
+                                      .updateBooking(updatedBooking);
 
-  // Make previous therapist available
-  if (booking.therapistRef != null &&
-      booking.therapistRef != selectedTherapistRef) {
-    await context.read<StaffController>().updateJobStatus(
-      booking.therapistRef!,
-      "Available",
-    );
-  }
+                                  // Make previous therapist available
+                                  if (booking.therapistRef != null &&
+                                      booking.therapistRef !=
+                                          selectedTherapistRef) {
+                                    await context
+                                        .read<StaffController>()
+                                        .updateJobStatus(
+                                          booking.therapistRef!,
+                                          "Available",
+                                        );
+                                  }
 
-  // Make new therapist busy
-  if (selectedTherapistRef != null) {
-    await context.read<StaffController>().updateJobStatus(
-      selectedTherapistRef!,
-      "Busy",
-    );
-  }
+                                  // Make new therapist busy
+                                  if (selectedTherapistRef != null) {
+                                    await context
+                                        .read<StaffController>()
+                                        .updateJobStatus(
+                                          selectedTherapistRef!,
+                                          "Busy",
+                                        );
+                                  }
 
-  if (!mounted) return;
+                                  if (!mounted) return;
 
-  Navigator.pop(context);
+                                  Navigator.pop(context);
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text("Booking updated successfully"),
-    ),
-  );
-} else {
-  _save();
-}
-},
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Booking updated successfully",
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  _save();
+                                }
+                              },
                               child: Text(
                                 isedit ? 'Update bookings' : 'Create Booking',
                                 style: TextStyle(

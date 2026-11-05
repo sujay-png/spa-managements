@@ -48,9 +48,9 @@ class _ShellrouteState extends State<Shellroute> {
     Dashboard(),
     BookingPage(),
     CustomerPage(),
-    ServicePage(),
-    StaffPage(),
     ServiceMenuView(),
+    StaffPage(),
+    ServicePage(),
 
 
     // MaintenanceView(),
@@ -158,7 +158,7 @@ class _ShellrouteState extends State<Shellroute> {
                     _menu(Icons.people_outline, "Customers", 2),
                     _menu(Icons.content_cut, "Services", 3),
                     _menu(Icons.person_outline, "Staff", 4),
-                    _menu(Icons.menu, "Service Menu", 5),
+                    _menu(Icons.room_service_outlined, "Manage Services", 5),
 
                     const Spacer(),
 

@@ -163,8 +163,39 @@ class BookingController extends ChangeNotifier {
     }
   }
 
+  Future<void> completeBookingWithPayment({
+    required int id,
+    required double rate,
+    required double totalAmount,
+    required String paymentMethod,
+    required bool withGst,
+    required double gstAmount,
+  }) async {
+    await _service.completeBookingWithPayment(
+      id: id,
+      rate: rate,
+      totalAmount: totalAmount,
+      paymentMethod: paymentMethod,
+      withGst: withGst,
+      gstAmount: gstAmount,
+    );
+    final index = _bookings.indexWhere((e) => e.id == id);
+    if (index != -1) {
+      _bookings[index].statusrequired = 'Completed';
+      _bookings[index].servicePrice = totalAmount.toStringAsFixed(2);
+      _bookings[index].paymentStatus = 'Paid';
+      _bookings[index].paymentMethod = paymentMethod;
+      notifyListeners();
+    }
+  }
+
   Future<void> updateStatus(int id, String status) async {
     await _service.updateBookingStatus(id, status);
+    final index = _bookings.indexWhere((e) => e.id == id);
+    if (index != -1) {
+      _bookings[index].statusrequired = status;
+      notifyListeners();
+    }
   }
 
   //======================== Search ========================

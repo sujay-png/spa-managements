@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
+import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:ira_spa_webapp/models/client_model.dart';
 import 'package:ira_spa_webapp/models/spa_service.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
@@ -35,10 +36,10 @@ class _ClientDetailsState extends State<ClientDetails> {
   final _service = DatabaseService();
   DateTime? _selectedDate;
   bool _isSaving = false;
-  bool _loadingCustomers = true;
   List<ClientModel> _customersList = [];
-  ClientModel? _selectedCustomer;
   ClientModel? client;
+  String _paymentStatus = 'Unpaid'; // 'Unpaid' or 'Paid'
+  String _paymentMethod = 'UPI / QR Code'; // 'Cash', 'UPI / QR Code', 'Card'
 
   // ─── Sub-form data (updated via callbacks) ────────────────────────────────
   GoalConcernData _goalData = const GoalConcernData();
@@ -77,41 +78,10 @@ class _ClientDetailsState extends State<ClientDetails> {
       if (!mounted) return;
       setState(() {
         _customersList = data;
-        _loadingCustomers = false;
       });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _loadingCustomers = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to load customers: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    } catch (_) {
+      // Background load for autofill suggestions; ignore if fails
     }
-  }
-
-  // ─── Autofill fields when a customer is selected ──────────────────────────
-
-  void _onCustomerSelected(ClientModel? customer) {
-    setState(() {
-      _selectedCustomer = customer;
-      if (customer != null) {
-        _nameController.text = customer.name;
-        _phoneController.text = customer.phone;
-        _emailController.text = customer.email;
-        _locationController.text = customer.location;
-        _ageController.text = customer.age;
-        _loyaltyCardController.text = customer.loyaltyCardNo;
-      } else {
-        _nameController.clear();
-        _phoneController.clear();
-        _emailController.clear();
-        _locationController.clear();
-        _ageController.clear();
-        _loyaltyCardController.clear();
-      }
-    });
   }
 
   // ─── Save everything to Supabase ─────────────────────────────────────────
@@ -140,6 +110,35 @@ class _ClientDetailsState extends State<ClientDetails> {
     setState(() => _isSaving = true);
 
     try {
+      final totalAmount = widget.selectedServices.values.fold(
+        0.0,
+        (sum, o) => sum + o.price.toDouble(),
+      );
+      final totalMinutes = widget.selectedServices.values.fold(
+        0,
+        (sum, o) => sum + o.duration,
+      );
+      final isPaid = _paymentStatus.toLowerCase() == 'paid';
+      final serviceTitles = widget.selectedServices.keys.map((s) => s.title).join(', ');
+      final serviceDurations = widget.selectedServices.values.map((o) => '${o.duration} min').join(', ');
+
+      DateTime? slotDateTime = _selectedDate;
+      if (slotDateTime != null && _timeController.text.isNotEmpty) {
+        try {
+          final timeStr = _timeController.text.trim();
+          final parts = timeStr.split(RegExp(r'[:\s]'));
+          if (parts.length >= 2) {
+            int h = int.parse(parts[0]);
+            int m = int.parse(parts[1]);
+            final isPm = timeStr.toUpperCase().contains('PM');
+            final isAm = timeStr.toUpperCase().contains('AM');
+            if (isPm && h < 12) h += 12;
+            if (isAm && h == 12) h = 0;
+            slotDateTime = DateTime(slotDateTime.year, slotDateTime.month, slotDateTime.day, h, m);
+          }
+        } catch (_) {}
+      }
+
       final client = ClientModel(
         // Basic details
         businessRef: auth.businessRef!,
@@ -151,6 +150,7 @@ class _ClientDetailsState extends State<ClientDetails> {
         phone: _phoneController.text.trim(),
         location: _locationController.text.trim(),
         loyaltyCardNo: _loyaltyCardController.text.trim(),
+        appointmentDatetime: slotDateTime?.toIso8601String(),
         // Goals & Concerns
         massageGoal: _goalData.massageGoals.join(', '),
         bodyFocusArea: _goalData.bodyFocusAreas.join(', '),
@@ -162,17 +162,35 @@ class _ClientDetailsState extends State<ClientDetails> {
         // Lifestyle
         lifestyleType: _lifestyleData.lifestyleType,
         sessionFrequency: _lifestyleData.sessionFrequency,
-        serviceName: widget.selectedServices.keys.first.title,
-        serviceTime: widget.selectedServices.values.first.label,
+        serviceName: serviceTitles.isNotEmpty ? serviceTitles : null,
+        serviceTime: serviceDurations.isNotEmpty ? serviceDurations : null,
       );
 
-      final saved = await _service.insertClient(client);
+      final saved = await _service.insertClient(
+        client,
+        rate: totalAmount,
+        totalAmount: totalAmount,
+        paidAmount: isPaid ? totalAmount : 0.0,
+        paymentStatus: isPaid ? 'Paid' : 'unpaid',
+        paymentMethod: isPaid ? _paymentMethod : null,
+        duration: totalMinutes,
+        bookingStatus: 'Confirmed',
+        appointmentSlot: slotDateTime?.toIso8601String(),
+      );
+
+      if (mounted) {
+        try {
+          context.read<BookingController>().loadBookings(auth.businessRef!);
+        } catch (_) {}
+      }
 
       if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Client saved successfully (ID: ${saved.id})'),
+          content: Text(
+            'Client saved successfully! Total: ₹${totalAmount.toStringAsFixed(0)} (${isPaid ? "Paid via $_paymentMethod" : "Unpaid"})',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -311,62 +329,50 @@ class _ClientDetailsState extends State<ClientDetails> {
                     ),
                     const SizedBox(height: 25),
 
-                    // Select Customer (Required) & Age (Optional)
+                    // Customer Name (Required) & Age (Optional)
                     Row(
                       children: [
                         Expanded(
-                          child: _loadingCustomers
-                              ? const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 14),
-                                  child: Center(
-                                    child: SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : DropdownButtonFormField<ClientModel>(
-                                  value: _selectedCustomer,
-                                  isExpanded: true,
-                                  decoration: InputDecoration(
-                                    label: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: const [
-                                        Text('Select Customer'),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          '*',
-                                          style: TextStyle(
-                                            color: Colors.red,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    prefixIcon: const Icon(
-                                      Icons.person_search_outlined,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  items: _customersList.map((customer) {
-                                    return DropdownMenuItem<ClientModel>(
-                                      value: customer,
-                                      child: Text(
-                                        customer.name,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    );
-                                  }).toList(),
-                                  onChanged: _onCustomerSelected,
-                                  validator: (value) => value == null
-                                      ? 'Please select a customer'
-                                      : null,
-                                ),
+                          child: _buildInputField(
+                            label: 'Customer Name',
+                            icon: Icons.person_outline,
+                            hint: 'Enter customer name',
+                            controller: _nameController,
+                            isRequired: true,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Please enter customer name'
+                                : null,
+                            onChanged: (val) {
+                              if (val.trim().isEmpty) return;
+                              final match = _customersList
+                                  .cast<ClientModel?>()
+                                  .firstWhere(
+                                    (c) =>
+                                        c != null &&
+                                        c.name.trim().toLowerCase() ==
+                                            val.trim().toLowerCase(),
+                                    orElse: () => null,
+                                  );
+                              if (match != null) {
+                                if (_phoneController.text.isEmpty) {
+                                  _phoneController.text = match.phone;
+                                }
+                                if (_emailController.text.isEmpty) {
+                                  _emailController.text = match.email;
+                                }
+                                if (_ageController.text.isEmpty) {
+                                  _ageController.text = match.age;
+                                }
+                                if (_locationController.text.isEmpty) {
+                                  _locationController.text = match.location;
+                                }
+                                if (_loyaltyCardController.text.isEmpty) {
+                                  _loyaltyCardController.text =
+                                      match.loyaltyCardNo;
+                                }
+                              }
+                            },
+                          ),
                         ),
                         const SizedBox(width: 20),
                         Expanded(
@@ -473,6 +479,13 @@ class _ClientDetailsState extends State<ClientDetails> {
                           setState(() => _lifestyleData = data),
                     ),
 
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 16),
+
+                    // ── Order Summary & Payment Details ───────────────────
+                    _buildPaymentSection(),
+
                     const SizedBox(height: 35),
 
                     // ── Save Button ──────────────────────────────────────
@@ -517,6 +530,214 @@ class _ClientDetailsState extends State<ClientDetails> {
     );
   }
 
+  Widget _buildPaymentSection() {
+    final totalPrice = widget.selectedServices.values.fold(
+      0.0,
+      (sum, o) => sum + o.price.toDouble(),
+    );
+    final totalMinutes = widget.selectedServices.values.fold(
+      0,
+      (sum, o) => sum + o.duration,
+    );
+    final hours = totalMinutes ~/ 60;
+    final mins = totalMinutes % 60;
+    final durationStr = hours > 0 ? '${hours}h ${mins}m' : '${mins}m';
+
+    final paymentModes = ['UPI / QR Code', 'Cash', 'Card'];
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFBF8F5),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFEADBCE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.receipt_long_outlined, size: 20, color: Color(0xFF8B6B4D)),
+              SizedBox(width: 8),
+              Text(
+                'Order Summary & Payment',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF2C2E3E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...widget.selectedServices.entries.map((e) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${e.key.title} (${e.value.duration} min)',
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        color: Color(0xFF55596E),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '₹${e.value.price}',
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2C2E3E),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          const Divider(color: Color(0xFFEADBCE)),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Total Duration: $durationStr',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF6B6E82),
+                ),
+              ),
+              Text(
+                'Total: ₹${totalPrice.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF8B5A2B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Payment Status Radio / Toggle
+          const Text(
+            'Payment Status',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2C2E3E),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _buildChoiceChip(
+                label: 'Unpaid',
+                isSelected: _paymentStatus == 'Unpaid',
+                activeColor: Colors.red.shade700,
+                onSelected: () => setState(() => _paymentStatus = 'Unpaid'),
+              ),
+              const SizedBox(width: 12),
+              _buildChoiceChip(
+                label: 'Paid',
+                isSelected: _paymentStatus == 'Paid',
+                activeColor: Colors.green.shade700,
+                onSelected: () => setState(() => _paymentStatus = 'Paid'),
+              ),
+            ],
+          ),
+
+          // Payment Method Selector
+          if (_paymentStatus == 'Paid') ...[
+            const SizedBox(height: 14),
+            const Text(
+              'Payment Method',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2C2E3E),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              children: paymentModes.map((mode) {
+                final isSelected = _paymentMethod == mode;
+                return ChoiceChip(
+                  label: Text(
+                    mode,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isSelected ? Colors.white : const Color(0xFF333333),
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                  ),
+                  selected: isSelected,
+                  selectedColor: const Color(0xFF8B5A2B),
+                  backgroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF8B5A2B)
+                          : const Color(0xFFCBD0D9),
+                    ),
+                  ),
+                  onSelected: (_) => setState(() => _paymentMethod = mode),
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChoiceChip({
+    required String label,
+    required bool isSelected,
+    required Color activeColor,
+    required VoidCallback onSelected,
+  }) {
+    return GestureDetector(
+      onTap: onSelected,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor.withOpacity(0.12) : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? activeColor : const Color(0xFFCBD0D9),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
+              size: 16,
+              color: isSelected ? activeColor : const Color(0xFF8C8F9F),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected ? activeColor : const Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─── Reusable Input Field ─────────────────────────────────────────────────
 
   Widget _buildInputField({
@@ -529,6 +750,7 @@ class _ClientDetailsState extends State<ClientDetails> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
     bool isRequired = false,
+    ValueChanged<String>? onChanged,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -563,6 +785,7 @@ class _ClientDetailsState extends State<ClientDetails> {
           controller: controller,
           readOnly: readOnly,
           onTap: onTap,
+          onChanged: onChanged,
           keyboardType: keyboardType,
           validator: validator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
