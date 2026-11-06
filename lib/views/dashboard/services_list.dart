@@ -6,6 +6,18 @@ import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
+class _ServiceSummary {
+  final GroupedServiceModel group;
+  final int count;
+  final double revenue;
+
+  const _ServiceSummary({
+    required this.group,
+    required this.count,
+    required this.revenue,
+  });
+}
+
 class ServicesList extends StatefulWidget {
   const ServicesList({super.key});
 
@@ -32,59 +44,106 @@ class _ServicesListState extends State<ServicesList> {
   @override
   Widget build(BuildContext context) {
     final servicelist = context.watch<ServiceController>();
-    final services = servicelist.services;
+    final groups = servicelist.groupedServices;
     final bookingcontroller = context.watch<BookingController>();
     final bookings = bookingcontroller.bookings;
 
-    // Cross-reference: use ServiceController's counts (from REST) and fall
-    // back to scanning BookingController's booking list by service name.
-    int getCount(ServiceModel service) {
-      final dbCount = servicelist.bookingCounts[service.id];
-      if (dbCount != null && dbCount > 0) return dbCount;
+    String cleanName(String name) {
+      return name
+          .replaceAll(
+              RegExp(r'(\s*[-–—]?\s*\(?\s*\d+\s*min(ute)?s?\s*\)?.*$)',
+                  caseSensitive: false),
+              '')
+          .trim()
+          .toLowerCase();
+    }
 
-      final sName = service.serviceName.trim().toLowerCase();
-      return bookings.where((b) {
-        if (service.id != null && (b.serviceRef == service.id || b.serviceOptionId == service.id)) {
-          return true;
+    int getGroupCount(GroupedServiceModel group) {
+      final optionIds = group.ids;
+      final cleanBase = cleanName(group.serviceName);
+
+      // 1. Sum ServiceController's precalculated counts for all options in this group
+      int sumCtrl = 0;
+      for (final opt in group.options) {
+        if (opt.id != null) {
+          sumCtrl += servicelist.getBookingCount(opt.id);
         }
-        final bName = b.servicename.trim().toLowerCase();
-        if (sName.isEmpty || bName.isEmpty) return false;
-        return bName == sName || bName.contains(sName) || sName.contains(bName);
+      }
+      if (sumCtrl > 0) return sumCtrl;
+
+      // 2. Count from BookingController bookings
+      return bookings.where((b) {
+        if (b.serviceRef != null && optionIds.contains(b.serviceRef)) return true;
+        if (b.serviceOptionId != null && optionIds.contains(b.serviceOptionId)) return true;
+        final bName = cleanName(b.servicename);
+        if (cleanBase.isEmpty || bName.isEmpty) return false;
+        return bName == cleanBase || bName.contains(cleanBase) || cleanBase.contains(bName);
       }).length;
     }
 
-    double getRevenue(ServiceModel service) {
-      // First try the ServiceController's pre-calculated revenue
-      final rev = servicelist.getRevenue(service);
-      if (rev > 0) return rev;
+    double getGroupRevenue(GroupedServiceModel group, int count) {
+      // 1. Sum ServiceController's precalculated revenue for all options in this group
+      double sumCtrlRev = 0;
+      for (final opt in group.options) {
+        sumCtrlRev += servicelist.getRevenue(opt);
+      }
+      if (sumCtrlRev > 0) return sumCtrlRev;
 
-      // Fall back: sum booking prices from BookingController
+      // 2. Scan BookingController bookings
+      final optionIds = group.ids;
+      final cleanBase = cleanName(group.serviceName);
       double total = 0;
       for (final b in bookings) {
         bool matches = false;
-        if (b.serviceOptionId != null && b.serviceOptionId == service.id) {
+        if (b.serviceRef != null && optionIds.contains(b.serviceRef)) {
+          matches = true;
+        } else if (b.serviceOptionId != null && optionIds.contains(b.serviceOptionId)) {
           matches = true;
         } else {
-          final sName = service.serviceName.trim().toLowerCase();
-          final bName = b.servicename.trim().toLowerCase();
-          if (sName.isNotEmpty && bName.isNotEmpty && (sName == bName || sName.contains(bName) || bName.contains(sName))) {
+          final bName = cleanName(b.servicename);
+          if (cleanBase.isNotEmpty &&
+              bName.isNotEmpty &&
+              (cleanBase == bName || cleanBase.contains(bName) || bName.contains(cleanBase))) {
             matches = true;
           }
         }
+
         if (matches) {
           final rawPrice = b.servicePrice ?? '';
           final sanitized = rawPrice.replaceAll(RegExp(r'[^0-9.]'), '');
           final price = double.tryParse(sanitized);
-          total += price != null && price > 0 ? price : service.price;
+          if (price != null && price > 0) {
+            total += price;
+          } else if (group.options.isNotEmpty) {
+            total += group.options.first.price;
+          }
         }
       }
-      return total;
+
+      if (total > 0) return total;
+      final fallbackPrice = group.options.isNotEmpty ? group.options.first.price : 0.0;
+      return fallbackPrice * count;
     }
 
-    final counts = services.map((s) => getCount(s)).toList();
-    final maxCount = counts.isEmpty
+    final summaryList = groups
+        .map((g) {
+          final count = getGroupCount(g);
+          final revenue = getGroupRevenue(g, count);
+          return _ServiceSummary(group: g, count: count, revenue: revenue);
+        })
+        .where((s) => s.count > 0)
+        .toList();
+
+    // Sort by bookings count descending, then by revenue descending
+    summaryList.sort((a, b) {
+      final cmp = b.count.compareTo(a.count);
+      if (cmp != 0) return cmp;
+      return b.revenue.compareTo(a.revenue);
+    });
+
+    final maxCount = summaryList.isEmpty
         ? 1
-        : counts.reduce((a, b) => a > b ? a : b).clamp(1, 999999);
+        : summaryList.map((e) => e.count).reduce((a, b) => a > b ? a : b).clamp(1, 999999);
 
     return Container(
       decoration: BoxDecoration(
@@ -130,21 +189,23 @@ class _ServicesListState extends State<ServicesList> {
                   padding: EdgeInsets.symmetric(vertical: 40),
                   child: Center(child: CircularProgressIndicator()),
                 )
-              : services.isEmpty
+              : summaryList.isEmpty
                   ? const Padding(
                       padding: EdgeInsets.symmetric(vertical: 40),
-                      child: Center(child: Text('No service found')),
+                      child: Center(
+                        child: Text(
+                          'No booked services yet',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      ),
                     )
                   : ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      itemCount: services.length,
+                      itemCount: summaryList.length,
                       itemBuilder: (context, index) {
-                        final service = services[index];
-                        final count = getCount(service);
-                        final revenue = getRevenue(service);
-                        final progress =
-                            maxCount > 0 ? (count / maxCount) : 0.0;
+                        final item = summaryList[index];
+                        final progress = maxCount > 0 ? (item.count / maxCount) : 0.0;
 
                         return Padding(
                           padding: const EdgeInsets.symmetric(
@@ -154,14 +215,14 @@ class _ServicesListState extends State<ServicesList> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              /// Service Name & Price Row
+                              /// Service Name & Revenue Row
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      service.serviceName,
+                                      item.group.serviceName,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -173,11 +234,11 @@ class _ServicesListState extends State<ServicesList> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    '₹${service.price.toStringAsFixed(0)}',
+                                    '₹${item.revenue.toStringAsFixed(0)}',
                                     style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.textSecondary,
-                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF66564A),
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],
@@ -201,13 +262,13 @@ class _ServicesListState extends State<ServicesList> {
 
                               const SizedBox(height: 6),
 
-                              /// Bookings Count & Revenue Row
+                              /// Bookings Count Row
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    '$count ${count == 1 ? "booking" : "bookings"}',
+                                    '${item.count} ${item.count == 1 ? "booking" : "bookings"}',
                                     style: const TextStyle(
                                       fontSize: 12,
                                       color: AppColors.textSecondary,
@@ -215,10 +276,10 @@ class _ServicesListState extends State<ServicesList> {
                                     ),
                                   ),
                                   Text(
-                                    'Revenue: ₹${revenue.toStringAsFixed(0)}',
+                                    'Revenue: ₹${item.revenue.toStringAsFixed(0)}',
                                     style: const TextStyle(
                                       fontSize: 12,
-                                      fontWeight: FontWeight.bold,
+                                      fontWeight: FontWeight.w600,
                                       color: Color(0xFF66564A),
                                     ),
                                   ),

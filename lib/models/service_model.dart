@@ -73,3 +73,15 @@ class ServiceModel {
     );
   }
 }
+
+extension ServiceModelBaseName on ServiceModel {
+  String get baseServiceName {
+    final cleaned = serviceName
+        .replaceAll(
+            RegExp(r'(\s*[-–—]?\s*\(?\s*\d+\s*min(ute)?s?\s*\)?.*$)',
+                caseSensitive: false),
+            '')
+        .trim();
+    return cleaned.isEmpty ? serviceName : cleaned;
+  }
+}

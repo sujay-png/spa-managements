@@ -1,98 +1,103 @@
 import 'package:flutter/material.dart';
+import 'package:ira_spa_webapp/models/spa_service.dart';
+import 'package:ira_spa_webapp/theme/app_theme.dart';
 
-class ServiceCard extends StatelessWidget {
-  final String title;
-  final String category;
-  final String duration;
-  final String price;
-  final String? description;
 
-  final String? bookings;
-  final String? revenue;
-  final String? badge;
+class HoverableServiceCard extends StatefulWidget {
+  final SpaService service;
+  final bool isSelected;
+  final ServiceOption? selectedOption;
+  final Function(ServiceOption) onOptionToggled;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const ServiceCard({
+  const HoverableServiceCard({
     super.key,
-    required this.title,
-    required this.category,
-    required this.duration,
-    required this.price,
-     this.description,
-     this.bookings,
-     this.revenue,
-     this.badge,
-    required this.onEdit,
-    required this.onDelete,
+    required this.service,
+    required this.isSelected,
+    this.selectedOption,
+    required this.onOptionToggled,
+    this.onEdit,
+    this.onDelete,
   });
 
   @override
+  State<HoverableServiceCard> createState() => _HoverableServiceCardState();
+}
+
+class _HoverableServiceCardState extends State<HoverableServiceCard> {
+  bool _isHovering = false;
+
+  void _setHovering(bool hovering) {
+    if (_isHovering == hovering) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _isHovering != hovering) {
+        setState(() => _isHovering = hovering);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8DDD2)),
-     
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          /// Top Section: Title & Category
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF2C221E),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    description ?? '',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF796D64),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+    return MouseRegion(
+      onEnter: (_) => _setHovering(true),
+      onExit: (_) => _setHovering(false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 140),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: widget.isSelected
+                ? AppColors.primary
+                : (_isHovering
+                    ? AppColors.primary.withOpacity(0.4)
+                    : const Color(0xFFE8E8EE)),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withOpacity(
+                _isHovering || widget.isSelected ? 0.08 : 0.02,
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C221E),
-                      ),
+              blurRadius: _isHovering ? 15 : 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.service.title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1E202B),
                     ),
                   ),
-                  SizedBox(
-                    width: 30,
-                    child: PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, size: 18),
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          onEdit.call();
-                        } else if (value == 'delete') {
-                          onDelete.call();
-                        }
-                      },
-                      itemBuilder: (context) => [
+                ),
+                if (widget.onEdit != null || widget.onDelete != null)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF6B6E82)),
+                    onSelected: (value) {
+                      if (value == 'edit' && widget.onEdit != null) {
+                        widget.onEdit!();
+                      } else if (value == 'delete' && widget.onDelete != null) {
+                        widget.onDelete!();
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      if (widget.onEdit != null)
                         const PopupMenuItem(
                           value: 'edit',
                           child: Row(
@@ -103,226 +108,101 @@ class ServiceCard extends StatelessWidget {
                             ],
                           ),
                         ),
+                      if (widget.onDelete != null)
                         const PopupMenuItem(
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(
-                                Icons.delete_outline,
-                                size: 16,
-                                color: Colors.red,
-                              ),
+                              Icon(Icons.delete_outline, size: 16, color: Colors.red),
                               SizedBox(width: 8),
-                              Text(
-                                'Delete',
-                                style: TextStyle(color: Colors.red),
-                              ),
+                              Text('Delete', style: TextStyle(color: Colors.red)),
                             ],
                           ),
+                        ),
+                    ],
+                  ),
+              ],
+            ),
+            if (widget.service.description.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                widget.service.description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF6B6E82),
+                  height: 1.4,
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 24,
+              runSpacing: 12,
+              children: widget.service.options.map((option) {
+                final bool isOptionSelected = widget.selectedOption == option;
+                final durationStr = option.label.isNotEmpty &&
+                        option.label.toLowerCase().contains('min')
+                    ? option.label
+                    : '${option.duration} min';
+
+                return MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => widget.onOptionToggled(option),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isOptionSelected
+                              ? Icons.check_box
+                              : Icons.check_box_outline_blank,
+                          color: isOptionSelected
+                              ? AppColors.primary
+                              : const Color(0xFFCBD0D9),
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time,
+                              size: 16,
+                              color: Color(0xFF6B6E82),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              durationStr,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF4A4D60),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '₹${option.price}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isOptionSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: isOptionSelected
+                                    ? AppColors.textPrimary
+                                    : const Color(0xFF4A4D60),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3ECE5),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  category,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF796D64),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(flex: 3),
-
-          /// Duration & Price Boxes
-          Row(
-            children: [
-              Expanded(
-                flex: 5,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F3EE),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "DURATION",
-                        style: TextStyle(
-                          fontSize: 9,
-                          letterSpacing: 0.8,
-                          color: Color(0xFF9E9188),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 14,
-                            color: Color(0xFF544436),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            duration,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF332A24),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 5,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 9,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF7F3EE),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "PRICE",
-                        style: TextStyle(
-                          fontSize: 9,
-                          letterSpacing: 0.8,
-                          color: Color(0xFF9E9188),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        price,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF9D785A),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(flex: 2),
-
-          /// Divider with Spacing
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
-            child: Divider(color: Color(0xFFF0E7DE), height: 1, thickness: 1),
-          ),
-
-          const Spacer(flex: 1),
-
-          /// Bookings & Revenue
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "BOOKINGS",
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 0.8,
-                        color: Color(0xFF9E9188),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      bookings ?? '',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF332A24),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "REVENUE",
-                      style: TextStyle(
-                        fontSize: 10,
-                        letterSpacing: 0.8,
-                        color: Color(0xFF9E9188),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      revenue?? '',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF332A24),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(flex: 9),
-
-          /// Bottom Status Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2F3EC),
-              borderRadius: BorderRadius.circular(20),
+                );
+              }).toList(),
             ),
-            child: Text(
-              badge ?? '',
-              style: const TextStyle(
-                color: Color(0xFF108A00),
-                fontWeight: FontWeight.w600,
-                fontSize: 11,
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

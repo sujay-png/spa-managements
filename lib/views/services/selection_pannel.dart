@@ -1,7 +1,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
-import 'package:ira_spa_webapp/views/service_menu/client_form/clientdetails.dart';
+import 'package:ira_spa_webapp/views/client_form/clientdetails.dart';
+
 import '../../models/spa_service.dart';
 
 class SelectionPanel extends StatelessWidget {
@@ -64,103 +65,107 @@ class SelectionPanel extends StatelessWidget {
           ),
           const SizedBox(height: 30),
 
-          Flexible(
-            child: selectedServices.isEmpty
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      SizedBox(width: double.infinity),
-                      Text(
-                        'No services selected yet',
-                        style: TextStyle(
-                          color: Color(0xFF6B6E82),
-                          fontSize: 14,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Click on services to add them',
-                        style: TextStyle(
-                          color: Color(0xFFA0A3B1),
-                          fontSize: 13,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                    ],
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: selectedServices.entries.map((entry) {
-                        final service = entry.key;
-                        final option = entry.value;
+          if (selectedServices.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(width: double.infinity),
+                  Text(
+                    'No services selected yet',
+                    style: TextStyle(
+                      color: Color(0xFF6B6E82),
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Click on services to add them',
+                    style: TextStyle(
+                      color: Color(0xFFA0A3B1),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 340),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: selectedServices.entries.map((entry) {
+                    final service = entry.key;
+                    final option = entry.value;
 
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Column(
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      service.title,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: Color(0xFF1E202B),
-                                      ),
-                                    ),
+                              Expanded(
+                                child: Text(
+                                  service.title,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFF1E202B),
                                   ),
-                                  MouseRegion(
-                                    cursor: SystemMouseCursors.click,
-                                    child: GestureDetector(
-                                      onTap: () => onRemove(service),
-                                      child: const Icon(
-                                        Icons.close,
-                                        size: 18,
-                                        color: Color(0xFFA0A3B1),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Text(
-                                    '${option.duration} min',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF6B6E82),
-                                    ),
+                              MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  onTap: () => onRemove(service),
+                                  child: const Icon(
+                                    Icons.close,
+                                    size: 18,
+                                    color: Color(0xFFA0A3B1),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    '₹${option.price}',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              const Divider(
-                                color: Color(0xFFF3F3F5),
-                                height: 1,
+                                ),
                               ),
                             ],
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text(
+                                '${option.duration} min',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF6B6E82),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                '₹${option.price}',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          const Divider(
+                            color: Color(0xFFF3F3F5),
+                            height: 1,
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
 
           if (selectedServices.isNotEmpty) ...[
             const SizedBox(height: 16),

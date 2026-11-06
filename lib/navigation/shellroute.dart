@@ -8,9 +8,9 @@ import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/bookings/booking_page.dart';
 import 'package:ira_spa_webapp/views/customer/customer_page.dart';
 import 'package:ira_spa_webapp/views/dashboard/dashboard.dart';
-import 'package:ira_spa_webapp/views/service_menu/screen.dart';
-import 'package:ira_spa_webapp/views/service_menu/selection_pannel.dart';
-import 'package:ira_spa_webapp/views/services/services_page.dart';
+import 'package:ira_spa_webapp/views/services/screen.dart';
+import 'package:ira_spa_webapp/views/services/selection_pannel.dart';
+
 import 'package:ira_spa_webapp/views/staff/staff_page.dart';
 import 'package:provider/provider.dart';
 
@@ -50,8 +50,7 @@ class _ShellrouteState extends State<Shellroute> {
     CustomerPage(),
     ServiceMenuView(),
     StaffPage(),
-    ServicePage(),
-
+  
 
     // MaintenanceView(),
     // NoticeBoardView(),
@@ -158,7 +157,7 @@ class _ShellrouteState extends State<Shellroute> {
                     _menu(Icons.people_outline, "Customers", 2),
                     _menu(Icons.content_cut, "Services", 3),
                     _menu(Icons.person_outline, "Staff", 4),
-                    _menu(Icons.room_service_outlined, "Manage Services", 5),
+                    // _menu(Icons.room_service_outlined, "Manage Services", 5),
 
                     const Spacer(),
 

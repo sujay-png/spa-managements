@@ -103,35 +103,35 @@ class _BookingPageState extends State<BookingPage> {
                           ),
                         ),
                         Spacer(),
-                        SizedBox(
-                          width: 200,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              showBookingDialog(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8C7B68),
-                              foregroundColor: AppColors.surface,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: const Icon(Icons.add, size: 20),
-                            label: Text(
-                              'New Booking',
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(
-                                    fontSize: 15,
-                                    color: AppColors.surface,
-                                  ),
-                            ),
-                          ),
-                        ),
+                        // SizedBox(
+                        //   width: 200,
+                        //   child: ElevatedButton.icon(
+                        //     onPressed: () {
+                        //       showBookingDialog(context);
+                        //     },
+                        //     style: ElevatedButton.styleFrom(
+                        //       backgroundColor: const Color(0xFF8C7B68),
+                        //       foregroundColor: AppColors.surface,
+                        //       elevation: 0,
+                        //       padding: const EdgeInsets.symmetric(
+                        //         horizontal: 20,
+                        //         vertical: 12,
+                        //       ),
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(10),
+                        //       ),
+                        //     ),
+                        //     icon: const Icon(Icons.add, size: 20),
+                        //     label: Text(
+                        //       'New Booking',
+                        //       style: Theme.of(context).textTheme.labelLarge
+                        //           ?.copyWith(
+                        //             fontSize: 15,
+                        //             color: AppColors.surface,
+                        //           ),
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                     Padding(

@@ -1,9 +1,51 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:ira_spa_webapp/models/repository.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
+import 'package:ira_spa_webapp/models/spa_service.dart';
 import 'package:ira_spa_webapp/views/service/database_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+class GroupedServiceModel {
+  final String serviceName;
+  final String designation;
+  final String? description;
+  final List<ServiceModel> options;
+
+  const GroupedServiceModel({
+    required this.serviceName,
+    required this.designation,
+    this.description,
+    required this.options,
+  });
+
+  int get id => options.first.id ?? 0;
+  List<int> get ids => options.map((o) => o.id).whereType<int>().toList();
+
+  SpaService toSpaService() {
+    final opts = options.map((m) {
+      final durDigits = RegExp(r'\d+').firstMatch(m.duration)?.group(0);
+      final durInt = durDigits != null ? int.tryParse(durDigits) ?? 0 : 0;
+      return ServiceOption(
+        id: m.id,
+        label: m.duration,
+        duration: durInt,
+        price: m.price.toInt(),
+      );
+    }).toList();
+
+    opts.sort((a, b) => a.duration.compareTo(b.duration));
+
+    return SpaService(
+      id: '${designation}_$serviceName',
+      title: serviceName.toUpperCase(),
+      category: designation,
+      description: description ?? '',
+      options: opts,
+    );
+  }
+}
 
 class ServiceController extends ChangeNotifier {
   final DatabaseService _service = DatabaseService();
@@ -71,10 +113,12 @@ class ServiceController extends ChangeNotifier {
         if (rawServiceName != null && rawServiceName.isNotEmpty) {
           matchedService = _services.where((s) {
             final name = s.serviceName.trim().toLowerCase();
+            final base = s.baseServiceName.toLowerCase();
             if (name.isEmpty) return false;
             return name == rawServiceName ||
-                rawServiceName.contains(name) ||
-                name.contains(rawServiceName);
+                base == rawServiceName ||
+                rawServiceName.contains(base) ||
+                base.contains(rawServiceName);
           }).firstOrNull;
 
           matchedServiceId = matchedService?.id;
@@ -247,6 +291,46 @@ class ServiceController extends ChangeNotifier {
     }).toList();
   }
 
+  /// Returns all services grouped by category (designation) and service name
+  List<GroupedServiceModel> get groupedServices {
+    final list = _filteredServices;
+    if (list.isEmpty) return [];
+
+    final Map<String, List<ServiceModel>> grouped = {};
+    for (final s in list) {
+      final base = s.baseServiceName.isEmpty ? s.serviceName : s.baseServiceName;
+      final key = '${s.designation.trim().toLowerCase()}:::${base.toLowerCase()}';
+      grouped.putIfAbsent(key, () => []).add(s);
+    }
+
+    return grouped.values.map((group) {
+      final first = group.first;
+      final baseTitle = first.baseServiceName.isEmpty ? first.serviceName : first.baseServiceName;
+      final desc = group
+          .map((m) => m.description)
+          .firstWhere((d) => d != null && d.trim().isNotEmpty, orElse: () => null);
+      return GroupedServiceModel(
+        serviceName: baseTitle,
+        designation: first.designation,
+        description: desc,
+        options: group,
+      );
+    }).toList();
+  }
+
+  /// Returns services grouped by Category -> List<SpaService> for ServiceMenu
+  Map<String, List<SpaService>> get groupedSpaServices {
+    final groups = groupedServices;
+    if (groups.isEmpty) return {};
+
+    final Map<String, List<SpaService>> result = {};
+    for (final g in groups) {
+      final cat = g.designation.trim().isEmpty ? 'General' : g.designation.trim();
+      result.putIfAbsent(cat, () => []).add(g.toSpaService());
+    }
+    return result;
+  }
+
   void search(String value) {
     _search = value.toLowerCase();
     notifyListeners();
@@ -260,11 +344,20 @@ class ServiceController extends ChangeNotifier {
   }
 
   /// Saves multiple duration/price options for the same service as separate rows.
+  /// Removes any stale rows matching the base service name first to prevent
+  /// PostgreSQL unique constraint violations (services_business_name_idx).
   Future<void> addServiceWithOptions(List<ServiceModel> options) async {
+    if (options.isEmpty) return;
+    final ref = options.first.businessRef;
+    final baseName = options.first.baseServiceName;
+
+    if (ref != null && baseName.isNotEmpty) {
+      await _service.deleteServicesByBaseName(ref, baseName);
+    }
+
     for (final option in options) {
       await _service.addService(option);
     }
-    final ref = options.first.businessRef;
     if (ref != null) await loadServices(ref);
   }
 
@@ -282,7 +375,61 @@ class ServiceController extends ChangeNotifier {
   Future<void> deleteservice(int id) async {
     await _service.deleteService(id);
     _services.removeWhere((e) => e.id == id);
+    _recalculateBookingCounts();
     notifyListeners();
+  }
+
+  Future<void> deleteServiceGroup(List<int> ids) async {
+    for (final id in ids) {
+      await _service.deleteService(id);
+    }
+    _services.removeWhere((e) => e.id != null && ids.contains(e.id));
+    _recalculateBookingCounts();
+    notifyListeners();
+  }
+
+  /// Seeds all default services from spaMenuData into the Supabase backend for this business.
+  Future<int> seedDefaultServices(int businessRef) async {
+    _loading = true;
+    notifyListeners();
+    int count = 0;
+
+    try {
+      for (final entry in spaMenuData.entries) {
+        final category = entry.key;
+        for (final spa in entry.value) {
+          final baseName = spa.title;
+          await _service.deleteServicesByBaseName(businessRef, baseName);
+
+          for (int i = 0; i < spa.options.length; i++) {
+            final opt = spa.options[i];
+            String name = spa.title;
+            if (spa.options.length > 1) {
+              name = '${spa.title} - ${opt.label}';
+            }
+            final model = ServiceModel(
+              serviceName: name,
+              designation: category,
+              duration: opt.label,
+              price: opt.price.toDouble(),
+              businessRef: businessRef,
+              description: spa.description,
+            );
+            await _service.addService(model);
+            count++;
+          }
+        }
+      }
+
+      await loadServices(businessRef);
+    } catch (e) {
+      debugPrint('[ServiceCtrl] Error seeding default services: $e');
+      rethrow;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+    return count;
   }
 
   @override

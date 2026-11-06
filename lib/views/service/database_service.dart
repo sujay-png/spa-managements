@@ -10,8 +10,101 @@ class DatabaseService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   //====================Service=================================
+  bool _isUniqueViolation(dynamic error) {
+    final s = error.toString().toLowerCase();
+    return s.contains('23505') ||
+        s.contains('unique') ||
+        s.contains('services_business_name_idx');
+  }
+
+  Future<void> _updateByBusinessAndName(
+    ServiceModel service,
+    Map<String, dynamic> data,
+  ) async {
+    final updateData = Map<String, dynamic>.from(data)
+      ..remove('id')
+      ..remove('created_at');
+    await _supabase
+        .from('services')
+        .update(updateData)
+        .eq('business_ref', service.businessRef!)
+        .eq('service_name', service.serviceName);
+  }
+
   Future<void> addService(ServiceModel service) async {
-    await _supabase.from('services').insert(service.toJson());
+    try {
+      await _supabase.from('services').insert(service.toJson());
+    } catch (e) {
+      if (e.toString().contains('description') && service.description != null) {
+        final fallback =
+            Map<String, dynamic>.from(service.toJson())..remove('description');
+        try {
+          await _supabase.from('services').insert(fallback);
+        } catch (e2) {
+          if (_isUniqueViolation(e2) && service.businessRef != null) {
+            await _updateByBusinessAndName(service, fallback);
+            return;
+          }
+          rethrow;
+        }
+      } else if (_isUniqueViolation(e) && service.businessRef != null) {
+        await _updateByBusinessAndName(service, service.toJson());
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  /// Deletes all services matching the given base name for this business
+  /// (both exact name and "- [dur] min" variants) to allow clean re-insertion.
+  Future<void> deleteServicesByBaseName(int businessRef, String baseName) async {
+    try {
+      final data = await _supabase
+          .from('services')
+          .select('id, service_name')
+          .eq('business_ref', businessRef);
+
+      final cleanBase = baseName.trim().toLowerCase();
+      final idsToDelete = <int>[];
+
+      for (final row in (data as List)) {
+        final id = row['id'];
+        final sName =
+            (row['service_name'] ?? '').toString().trim().toLowerCase();
+        final sBase = sName
+            .replaceAll(
+                RegExp(r'\s*-\s*\d+\s*min.*$', caseSensitive: false), '')
+            .replaceAll(
+                RegExp(r'\s*\(\s*\d+\s*min.*\)\s*$', caseSensitive: false), '')
+            .trim();
+
+        if (sName == cleanBase || sBase == cleanBase) {
+          final parsedId = int.tryParse(id.toString());
+          if (parsedId != null) {
+            idsToDelete.add(parsedId);
+          }
+        }
+      }
+
+      for (final id in idsToDelete) {
+        try {
+          await _supabase.from('services').delete().eq('id', id);
+        } catch (e) {
+          if (e.toString().contains('23503') ||
+              e.toString().contains('foreign key')) {
+            try {
+              await _supabase
+                  .from('Booking')
+                  .update({'service_id': null})
+                  .eq('service_id', id);
+              await _supabase.from('services').delete().eq('id', id);
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[DatabaseService] deleteServicesByBaseName warning: $e');
+    }
   }
 
   //Watch Service
@@ -30,10 +123,22 @@ class DatabaseService {
   }
 
   Future<void> updateService(ServiceModel service) async {
-    await _supabase
-        .from('services')
-        .update(service.toJson())
-        .eq('id', service.id!);
+    try {
+      await _supabase
+          .from('services')
+          .update(service.toJson())
+          .eq('id', service.id!);
+    } catch (e) {
+      if (e.toString().contains('description') && service.description != null) {
+        final fallback = Map<String, dynamic>.from(service.toJson())..remove('description');
+        await _supabase
+            .from('services')
+            .update(fallback)
+            .eq('id', service.id!);
+      } else {
+        rethrow;
+      }
+    }
   }
 
   //=================================Customer ==========================================
