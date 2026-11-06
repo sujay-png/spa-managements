@@ -107,6 +107,9 @@ class BookingsModel {
       customerRef: parseInt(map['customer_id'] ?? map['customer_ref']),
       serviceRef: parseInt(map['service_id'] ?? map['service_option_id']),
       therapistRef: parseInt(map['staff_id'] ?? map['therapist_id']),
+      custphone: map['customer_phone']?.toString() ??
+          map['cust_phno']?.toString() ??
+          map['phone']?.toString(),
 
       // Names
       customer: map['customer_ref']?.toString() ?? '',
@@ -125,7 +128,8 @@ class BookingsModel {
       endTime: parseDate(map['end_time']),
 
       duration: parseInt(map['duration']),
-      serviceDuration: map['duration']?.toString(),
+      serviceDuration:
+          map['duration']?.toString() ?? map['time']?.toString(),
       servicePrice: rawPrice?.toString(),
       serviceOptionId: parseInt(map['service_option_id'] ?? map['service_id']),
       emailSent: map['email_sent'] == true,
@@ -164,6 +168,7 @@ class BookingsModel {
       if (parsedPrice != null) "total_amount": parsedPrice,
       if (parsedPrice != null && paymentStatus?.toLowerCase() == 'paid')
         "paid_amount": parsedPrice,
+      if (custphone != null && custphone!.isNotEmpty) "cust_phno": custphone,
     };
   }
 }

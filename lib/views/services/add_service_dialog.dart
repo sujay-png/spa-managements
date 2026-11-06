@@ -2,11 +2,35 @@ import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
+import 'package:ira_spa_webapp/models/spa_service.dart';
 import 'package:provider/provider.dart';
+
+class _OptionRow {
+  final int? id;
+  final TextEditingController durationCtrl;
+  final TextEditingController priceCtrl;
+
+  _OptionRow({
+    this.id,
+    required this.durationCtrl,
+    required this.priceCtrl,
+  });
+
+  void dispose() {
+    durationCtrl.dispose();
+    priceCtrl.dispose();
+  }
+}
 
 class AddServiceDialog extends StatefulWidget {
   final VoidCallback onSaved;
-  const AddServiceDialog({super.key, required this.onSaved});
+  final SpaService? serviceToEdit;
+
+  const AddServiceDialog({
+    super.key,
+    required this.onSaved,
+    this.serviceToEdit,
+  });
 
   @override
   State<AddServiceDialog> createState() => _AddServiceDialogState();
@@ -18,16 +42,40 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
   final _catCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
 
-  // Each option: {duration: TextEditingController, price: TextEditingController}
-  final List<Map<String, TextEditingController>> _options = [];
+  final List<_OptionRow> _options = [];
+  final List<int> _deletedOptionIds = [];
 
   bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    // Start with one option row
-    _addOptionRow();
+    final edit = widget.serviceToEdit;
+    if (edit != null) {
+      _nameCtrl.text = edit.title;
+      _catCtrl.text = edit.category;
+      _descCtrl.text = edit.description;
+
+      if (edit.options.isNotEmpty) {
+        for (final opt in edit.options) {
+          final durDigits = RegExp(r'\d+').firstMatch(opt.label)?.group(0);
+          final durText = opt.duration > 0
+              ? '${opt.duration}'
+              : (durDigits ?? opt.label);
+          _options.add(
+            _OptionRow(
+              id: opt.id,
+              durationCtrl: TextEditingController(text: durText),
+              priceCtrl: TextEditingController(text: '${opt.price}'),
+            ),
+          );
+        }
+      } else {
+        _addOptionRow();
+      }
+    } else {
+      _addOptionRow();
+    }
   }
 
   @override
@@ -36,25 +84,30 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     _catCtrl.dispose();
     _descCtrl.dispose();
     for (final o in _options) {
-      o['duration']!.dispose();
-      o['price']!.dispose();
+      o.dispose();
     }
     super.dispose();
   }
 
   void _addOptionRow() {
     setState(() {
-      _options.add({
-        'duration': TextEditingController(),
-        'price': TextEditingController(),
-      });
+      _options.add(
+        _OptionRow(
+          id: null,
+          durationCtrl: TextEditingController(),
+          priceCtrl: TextEditingController(),
+        ),
+      );
     });
   }
 
   void _removeOptionRow(int idx) {
     setState(() {
-      _options[idx]['duration']!.dispose();
-      _options[idx]['price']!.dispose();
+      final row = _options[idx];
+      if (row.id != null) {
+        _deletedOptionIds.add(row.id!);
+      }
+      row.dispose();
       _options.removeAt(idx);
     });
   }
@@ -81,21 +134,23 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
       final usedNames = <String>{};
       for (int i = 0; i < _options.length; i++) {
         final o = _options[i];
-        final dur = o['duration']!.text.trim();
-        final price = double.tryParse(o['price']!.text.trim()) ?? 0;
+        final dur = o.durationCtrl.text.trim();
+        final price = double.tryParse(o.priceCtrl.text.trim()) ?? 0;
         final durLabel = RegExp(r'^\d+$').hasMatch(dur) ? '$dur min' : dur;
 
         String name = serviceName;
         if (_options.length > 1) {
-          name = '$serviceName - $durLabel';
+          final suffix = durLabel.isNotEmpty ? durLabel : 'Option ${i + 1}';
+          name = '$serviceName - $suffix';
           if (usedNames.contains(name.toLowerCase())) {
-            name = '$serviceName - $durLabel (#${i + 1})';
+            name = '$serviceName - $suffix (#${i + 1})';
           }
         }
         usedNames.add(name.toLowerCase());
 
         rows.add(
           ServiceModel(
+            id: o.id,
             serviceName: name,
             designation: category,
             duration: durLabel,
@@ -106,7 +161,16 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
         );
       }
 
-      await context.read<ServiceController>().addServiceWithOptions(rows);
+      final isEditing = widget.serviceToEdit != null;
+      if (isEditing) {
+        await context.read<ServiceController>().updateServiceWithOptions(
+              businessRef: businessRef,
+              updatedOptions: rows,
+              deletedOptionIds: _deletedOptionIds,
+            );
+      } else {
+        await context.read<ServiceController>().addServiceWithOptions(rows);
+      }
 
       if (!mounted) return;
       Navigator.pop(context);
@@ -114,7 +178,10 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Service "$serviceName" saved with ${rows.length} option(s)!'),
+            isEditing
+                ? 'Service "$serviceName" updated successfully!'
+                : 'Service "$serviceName" saved with ${rows.length} option(s)!',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -130,6 +197,8 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.serviceToEdit != null;
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       backgroundColor: Colors.white,
@@ -157,26 +226,33 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                       color: const Color(0xFFD4A373).withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(Icons.spa_outlined,
-                        color: Color(0xFFD4A373), size: 22),
+                    child: Icon(
+                      isEditing ? Icons.edit_note_outlined : Icons.spa_outlined,
+                      color: const Color(0xFFD4A373),
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Add New Service',
-                          style: TextStyle(
+                          isEditing ? 'Edit Service' : 'Add New Service',
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF2C2E3E),
                           ),
                         ),
                         Text(
-                          'Configure service details and duration/pricing options',
-                          style:
-                              TextStyle(fontSize: 12, color: Color(0xFF8B7D76)),
+                          isEditing
+                              ? 'Update service details, duration, and pricing options'
+                              : 'Configure service details and duration/pricing options',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF8B7D76),
+                          ),
                         ),
                       ],
                     ),
@@ -301,8 +377,10 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Save Service',
-                              style: TextStyle(fontWeight: FontWeight.w600)),
+                          : Text(
+                              isEditing ? 'Update Service' : 'Save Service',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
                     ),
                   ),
                 ],
@@ -363,12 +441,12 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
             spacing: 16,
             runSpacing: 8,
             children: _options.map((o) {
-              final dur = o['duration']!.text.trim().isEmpty
+              final dur = o.durationCtrl.text.trim().isEmpty
                   ? '60 min'
-                  : '${o['duration']!.text.trim()} min';
-              final price = o['price']!.text.trim().isEmpty
+                  : '${o.durationCtrl.text.trim()} min';
+              final price = o.priceCtrl.text.trim().isEmpty
                   ? '2200'
-                  : o['price']!.text.trim();
+                  : o.priceCtrl.text.trim();
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -401,7 +479,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
     );
   }
 
-  Widget _buildOptionRow(int idx, Map<String, TextEditingController> option) {
+  Widget _buildOptionRow(int idx, _OptionRow option) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
@@ -439,10 +517,10 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _fieldLabel(Icons.access_time_outlined, 'Duration'),
+                      _fieldLabel(Icons.access_time_outlined, 'Duration (minutes)'),
                       const SizedBox(height: 6),
                       TextFormField(
-                        controller: option['duration'],
+                        controller: option.durationCtrl,
                         decoration: _dec('e.g. 60'),
                         keyboardType: TextInputType.number,
                         onChanged: (_) => setState(() {}),
@@ -461,7 +539,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                       _fieldLabel(Icons.currency_rupee, 'Price (₹)'),
                       const SizedBox(height: 6),
                       TextFormField(
-                        controller: option['price'],
+                        controller: option.priceCtrl,
                         decoration: _dec('e.g. 2200'),
                         keyboardType: TextInputType.number,
                         onChanged: (_) => setState(() {}),

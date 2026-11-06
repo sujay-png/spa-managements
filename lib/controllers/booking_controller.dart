@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:collection/collection.dart';
+import 'package:ira_spa_webapp/models/client_model.dart';
 
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/models/bookings_model.dart';
@@ -12,6 +14,9 @@ class BookingController extends ChangeNotifier {
 
   List<BookingsModel> _bookings = [];
   List<BookingsModel> get bookings => _filteredBookings;
+
+  List<ClientModel> _clients = [];
+  List<ClientModel> get clients => _clients;
 
   bool _loading = true;
   bool get loading => _loading;
@@ -89,11 +94,49 @@ class BookingController extends ChangeNotifier {
       _bookings.where((b) => b.statusrequired.toLowerCase() == 'pending').length;
 
   StreamSubscription<List<BookingsModel>>? _sub;
+  StreamSubscription<List<ClientModel>>? _clientSub;
+
+  void _enrichBookingsWithClients() {
+    if (_clients.isEmpty || _bookings.isEmpty) return;
+
+    for (final booking in _bookings) {
+      final cleanCust = booking.customer.trim().toLowerCase();
+      if (cleanCust.isEmpty) continue;
+
+      final matchedClient = _clients.firstWhereOrNull((c) {
+        final cName = c.name.trim().toLowerCase();
+        if (cName.isEmpty) return false;
+        return cName == cleanCust ||
+            cleanCust.contains(cName) ||
+            cName.contains(cleanCust);
+      });
+
+      if (matchedClient != null) {
+        if ((booking.custphone == null || booking.custphone!.trim().isEmpty) &&
+            matchedClient.phone.trim().isNotEmpty) {
+          booking.custphone = matchedClient.phone.trim();
+        }
+
+        final clientTime = matchedClient.serviceTime ??
+            (matchedClient.time.isNotEmpty ? matchedClient.time : null);
+        if ((booking.serviceDuration == null ||
+                booking.serviceDuration!.trim().isEmpty ||
+                booking.serviceDuration == '-') &&
+            clientTime != null &&
+            clientTime.trim().isNotEmpty) {
+          final t = clientTime.trim();
+          booking.serviceDuration =
+              RegExp(r'^\d+$').hasMatch(t) ? '$t min' : t;
+        }
+      }
+    }
+  }
 
   //======================== Load Bookings ========================
 
   Future<void> loadBookings(int businessRef) async {
     _sub?.cancel();
+    _clientSub?.cancel();
 
     _loading = true;
     notifyListeners();
@@ -135,6 +178,7 @@ class BookingController extends ChangeNotifier {
       final rows = List<Map<String, dynamic>>.from(data as List);
       final directList = rows.map((e) => BookingsModel.fromMap(e)).toList();
       _bookings = directList;
+      _enrichBookingsWithClients();
       _loading = false;
       debugPrint('[BookingCtrl] Loaded ${_bookings.length} bookings');
       notifyListeners();
@@ -148,6 +192,7 @@ class BookingController extends ChangeNotifier {
         (list) {
           if (list.isNotEmpty || _bookings.isEmpty) {
             _bookings = list;
+            _enrichBookingsWithClients();
           }
           _loading = false;
           notifyListeners();
@@ -161,6 +206,28 @@ class BookingController extends ChangeNotifier {
     } catch (e) {
       debugPrint('[BookingCtrl] Stream setup error: $e');
     }
+
+    // 3. Load clients from clients table to enrich bookings with mobile number & service minutes
+    try {
+      _clients = await _service.getAllClients(businessRef);
+      _enrichBookingsWithClients();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('[BookingCtrl] Fetch clients error: $e');
+    }
+
+    try {
+      _clientSub = _service.watchClients(businessRef).listen(
+        (clientList) {
+          _clients = clientList;
+          _enrichBookingsWithClients();
+          notifyListeners();
+        },
+        onError: (e) {
+          debugPrint('[BookingCtrl] Clients stream error: $e');
+        },
+      );
+    } catch (_) {}
   }
 
   Future<void> completeBookingWithPayment({
@@ -263,6 +330,7 @@ class BookingController extends ChangeNotifier {
   @override
   void dispose() {
     _sub?.cancel();
+    _clientSub?.cancel();
     super.dispose();
   }
 }

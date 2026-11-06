@@ -39,7 +39,7 @@ class GroupedServiceModel {
 
     return SpaService(
       id: '${designation}_$serviceName',
-      title: serviceName.toUpperCase(),
+      title: serviceName,
       category: designation,
       description: description ?? '',
       options: opts,
@@ -359,6 +359,35 @@ class ServiceController extends ChangeNotifier {
       await _service.addService(option);
     }
     if (ref != null) await loadServices(ref);
+  }
+
+  /// Updates an existing service group and its options in Supabase.
+  /// Modifies existing rows by ID, deletes removed options, and inserts new options.
+  Future<void> updateServiceWithOptions({
+    required int businessRef,
+    required List<ServiceModel> updatedOptions,
+    required List<int> deletedOptionIds,
+  }) async {
+    // 1. Delete removed options by id
+    for (final id in deletedOptionIds) {
+      try {
+        await _service.deleteService(id);
+      } catch (e) {
+        debugPrint('[ServiceCtrl] Error deleting option $id: $e');
+      }
+    }
+
+    // 2. Update existing rows or insert new options
+    for (final option in updatedOptions) {
+      if (option.id != null) {
+        await _service.updateService(option);
+      } else {
+        await _service.addService(option);
+      }
+    }
+
+    // 3. Reload services to sync with DB
+    await loadServices(businessRef);
   }
 
   Future<void> updatedservice(ServiceModel service) async {

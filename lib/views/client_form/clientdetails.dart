@@ -301,30 +301,7 @@ class _ClientDetailsState extends State<ClientDetails> {
                           ),
                         ),
                         const SizedBox(width: 20),
-                        Expanded(
-                          child: _buildInputField(
-                            label: 'Time',
-                            icon: Icons.access_time,
-                            hint: '00:00 AM/PM',
-                            controller: _timeController,
-                            readOnly: true,
-                            isRequired: true,
-                            validator: (v) => (v == null || v.trim().isEmpty)
-                                ? 'Please select a time'
-                                : null,
-                            onTap: () async {
-                              final picked = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay.now(),
-                              );
-                              if (picked != null) {
-                                setState(() {
-                                  _timeController.text = picked.format(context);
-                                });
-                              }
-                            },
-                          ),
-                        ),
+                     
                       ],
                     ),
                     const SizedBox(height: 25),
@@ -481,11 +458,8 @@ class _ClientDetailsState extends State<ClientDetails> {
 
                     const SizedBox(height: 24),
                     const Divider(),
-                    const SizedBox(height: 16),
-
-                    // ── Order Summary & Payment Details ───────────────────
-                    _buildPaymentSection(),
-
+                  
+               
                     const SizedBox(height: 35),
 
                     // ── Save Button ──────────────────────────────────────
@@ -530,213 +504,9 @@ class _ClientDetailsState extends State<ClientDetails> {
     );
   }
 
-  Widget _buildPaymentSection() {
-    final totalPrice = widget.selectedServices.values.fold(
-      0.0,
-      (sum, o) => sum + o.price.toDouble(),
-    );
-    final totalMinutes = widget.selectedServices.values.fold(
-      0,
-      (sum, o) => sum + o.duration,
-    );
-    final hours = totalMinutes ~/ 60;
-    final mins = totalMinutes % 60;
-    final durationStr = hours > 0 ? '${hours}h ${mins}m' : '${mins}m';
+  
 
-    final paymentModes = ['UPI / QR Code', 'Cash', 'Card'];
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFBF8F5),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFEADBCE)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Icon(Icons.receipt_long_outlined, size: 20, color: Color(0xFF8B6B4D)),
-              SizedBox(width: 8),
-              Text(
-                'Order Summary & Payment',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2C2E3E),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          ...widget.selectedServices.entries.map((e) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      '${e.key.title} (${e.value.duration} min)',
-                      style: const TextStyle(
-                        fontSize: 13.5,
-                        color: Color(0xFF55596E),
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '₹${e.value.price}',
-                    style: const TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF2C2E3E),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-          const SizedBox(height: 8),
-          const Divider(color: Color(0xFFEADBCE)),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total Duration: $durationStr',
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF6B6E82),
-                ),
-              ),
-              Text(
-                'Total: ₹${totalPrice.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF8B5A2B),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Payment Status Radio / Toggle
-          const Text(
-            'Payment Status',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF2C2E3E),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildChoiceChip(
-                label: 'Unpaid',
-                isSelected: _paymentStatus == 'Unpaid',
-                activeColor: Colors.red.shade700,
-                onSelected: () => setState(() => _paymentStatus = 'Unpaid'),
-              ),
-              const SizedBox(width: 12),
-              _buildChoiceChip(
-                label: 'Paid',
-                isSelected: _paymentStatus == 'Paid',
-                activeColor: Colors.green.shade700,
-                onSelected: () => setState(() => _paymentStatus = 'Paid'),
-              ),
-            ],
-          ),
-
-          // Payment Method Selector
-          if (_paymentStatus == 'Paid') ...[
-            const SizedBox(height: 14),
-            const Text(
-              'Payment Method',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF2C2E3E),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 10,
-              children: paymentModes.map((mode) {
-                final isSelected = _paymentMethod == mode;
-                return ChoiceChip(
-                  label: Text(
-                    mode,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isSelected ? Colors.white : const Color(0xFF333333),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
-                  selected: isSelected,
-                  selectedColor: const Color(0xFF8B5A2B),
-                  backgroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    side: BorderSide(
-                      color: isSelected
-                          ? const Color(0xFF8B5A2B)
-                          : const Color(0xFFCBD0D9),
-                    ),
-                  ),
-                  onSelected: (_) => setState(() => _paymentMethod = mode),
-                );
-              }).toList(),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChoiceChip({
-    required String label,
-    required bool isSelected,
-    required Color activeColor,
-    required VoidCallback onSelected,
-  }) {
-    return GestureDetector(
-      onTap: onSelected,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? activeColor.withOpacity(0.12) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? activeColor : const Color(0xFFCBD0D9),
-            width: isSelected ? 1.5 : 1.0,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-              size: 16,
-              color: isSelected ? activeColor : const Color(0xFF8C8F9F),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? activeColor : const Color(0xFF333333),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+ 
 
   // ─── Reusable Input Field ─────────────────────────────────────────────────
 

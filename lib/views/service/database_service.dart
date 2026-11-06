@@ -17,38 +17,130 @@ class DatabaseService {
         s.contains('services_business_name_idx');
   }
 
-  Future<void> _updateByBusinessAndName(
+  Future<void> _safeUpdateServiceById(int id, ServiceModel service) async {
+    final payload = Map<String, dynamic>.from(service.toJson())
+      ..remove('id')
+      ..remove('created_at');
+
+    try {
+      await _supabase.from('services').update(payload).eq('id', id);
+    } catch (e) {
+      if (e.toString().contains('description')) {
+        payload.remove('description');
+        await _supabase.from('services').update(payload).eq('id', id);
+      } else {
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _safeUpdateServiceByName(
     ServiceModel service,
     Map<String, dynamic> data,
   ) async {
     final updateData = Map<String, dynamic>.from(data)
       ..remove('id')
       ..remove('created_at');
-    await _supabase
-        .from('services')
-        .update(updateData)
-        .eq('business_ref', service.businessRef!)
-        .eq('service_name', service.serviceName);
+
+    // First try finding id by name to do safe id-based update
+    try {
+      final rows = await _supabase
+          .from('services')
+          .select('id, service_name')
+          .eq('business_ref', service.businessRef!);
+
+      final target = service.serviceName.trim().toLowerCase();
+      int? foundId;
+      for (final r in (rows as List)) {
+        if ((r['service_name'] ?? '').toString().trim().toLowerCase() == target) {
+          foundId = int.tryParse(r['id']?.toString() ?? '');
+          break;
+        }
+      }
+
+      if (foundId != null) {
+        await _safeUpdateServiceById(foundId, service);
+        return;
+      }
+    } catch (_) {}
+
+    // Fallback: update by business_ref and service_name
+    try {
+      await _supabase
+          .from('services')
+          .update(updateData)
+          .eq('business_ref', service.businessRef!)
+          .eq('service_name', service.serviceName);
+    } catch (e) {
+      if (e.toString().contains('description') && updateData.containsKey('description')) {
+        updateData.remove('description');
+        await _supabase
+            .from('services')
+            .update(updateData)
+            .eq('business_ref', service.businessRef!)
+            .eq('service_name', service.serviceName);
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<void> addService(ServiceModel service) async {
+    final ref = service.businessRef;
+    final name = service.serviceName.trim();
+
+    // 1. Proactive check: If row with this service_name already exists for this business,
+    // update it by its primary key ID to guarantee no duplicate-key 23505 error!
+    if (ref != null && name.isNotEmpty) {
+      try {
+        final existing = await _supabase
+            .from('services')
+            .select('id, service_name')
+            .eq('business_ref', ref);
+
+        int? existingId;
+        final nameLower = name.toLowerCase();
+        for (final row in (existing as List)) {
+          final rowName = (row['service_name'] ?? '').toString().trim().toLowerCase();
+          if (rowName == nameLower) {
+            existingId = int.tryParse(row['id']?.toString() ?? '');
+            break;
+          }
+        }
+
+        if (existingId != null) {
+          await _safeUpdateServiceById(existingId, service);
+          return;
+        }
+      } catch (e) {
+        debugPrint('[DatabaseService] Pre-lookup service warning: $e');
+      }
+    }
+
+    // 2. Try upserting with onConflict to let PostgreSQL handle conflict atomically
+    final payload = service.toJson();
     try {
-      await _supabase.from('services').insert(service.toJson());
+      await _supabase.from('services').upsert(
+        payload,
+        onConflict: 'business_ref,service_name',
+      );
     } catch (e) {
       if (e.toString().contains('description') && service.description != null) {
-        final fallback =
-            Map<String, dynamic>.from(service.toJson())..remove('description');
+        final fallback = Map<String, dynamic>.from(payload)..remove('description');
         try {
-          await _supabase.from('services').insert(fallback);
+          await _supabase.from('services').upsert(
+            fallback,
+            onConflict: 'business_ref,service_name',
+          );
         } catch (e2) {
           if (_isUniqueViolation(e2) && service.businessRef != null) {
-            await _updateByBusinessAndName(service, fallback);
+            await _safeUpdateServiceByName(service, fallback);
             return;
           }
           rethrow;
         }
       } else if (_isUniqueViolation(e) && service.businessRef != null) {
-        await _updateByBusinessAndName(service, service.toJson());
+        await _safeUpdateServiceByName(service, payload);
       } else {
         rethrow;
       }
@@ -97,6 +189,14 @@ class DatabaseService {
                   .from('Booking')
                   .update({'service_id': null})
                   .eq('service_id', id);
+            } catch (_) {}
+            try {
+              await _supabase
+                  .from('Booking')
+                  .update({'service_option_id': null})
+                  .eq('service_option_id', id);
+            } catch (_) {}
+            try {
               await _supabase.from('services').delete().eq('id', id);
             } catch (_) {}
           }
@@ -572,12 +672,36 @@ class DatabaseService {
   }
 
   // ─── READ ─────────────────────────────────────────────────────────────────
-  Future<List<ClientModel>> getAllClients() async {
-    final response = await _supabase
-        .from('clients')
-        .select()
-        .order('id', ascending: false);
-    return (response as List).map((row) => ClientModel.fromMap(row)).toList();
+  Future<List<ClientModel>> getAllClients([int? businessRef]) async {
+    try {
+      dynamic query = _supabase.from('clients').select();
+      if (businessRef != null) {
+        query = query.or('business_ref.eq.$businessRef,business_ref.is.null');
+      }
+      final response = await query.order('id', ascending: false);
+      return (response as List).map((row) => ClientModel.fromMap(row)).toList();
+    } catch (e) {
+      try {
+        final response = await _supabase
+            .from('clients')
+            .select()
+            .order('id', ascending: false);
+        return (response as List).map((row) => ClientModel.fromMap(row)).toList();
+      } catch (_) {
+        return [];
+      }
+    }
+  }
+
+  Stream<List<ClientModel>> watchClients(int businessRef) {
+    try {
+      return _supabase
+          .from('clients')
+          .stream(primaryKey: ['id'])
+          .map((data) => data.map((e) => ClientModel.fromMap(e)).toList());
+    } catch (_) {
+      return const Stream.empty();
+    }
   }
 
   Future<ClientModel?> getClientById(int id) async {

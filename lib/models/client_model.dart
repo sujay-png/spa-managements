@@ -94,35 +94,43 @@ final String? serviceTime;
 
   // ── Mapped from DB Schema: public.clients ─────────────────
   factory ClientModel.fromMap(Map<String, dynamic> map) {
+    int? parseInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      return int.tryParse(value.toString());
+    }
+
     return ClientModel(
-      id: map['id'] as int?,
-      businessRef: map['business_ref'] ,
-      date: map['date'] ?? '',
-      time: '', // Note: DB uses appointment_datetime or date
-      name: map['customer_name'] ?? map['name'] ?? '',
-    phone: map['customer_phone'] ?? map['phone'] ?? '',
-    email: map['customer_email'] ?? map['email'] ?? '',
-    location: map['customer_address'] ?? map['location'] ?? '',
-    
+      id: parseInt(map['id']),
+      businessRef: parseInt(map['business_ref']),
+      date: map['date']?.toString() ?? '',
+      time: map['time']?.toString() ?? '',
+      name: map['customer_name']?.toString() ?? map['name']?.toString() ?? '',
+      phone: map['customer_phone']?.toString() ??
+          map['phone']?.toString() ??
+          '',
+      email: map['customer_email']?.toString() ?? map['email']?.toString() ?? '',
+      location: map['customer_address']?.toString() ??
+          map['location']?.toString() ??
+          '',
       age: map['age']?.toString() ?? '',
-  
-      loyaltyCardNo: map['loyalty_card_no'] ?? '',
-      customerId: map['customer_id'] as int?,
-      signatureUrl: map['signature_url'] as String?,
-      dob: map['dob'] as String?,
-      status: map['status'] as String?,
-      therapistId: map['therapist_id'] as int?,
-      appointmentDatetime: map['appointment_datetime'] as String?,
-      massageGoal: map['massage_goal'] as String?,
-      bodyFocusArea: map['body_focus_area'] as String?,
-      skinAllergy: map['skin_allergy'] as String?,
-      isPregnant: map['is_pregnant'] as String?,
-      cardiacProblems: map['cardiac_problems'] as String?,
-      recentSurgery: map['recent_surgery'] as String?,
-      lifestyleType: map['lifestyle_type'] as String?,
-      sessionFrequency: map['session_frequency'] as String?,
-      serviceName: map['service_name'] as String?,
-serviceTime: map['time'] as String?,
+      loyaltyCardNo: map['loyalty_card_no']?.toString() ?? '',
+      customerId: parseInt(map['customer_id']),
+      signatureUrl: map['signature_url']?.toString(),
+      dob: map['dob']?.toString(),
+      status: map['status']?.toString(),
+      therapistId: parseInt(map['therapist_id']),
+      appointmentDatetime: map['appointment_datetime']?.toString(),
+      massageGoal: map['massage_goal']?.toString(),
+      bodyFocusArea: map['body_focus_area']?.toString(),
+      skinAllergy: map['skin_allergy']?.toString(),
+      isPregnant: map['is_pregnant']?.toString(),
+      cardiacProblems: map['cardiac_problems']?.toString(),
+      recentSurgery: map['recent_surgery']?.toString(),
+      lifestyleType: map['lifestyle_type']?.toString(),
+      sessionFrequency: map['session_frequency']?.toString(),
+      serviceName: map['service_name']?.toString(),
+      serviceTime: map['time']?.toString() ?? map['duration']?.toString(),
     );
   }
 

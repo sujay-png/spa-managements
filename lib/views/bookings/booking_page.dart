@@ -391,9 +391,24 @@ class _BookingPageState extends State<BookingPage> {
             selectedCustomer = customerController.customers
                 .cast<CustomerModel?>()
                 .firstWhere(
-                  (e) => e != null && e.name == booking.customer,
+                  (e) =>
+                      e != null &&
+                      ((booking.customerRef != null &&
+                              e.id == booking.customerRef) ||
+                          e.name.trim().toLowerCase() ==
+                              booking.customer.trim().toLowerCase()),
                   orElse: () => null,
                 );
+
+            if (selectedCustomer != null) {
+              selectedCustomerRef = selectedCustomer!.id;
+              selectedCustomerName = selectedCustomer!.name;
+              selectedCustomerPhone = selectedCustomer!.phoneno;
+            } else {
+              selectedCustomerRef = booking.customerRef;
+              selectedCustomerName = booking.customer;
+              selectedCustomerPhone = booking.custphone;
+            }
 
             selectedService = serviceController.services
                 .cast<ServiceModel?>()
@@ -414,7 +429,12 @@ class _BookingPageState extends State<BookingPage> {
             selectedStaff = staffcontroller.staffs
                 .cast<StaffModel?>()
                 .firstWhere(
-                  (e) => e != null && e.name == booking.therapistname,
+                  (e) =>
+                      e != null &&
+                      ((booking.therapistRef != null &&
+                              e.id == booking.therapistRef) ||
+                          e.name.trim().toLowerCase() ==
+                              booking.therapistname.trim().toLowerCase()),
                   orElse: () => null,
                 );
 
@@ -422,13 +442,16 @@ class _BookingPageState extends State<BookingPage> {
               selectedTherapistRef = selectedStaff!.id;
               selectedTherapistName = selectedStaff!.name;
             }
-            // ADD THESE LINES
-            selectedCustomerRef = selectedCustomer?.id;
+            selectedCustomerRef =
+                selectedCustomer?.id ?? booking.customerRef;
+            selectedCustomerName =
+                selectedCustomer?.name ?? booking.customer;
+            selectedCustomerPhone =
+                selectedCustomer?.phoneno ?? booking.custphone;
 
-            selectedServiceRef = selectedService?.id;
-            selectedTherapistRef = selectedStaff?.id;
-
-            selectedCustomerName = selectedCustomer?.name ?? '';
+            selectedServiceRef = selectedService?.id ?? booking.serviceRef;
+            selectedTherapistRef =
+                selectedStaff?.id ?? booking.therapistRef;
 
             selectedServiceName =
                 selectedService?.serviceName ?? booking.servicename;
@@ -436,9 +459,8 @@ class _BookingPageState extends State<BookingPage> {
             selectedTherapistName =
                 selectedStaff?.name ?? booking.therapistname;
 
-            selectedCustomerPhone = selectedCustomer?.phoneno;
-
-            selectedServiceDuration = selectedService?.duration;
+            selectedServiceDuration =
+                selectedService?.duration ?? booking.serviceDuration;
 
             selectedServicePrice =
                 selectedService?.price.toString() ?? booking.servicePrice;
@@ -506,84 +528,99 @@ class _BookingPageState extends State<BookingPage> {
                       const Divider(height: 32, thickness: 1),
                       label(Icons.person_outline, 'CUSTOMER'),
                       const SizedBox(height: 8),
-                      customerController.loading
-                          ? const Center(child: CircularProgressIndicator())
-                          : DropdownButtonFormField<CustomerModel>(
-                              value: selectedCustomer,
-                              items: customerController.customers
-                                  .where(
-                                    (c) =>
-                                        !c.isblacklisted ||
-                                        c.id == selectedCustomer?.id,
-                                  )
-                                  .map((c) {
-                                    return DropdownMenuItem(
-                                      enabled: !c.isblacklisted,
-                                      value: c,
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            c.name,
-                                            style: TextStyle(
-                                              color: c.isblacklisted
-                                                  ? Colors.grey
-                                                  : AppColors.textPrimary,
-                                            ),
-                                          ),
-                                          if (c.isblacklisted)
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 6,
-                                                    vertical: 2,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.red.withOpacity(
-                                                  0.1,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                                border: Border.all(
-                                                  color: Colors.red.shade300,
-                                                ),
-                                              ),
-                                              child: const Text(
-                                                'Blocked',
-                                                style: TextStyle(
-                                                  color: Colors.red,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    );
-                                  })
-                                  .toList(),
-                              validator: (value) {
-                                if (value == null) {
-                                  return 'Plz select customer';
-                                }
-                                if (value.isblacklisted) {
-                                  return 'This customer is blocked and cannot be selected';
-                                }
-                                return null;
-                              },
-                              onChanged: (value) {
-                                if (value != null && value.isblacklisted)
-                                  return;
-                                setState(() {
-                                  selectedCustomer = value;
-
-                                  selectedCustomerRef = value?.id;
-                                  selectedCustomerName = value?.name ?? '';
-                                  selectedCustomerPhone = value?.phoneno;
-                                });
-                              },
+                      if (isedit)
+                        TextFormField(
+                          initialValue: booking!.customer.isNotEmpty
+                              ? booking.customer
+                              : (booking.custphone ?? ''),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
+                          ),
+                        )
+                      else
+                        customerController.loading
+                            ? const Center(child: CircularProgressIndicator())
+                            : DropdownButtonFormField<CustomerModel>(
+                                value: selectedCustomer,
+                                items: customerController.customers
+                                    .where(
+                                      (c) =>
+                                          !c.isblacklisted ||
+                                          c.id == selectedCustomer?.id,
+                                    )
+                                    .map((c) {
+                                      return DropdownMenuItem(
+                                        enabled: !c.isblacklisted,
+                                        value: c,
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              c.name,
+                                              style: TextStyle(
+                                                color: c.isblacklisted
+                                                    ? Colors.grey
+                                                    : AppColors.textPrimary,
+                                              ),
+                                            ),
+                                            if (c.isblacklisted)
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.red.withOpacity(
+                                                    0.1,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(4),
+                                                  border: Border.all(
+                                                    color: Colors.red.shade300,
+                                                  ),
+                                                ),
+                                                child: const Text(
+                                                  'Blocked',
+                                                  style: TextStyle(
+                                                    color: Colors.red,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      );
+                                    })
+                                    .toList(),
+                                validator: (value) {
+                                  if (value == null) {
+                                    return 'Plz select customer';
+                                  }
+                                  if (value.isblacklisted) {
+                                    return 'This customer is blocked and cannot be selected';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  if (value != null && value.isblacklisted)
+                                    return;
+                                  setState(() {
+                                    selectedCustomer = value;
+
+                                    selectedCustomerRef = value?.id;
+                                    selectedCustomerName = value?.name ?? '';
+                                    selectedCustomerPhone = value?.phoneno;
+                                  });
+                                },
+                              ),
                       const SizedBox(height: 16),
                       label(Icons.content_cut, 'SERVICE'),
                       const SizedBox(height: 8),

@@ -87,38 +87,54 @@ class _HoverableServiceCardState extends State<HoverableServiceCard> {
                   ),
                 ),
                 if (widget.onEdit != null || widget.onDelete != null)
-                  PopupMenuButton<String>(
-                    icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF6B6E82)),
-                    onSelected: (value) {
-                      if (value == 'edit' && widget.onEdit != null) {
-                        widget.onEdit!();
-                      } else if (value == 'delete' && widget.onDelete != null) {
-                        widget.onDelete!();
-                      }
-                    },
-                    itemBuilder: (context) => [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       if (widget.onEdit != null)
-                        const PopupMenuItem(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              Icon(Icons.edit_outlined, size: 16),
-                              SizedBox(width: 8),
-                              Text('Edit'),
-                            ],
-                          ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF6B6E82)),
+                          tooltip: 'Edit Service',
+                          splashRadius: 18,
+                          constraints: const BoxConstraints(),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          onPressed: widget.onEdit,
                         ),
-                      if (widget.onDelete != null)
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete_outline, size: 16, color: Colors.red),
-                              SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
-                            ],
-                          ),
-                        ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF6B6E82)),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onSelected: (value) {
+                          if (value == 'edit' && widget.onEdit != null) {
+                            widget.onEdit!();
+                          } else if (value == 'delete' && widget.onDelete != null) {
+                            widget.onDelete!();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          if (widget.onEdit != null)
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 16, color: Color(0xFF6B6E82)),
+                                  SizedBox(width: 8),
+                                  Text('Edit'),
+                                ],
+                              ),
+                            ),
+                          if (widget.onDelete != null)
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete_outline, size: 16, color: Colors.red),
+                                  SizedBox(width: 8),
+                                  Text('Delete', style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
               ],

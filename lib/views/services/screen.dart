@@ -50,15 +50,21 @@ class _ServiceMenuViewState extends State<ServiceMenuView> {
     });
   }
 
-  void _showAddServiceDialog(BuildContext context) {
+  void _showAddServiceDialog(BuildContext context, [SpaService? serviceToEdit]) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AddServiceDialog(
+        serviceToEdit: serviceToEdit,
         onSaved: () {
           final auth = context.read<AuthController>();
           if (auth.businessRef != null) {
             context.read<ServiceController>().loadServices(auth.businessRef!);
+          }
+          if (serviceToEdit != null) {
+            setState(() {
+              selectedServices.remove(serviceToEdit);
+            });
           }
         },
       ),
@@ -259,6 +265,7 @@ class _ServiceMenuViewState extends State<ServiceMenuView> {
             isSelected: isServiceSelected,
             selectedOption: selectedServices[service],
             onOptionToggled: (option) => toggleServiceOption(service, option),
+            onEdit: () => _showAddServiceDialog(context, service),
             onDelete: hasBackendId ? () => _deleteService(service) : null,
           );
         }),

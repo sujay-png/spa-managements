@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:ira_spa_webapp/views/bookings/payment_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
@@ -201,22 +202,70 @@ class _BookingTabelState extends State<BookingTabel> {
                         item.statusrequired.toLowerCase() == 'confirmed';
                     final isPending =
                         item.statusrequired.toLowerCase() == 'pending';
+                    // Look up matching client from clients table
+                    final client = bookingController.clients.firstWhereOrNull((c) {
+                      final cName = c.name.trim().toLowerCase();
+                      final bName = item.customer.trim().toLowerCase();
+                      if (cName.isEmpty || bName.isEmpty) return false;
+                      return cName == bName ||
+                          bName.contains(cName) ||
+                          cName.contains(bName);
+                    });
+
                     final customer = customers
-                        .where((c) => c.name == item.customer)
+                        .where((c) =>
+                            c.name.trim().toLowerCase() ==
+                            item.customer.trim().toLowerCase())
                         .firstOrNull;
 
-                    final phone = customer?.phoneno ?? "-";
-                    ServiceModel? service;
+                    // Fetch Mobile Number: prioritize client table, fallback to item.custphone, fallback to customer.phoneno
+                    String phone = "-";
+                    if (client != null && client.phone.trim().isNotEmpty) {
+                      phone = client.phone.trim();
+                    } else if (item.custphone != null &&
+                        item.custphone!.trim().isNotEmpty) {
+                      phone = item.custphone!.trim();
+                    } else if (customer?.phoneno != null &&
+                        customer!.phoneno.trim().isNotEmpty) {
+                      phone = customer.phoneno.trim();
+                    }
 
+                    ServiceModel? service;
                     try {
                       service = services.firstWhere(
-                        (s) => s.serviceName == item.servicename,
+                        (s) =>
+                            s.serviceName.trim().toLowerCase() ==
+                            item.servicename.trim().toLowerCase(),
                       );
                     } catch (_) {
                       service = null;
                     }
 
-                    final serviceDuration = service?.duration ?? "-";
+                    // Fetch Service Minutes: prioritize client table, fallback to item.serviceDuration, fallback to service.duration
+                    String serviceDuration = "-";
+                    final clientTime = client?.serviceTime ??
+                        (client != null && client.time.isNotEmpty
+                            ? client.time
+                            : null);
+                    if (clientTime != null &&
+                        clientTime.trim().isNotEmpty &&
+                        clientTime.trim() != '-') {
+                      final t = clientTime.trim();
+                      serviceDuration =
+                          RegExp(r'^\d+$').hasMatch(t) ? '$t min' : t;
+                    } else if (item.serviceDuration != null &&
+                        item.serviceDuration!.trim().isNotEmpty &&
+                        item.serviceDuration != '-') {
+                      final t = item.serviceDuration!.trim();
+                      serviceDuration =
+                          RegExp(r'^\d+$').hasMatch(t) ? '$t min' : t;
+                    } else if (item.duration != null && item.duration! > 0) {
+                      serviceDuration = '${item.duration} min';
+                    } else if (service?.duration != null &&
+                        service!.duration.trim().isNotEmpty) {
+                      serviceDuration = service.duration.trim();
+                    }
+
                     final servicePrice = service?.price.toString() ?? "-";
 
                     return Container(
@@ -445,7 +494,6 @@ class _BookingTabelState extends State<BookingTabel> {
                             ),
                           ),
 
-                          /// Price
 
                           /// Status
                           Expanded(
