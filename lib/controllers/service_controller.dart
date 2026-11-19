@@ -189,7 +189,7 @@ class ServiceController extends ChangeNotifier {
         }
       }
 
-      final directList = (data as List)
+      final directList = (data)
           .map((e) => ServiceModel.fromJson(e as Map<String, dynamic>))
           .toList();
       _services = directList;
@@ -254,7 +254,7 @@ class ServiceController extends ChangeNotifier {
             .select();
       }
 
-      final rows = List<Map<String, dynamic>>.from(data as List);
+      final rows = List<Map<String, dynamic>>.from(data);
       _rawBookingRows = rows;
       debugPrint('[ServiceCtrl] Loaded ${rows.length} booking rows');
       _recalculateBookingCounts();

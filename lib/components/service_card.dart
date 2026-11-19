@@ -55,14 +55,14 @@ class _HoverableServiceCardState extends State<HoverableServiceCard> {
             color: widget.isSelected
                 ? AppColors.primary
                 : (_isHovering
-                    ? AppColors.primary.withOpacity(0.4)
+                    ? AppColors.primary.withValues(alpha: 0.4)
                     : const Color(0xFFE8E8EE)),
             width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(
-                _isHovering || widget.isSelected ? 0.08 : 0.02,
+              color: AppColors.primary.withValues(
+                alpha: _isHovering || widget.isSelected ? 0.08 : 0.02,
               ),
               blurRadius: _isHovering ? 15 : 10,
               offset: const Offset(0, 4),

@@ -46,7 +46,13 @@ class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
   Widget build(BuildContext context) {
     // Watch the Booking Controller
     final bookingController = context.watch<BookingController>();
-    final List<BookingsModel> bookings = bookingController.bookings;
+    // Dashboard shows only the next few open appointments.
+    final open = bookingController.bookings.where((b) {
+      final st = b.statusrequired.toLowerCase();
+      return !st.startsWith('complete') && st != 'cancelled';
+    }).toList();
+    final List<BookingsModel> bookings =
+        (open.isNotEmpty ? open : bookingController.bookings).take(5).toList();
 
     if (bookingController.loading) {
       return const Center(child: CircularProgressIndicator());
@@ -125,7 +131,7 @@ class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
                   final String staffName = booking.therapistname.trim().isNotEmpty
                       ? booking.therapistname
                       : (booking.therapistRef != null ? 'Staff #${booking.therapistRef}' : 'Unassigned');
-                  final String status = booking.statusrequired?.toString() ?? 'pending';
+                  final String status = booking.statusrequired.toString() ?? 'pending';
               
                   final bool isConfirmed = status.toLowerCase() == 'confirmed' ||
                       status.toLowerCase() == 'completed';
@@ -207,8 +213,8 @@ class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
                               ),
                               decoration: BoxDecoration(
                                 color: isConfirmed
-                                    ? Colors.green.withOpacity(0.12)
-                                    : Colors.orange.withOpacity(0.12),
+                                    ? Colors.green.withValues(alpha: 0.12)
+                                    : Colors.orange.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(

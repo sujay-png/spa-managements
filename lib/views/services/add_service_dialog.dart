@@ -223,7 +223,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD4A373).withOpacity(0.15),
+                      color: const Color(0xFFD4A373).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -409,7 +409,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
         border: Border.all(color: const Color(0xFFEDE8E3)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -496,7 +496,7 @@ class _AddServiceDialogState extends State<AddServiceDialog> {
             height: 24,
             margin: const EdgeInsets.only(top: 24, right: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFD4A373).withOpacity(0.15),
+              color: const Color(0xFFD4A373).withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Center(

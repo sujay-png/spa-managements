@@ -318,7 +318,7 @@ class _AddStaffDialogState extends State<AddStaffDialog> {
                         ),
                         const SizedBox(height: 8),
                         DropdownButtonFormField<String>(
-                          value: status,
+                          initialValue: status,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: fieldBgColor,

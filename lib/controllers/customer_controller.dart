@@ -11,8 +11,8 @@ class CustomerController extends ChangeNotifier {
   bool _loading = true;
   bool get loading => _loading;
 
-  int _totalVisits = 0;
-  double _spentThisMonth = 0;
+  final int _totalVisits = 0;
+  final double _spentThisMonth = 0;
   DateTime? _lastVisit;
 
   int get totalVisits => _totalVisits;

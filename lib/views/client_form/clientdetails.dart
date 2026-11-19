@@ -38,8 +38,8 @@ class _ClientDetailsState extends State<ClientDetails> {
   bool _isSaving = false;
   List<ClientModel> _customersList = [];
   ClientModel? client;
-  String _paymentStatus = 'Unpaid'; // 'Unpaid' or 'Paid'
-  String _paymentMethod = 'UPI / QR Code'; // 'Cash', 'UPI / QR Code', 'Card'
+  final String _paymentStatus = 'Unpaid'; // 'Unpaid' or 'Paid'
+  final String _paymentMethod = 'UPI / QR Code'; // 'Cash', 'UPI / QR Code', 'Card'
 
   // ─── Sub-form data (updated via callbacks) ────────────────────────────────
   GoalConcernData _goalData = const GoalConcernData();

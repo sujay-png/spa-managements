@@ -1,5 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:ira_spa_webapp/views/bookings/payment_dialog.dart';
+import 'package:ira_spa_webapp/views/payments/checkout_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/booking_controller.dart';
@@ -366,44 +366,16 @@ class _BookingTabelState extends State<BookingTabel> {
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Tooltip(
-                                message: 'Click to record or update payment',
+                                message: 'Collect payment (UPI QR / cash / card) or view invoice',
                                 child: InkWell(
                                   borderRadius: BorderRadius.circular(6),
                                   onTap: () async {
-                                    final paymentResult =
-                                        await showPaymentConfirmationDialog(
+                                    await showCheckoutDialog(
                                       context: context,
                                       item: item,
                                       service: service,
                                     );
-
-                                    if (paymentResult != null) {
-                                      if (!mounted) return;
-                                      await context
-                                          .read<BookingController>()
-                                          .completeBookingWithPayment(
-                                            id: item.id!,
-                                            rate: paymentResult.rate,
-                                            totalAmount:
-                                                paymentResult.totalAmount,
-                                            paymentMethod:
-                                                paymentResult.paymentMethod,
-                                            withGst: paymentResult.withGst,
-                                            gstAmount: paymentResult.gstAmount,
-                                          );
-                                      if (mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Payment confirmed (₹${paymentResult.totalAmount.toStringAsFixed(2)} via ${paymentResult.paymentMethod}) & marked as Completed',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                      }
-                                    }
+                                    if (mounted) setState(() {});
                                   },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
@@ -414,11 +386,11 @@ class _BookingTabelState extends State<BookingTabel> {
                                       color:
                                           item.paymentStatusLabel.toLowerCase() ==
                                               'paid'
-                                          ? Colors.green.withOpacity(0.12)
+                                          ? Colors.green.withValues(alpha: 0.12)
                                           : item.paymentStatusLabel.toLowerCase() ==
                                                 'pending'
-                                          ? Colors.orange.withOpacity(0.12)
-                                          : Colors.red.withOpacity(0.12),
+                                          ? Colors.orange.withValues(alpha: 0.12)
+                                          : Colors.red.withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: Text(
@@ -500,7 +472,7 @@ class _BookingTabelState extends State<BookingTabel> {
                             flex: 1,
                             child: DropdownButtonFormField<String>(
                               key: UniqueKey(),
-                              value:
+                              initialValue:
                                   (item.statusLabel == 'Completed' ||
                                       item.statusLabel == 'Pending')
                                   ? item.statusLabel
@@ -512,8 +484,8 @@ class _BookingTabelState extends State<BookingTabel> {
                                 ),
                                 filled: true,
                                 fillColor: item.statusLabel == "Pending"
-                                    ? Colors.orange.withOpacity(.12)
-                                    : Colors.blue.withOpacity(.12),
+                                    ? Colors.orange.withValues(alpha: .12)
+                                    : Colors.blue.withValues(alpha: .12),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(5),
                                   borderSide: BorderSide.none,
@@ -554,40 +526,12 @@ class _BookingTabelState extends State<BookingTabel> {
                                 if (value == item.statusLabel) return;
 
                                 if (value == "Completed") {
-                                  final paymentResult =
-                                      await showPaymentConfirmationDialog(
-                                        context: context,
-                                        item: item,
-                                        service: service,
-                                      );
-
-                                  if (paymentResult != null) {
-                                    if (!mounted) return;
-                                    await context
-                                        .read<BookingController>()
-                                        .completeBookingWithPayment(
-                                          id: item.id!,
-                                          rate: paymentResult.rate,
-                                          totalAmount:
-                                              paymentResult.totalAmount,
-                                          paymentMethod:
-                                              paymentResult.paymentMethod,
-                                          withGst: paymentResult.withGst,
-                                          gstAmount: paymentResult.gstAmount,
-                                        );
-                                    if (mounted) {
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Payment confirmed (₹${paymentResult.totalAmount.toStringAsFixed(2)} via ${paymentResult.paymentMethod}) & marked as Completed',
-                                          ),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
-                                    }
-                                  } else {
+                                  final inv = await showCheckoutDialog(
+                                    context: context,
+                                    item: item,
+                                    service: service,
+                                  );
+                                  if (inv == null || !inv.isPaid) {
                                     if (mounted) setState(() {});
                                   }
                                 } else {

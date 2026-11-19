@@ -173,7 +173,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isActive
-              ? const Color(0xFF8C7B68).withOpacity(0.12)
+              ? const Color(0xFF8C7B68).withValues(alpha: 0.12)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -204,7 +204,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
           width: 68,
           height: 68,
           decoration: BoxDecoration(
-            color: const Color(0xFF8C7B68).withOpacity(0.12),
+            color: const Color(0xFF8C7B68).withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
           child: const Icon(
@@ -418,7 +418,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
                       boxShadow: !_withGst
                           ? [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                                 blurRadius: 4,
                                 offset: const Offset(0, 1),
                               ),
@@ -451,7 +451,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
                       boxShadow: _withGst
                           ? [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: Colors.black.withValues(alpha: 0.06),
                                 blurRadius: 4,
                                 offset: const Offset(0, 1),
                               ),
@@ -587,7 +587,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
                       const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFF8C7B68).withOpacity(0.10)
+                        ? const Color(0xFF8C7B68).withValues(alpha: 0.10)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(

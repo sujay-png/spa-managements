@@ -84,7 +84,7 @@ CustomerModel copyWith({
     totalVisits: totalVisits ?? this.totalVisits,
     spentThisMonth: spentThisMonth ?? this.spentThisMonth,
     lastVisit: lastVisit ?? this.lastVisit,
-    isblacklisted: isBlacklisted ?? this.isblacklisted,
+    isblacklisted: isBlacklisted ?? isblacklisted,
   );
 }
 }

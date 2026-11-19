@@ -164,8 +164,8 @@ class BookingsModel {
       if (duration != null) "duration": duration,
       if (serviceOptionId != null) "service_option_id": serviceOptionId,
       "email_sent": emailSent,
-      if (parsedPrice != null) "rate": parsedPrice,
-      if (parsedPrice != null) "total_amount": parsedPrice,
+      "rate": ?parsedPrice,
+      "total_amount": ?parsedPrice,
       if (parsedPrice != null && paymentStatus?.toLowerCase() == 'paid')
         "paid_amount": parsedPrice,
       if (custphone != null && custphone!.isNotEmpty) "cust_phno": custphone,

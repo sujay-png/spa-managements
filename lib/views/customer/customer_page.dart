@@ -489,7 +489,7 @@ class _CustomerPageState extends State<CustomerPage> {
                               onPressed: () async {
                                 if (isedit) {
                                   final updatecustomer = CustomerModel(
-                                    id: customer!.id,
+                                    id: customer.id,
                                     businessRef: customer.businessRef,
                                     name: name.text.trim(),
                                     email: email.text.trim(),

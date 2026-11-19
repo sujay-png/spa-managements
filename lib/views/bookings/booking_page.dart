@@ -164,7 +164,7 @@ class _BookingPageState extends State<BookingPage> {
                             child: Consumer<BookingController>(
                               builder: (context, controller, _) {
                                 return DropdownButtonFormField<String>(
-                                  value: controller.bookings.isEmpty
+                                  initialValue: controller.bookings.isEmpty
                                       ? 'All'
                                       : null,
                                   hint: const Text("Status"),
@@ -530,7 +530,7 @@ class _BookingPageState extends State<BookingPage> {
                       const SizedBox(height: 8),
                       if (isedit)
                         TextFormField(
-                          initialValue: booking!.customer.isNotEmpty
+                          initialValue: booking.customer.isNotEmpty
                               ? booking.customer
                               : (booking.custphone ?? ''),
                           readOnly: true,
@@ -546,7 +546,7 @@ class _BookingPageState extends State<BookingPage> {
                         customerController.loading
                             ? const Center(child: CircularProgressIndicator())
                             : DropdownButtonFormField<CustomerModel>(
-                                value: selectedCustomer,
+                                initialValue: selectedCustomer,
                                 items: customerController.customers
                                     .where(
                                       (c) =>
@@ -577,8 +577,8 @@ class _BookingPageState extends State<BookingPage> {
                                                       vertical: 2,
                                                     ),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.red.withOpacity(
-                                                    0.1,
+                                                  color: Colors.red.withValues(
+                                                    alpha: 0.1,
                                                   ),
                                                   borderRadius:
                                                       BorderRadius.circular(4),
@@ -610,8 +610,9 @@ class _BookingPageState extends State<BookingPage> {
                                   return null;
                                 },
                                 onChanged: (value) {
-                                  if (value != null && value.isblacklisted)
+                                  if (value != null && value.isblacklisted) {
                                     return;
+                                  }
                                   setState(() {
                                     selectedCustomer = value;
 
@@ -627,7 +628,7 @@ class _BookingPageState extends State<BookingPage> {
 
                       if (isedit)
                         TextFormField(
-                          initialValue: booking!.servicename,
+                          initialValue: booking.servicename,
                           readOnly: true,
                           decoration: InputDecoration(
                             filled: true,
@@ -639,7 +640,7 @@ class _BookingPageState extends State<BookingPage> {
                         )
                       else
                         DropdownButtonFormField<ServiceModel>(
-                          value: selectedService,
+                          initialValue: selectedService,
                           items: serviceController.services.map((service) {
                             return DropdownMenuItem<ServiceModel>(
                               value: service,
@@ -664,7 +665,7 @@ class _BookingPageState extends State<BookingPage> {
                       staffcontroller.loading
                           ? const Center(child: CircularProgressIndicator())
                           : DropdownButtonFormField<StaffModel>(
-                              value: selectedStaff,
+                              initialValue: selectedStaff,
                               items: staffcontroller.staffs.map((c) {
                                 return DropdownMenuItem(
                                   value: c,
@@ -902,7 +903,7 @@ class _BookingPageState extends State<BookingPage> {
                                 }
                                 if (isedit) {
                                   final updatedBooking = BookingsModel(
-                                    id: booking!.id,
+                                    id: booking.id,
 
                                     // Keep existing customer & service
                                     customerRef: booking.customerRef,
@@ -1023,7 +1024,7 @@ class _BookingPageState extends State<BookingPage> {
     List<String> items,
     ValueChanged<String?> onChanged,
   ) => DropdownButtonFormField<String>(
-    value: val,
+    initialValue: val,
     hint: Text(
       hint,
       style: TextStyle(color: Colors.grey.shade400, fontSize: 13),

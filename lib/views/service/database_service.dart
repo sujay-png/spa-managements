@@ -644,12 +644,12 @@ class DatabaseService {
       'cust_phno': client.phone,
       'location': client.location,
       'booking_status': bookingStatus ?? 'Confirmed',
-      if (rate != null) 'rate': rate,
-      if (totalAmount != null) 'total_amount': totalAmount,
-      if (paidAmount != null) 'paid_amount': paidAmount,
-      if (paymentStatus != null) 'payment_status': paymentStatus,
-      if (paymentMethod != null) 'payment_method': paymentMethod,
-      if (duration != null) 'duration': duration,
+      'rate': ?rate,
+      'total_amount': ?totalAmount,
+      'paid_amount': ?paidAmount,
+      'payment_status': ?paymentStatus,
+      'payment_method': ?paymentMethod,
+      'duration': ?duration,
     };
 
     await _supabase.from('Booking').insert(bookingPayload);

@@ -175,7 +175,7 @@ class BookingController extends ChangeNotifier {
         }
       }
 
-      final rows = List<Map<String, dynamic>>.from(data as List);
+      final rows = List<Map<String, dynamic>>.from(data);
       final directList = rows.map((e) => BookingsModel.fromMap(e)).toList();
       _bookings = directList;
       _enrichBookingsWithClients();

@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/booking_controller.dart';
 import 'package:ira_spa_webapp/controllers/customer_controller.dart';
+import 'package:ira_spa_webapp/controllers/payment_controller.dart';
 import 'package:ira_spa_webapp/controllers/service_controller.dart';
 import 'package:ira_spa_webapp/controllers/staff_controller.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/views/bookings/booking_page.dart';
 import 'package:ira_spa_webapp/views/customer/customer_page.dart';
 import 'package:ira_spa_webapp/views/dashboard/dashboard.dart';
+import 'package:ira_spa_webapp/views/payments/payments_page.dart';
 import 'package:ira_spa_webapp/views/services/screen.dart';
 import 'package:ira_spa_webapp/views/services/selection_pannel.dart';
 
@@ -24,7 +26,7 @@ class Shellroute extends StatefulWidget {
 class _ShellrouteState extends State<Shellroute> {
   int _index = 0;
   final double _mobileBreakpoint = 600;
-  bool _isexpanded = false;
+  final bool _isexpanded = false;
   int? _loadedBusinessRef;
 
   @override
@@ -40,21 +42,22 @@ class _ShellrouteState extends State<Shellroute> {
         context.read<BookingController>().loadBookings(ref);
         context.read<CustomerController>().loadcustomer(ref);
         context.read<StaffController>().loadStaff(ref);
+        context
+            .read<PaymentController>()
+            .load(ref, businessName: auth.Bussiness);
       });
     }
   }
 
-  static const _pages = [
-    Dashboard(),
-    BookingPage(),
-    CustomerPage(),
-    ServiceMenuView(),
-    StaffPage(),
-  
-
-    // MaintenanceView(),
-    // NoticeBoardView(),
-  ];
+  // Index order must match the sidebar + bottom navigation below.
+  List<Widget> get _pages => [
+        Dashboard(onOpenPayments: () => setState(() => _index = 2)),
+        const BookingPage(),
+        const PaymentsPage(),
+        const CustomerPage(),
+        const ServiceMenuView(),
+        const StaffPage(),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -154,9 +157,10 @@ class _ShellrouteState extends State<Shellroute> {
 
                     _menu(Icons.dashboard_outlined, "Dashboard", 0),
                     _menu(Icons.calendar_today_outlined, "Bookings", 1),
-                    _menu(Icons.people_outline, "Customers", 2),
-                    _menu(Icons.content_cut, "Services", 3),
-                    _menu(Icons.person_outline, "Staff", 4),
+                    _menu(Icons.account_balance_wallet_outlined, "Payments", 2),
+                    _menu(Icons.people_outline, "Customers", 3),
+                    _menu(Icons.content_cut, "Services", 4),
+                    _menu(Icons.person_outline, "Staff", 5),
                     // _menu(Icons.room_service_outlined, "Manage Services", 5),
 
                     const Spacer(),
@@ -178,7 +182,7 @@ class _ShellrouteState extends State<Shellroute> {
                           ),
                         ),
                       ),
-                      title: Text('$displayName'),
+                      title: Text(displayName),
 
                       trailing: Tooltip(
                         message: 'Logout',
@@ -211,24 +215,24 @@ class _ShellrouteState extends State<Shellroute> {
                   label: 'Dashboard',
                 ),
                 NavigationDestination(
+                  icon: Icon(Icons.calendar_today_outlined),
+                  label: 'Bookings',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.account_balance_wallet_outlined),
+                  label: 'Payments',
+                ),
+                NavigationDestination(
                   icon: Icon(Icons.people_outline),
-                  label: 'Booking',
+                  label: 'Customers',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.payments_outlined),
-                  label: 'Customer',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.build_outlined),
+                  icon: Icon(Icons.content_cut),
                   label: 'Services',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.campaign_outlined),
+                  icon: Icon(Icons.person_outline),
                   label: 'Staff',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.campaign_outlined),
-                  label: 'Service Menu',
                 ),
               ],
             )
