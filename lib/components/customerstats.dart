@@ -17,7 +17,7 @@ class Customerstats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(25),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
         color: AppColors.surface,
@@ -25,38 +25,41 @@ class Customerstats extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .04),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
-        spacing: 15,
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title.toUpperCase(),
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              letterSpacing: 1.4,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          Text(
-            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              height: 1,
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
             ),
           ),
-        
+          const SizedBox(height: 10),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+                height: 1.1,
+              ),
+            ),
+          ),
         ],
       ),
     );

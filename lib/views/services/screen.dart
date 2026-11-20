@@ -114,126 +114,195 @@ class _ServiceMenuViewState extends State<ServiceMenuView> {
     final controller = context.watch<ServiceController>();
     final Map<String, List<SpaService>> menuData = controller.groupedSpaServices;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Left Column: Scrollable Services
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with Title and Add Service button
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Service Menu',
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.w400,
-                              color: Color(0xFF1E202B),
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Choose the treatments that will make your day perfect',
-                            style: TextStyle(fontSize: 16, color: Color(0xFF6B6E82)),
-                          ),
-                        ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 1000;
+        final isMobile = constraints.maxWidth < 600;
+        final hPadding = isMobile ? 16.0 : (isCompact ? 24.0 : 40.0);
+
+        final menuContent = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with Title and Add Service button
+            if (isMobile)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Service Menu',
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1E202B),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Choose the treatments that will make your day perfect',
+                    style: TextStyle(fontSize: 14, color: Color(0xFF6B6E82)),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showAddServiceDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8C7A6B),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text(
+                        'Add Service',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    SizedBox(
-                      width: 165,
-                      height: 44,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _showAddServiceDialog(context),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8C7A6B),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                  ),
+                ],
+              )
+            else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Service Menu',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF1E202B),
                           ),
-                          elevation: 0,
                         ),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text(
-                          'Add Service',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        SizedBox(height: 8),
+                        Text(
+                          'Choose the treatments that will make your day perfect',
+                          style: TextStyle(fontSize: 16, color: Color(0xFF6B6E82)),
                         ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 165,
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showAddServiceDialog(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8C7A6B),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text(
+                        'Add Service',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            const SizedBox(height: 30),
+
+            if (controller.loading && menuData.isEmpty)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: CircularProgressIndicator(),
                 ),
-                const SizedBox(height: 40),
-
-                if (controller.loading && menuData.isEmpty)
-                  const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(),
-                    ),
-                  )
-                else if (menuData.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 60),
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.spa_outlined,
-                            size: 56,
-                            color: Colors.grey.shade400,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No services found in menu',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF1E202B),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            'Click "Add Service" above to add your treatments.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B6E82),
-                            ),
-                          ),
-                        ],
+              )
+            else if (menuData.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 60),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.spa_outlined,
+                        size: 56,
+                        color: Colors.grey.shade400,
                       ),
-                    ),
-                  )
-                else
-                  ...menuData.entries.map((entry) {
-                    return _buildCategorySection(entry.key, entry.value);
-                  }),
-              ],
-            ),
-          ),
-        ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No services found in menu',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1E202B),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Click "Add Service" above to add your treatments.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF6B6E82),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              ...menuData.entries.map((entry) {
+                return _buildCategorySection(entry.key, entry.value);
+              }),
 
-        // Right Column: Selection Panel
-        Container(
-          width: 350,
-          margin: const EdgeInsets.fromLTRB(0, 40, 40, 40),
-          child: SelectionPanel(
-            selectedServices: selectedServices,
-            onRemove: removeService,
-            onClear: clearAllServices,
-          ),
-        ),
-      ],
+            // In compact / mobile mode, show SelectionPanel below services
+            if (isCompact && selectedServices.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              SelectionPanel(
+                selectedServices: selectedServices,
+                onRemove: removeService,
+                onClear: clearAllServices,
+              ),
+            ],
+          ],
+        );
+
+        if (isCompact) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 24),
+            child: menuContent,
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column: Scrollable Services
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 40),
+                child: menuContent,
+              ),
+            ),
+
+            // Right Column: Selection Panel
+            Container(
+              width: 340,
+              margin: const EdgeInsets.fromLTRB(0, 40, 30, 40),
+              child: SelectionPanel(
+                selectedServices: selectedServices,
+                onRemove: removeService,
+                onClear: clearAllServices,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -261,6 +330,7 @@ class _ServiceMenuViewState extends State<ServiceMenuView> {
           final hasBackendId = service.options.any((o) => o.id != null);
 
           return HoverableServiceCard(
+            key: ValueKey(service.id),
             service: service,
             isSelected: isServiceSelected,
             selectedOption: selectedServices[service],

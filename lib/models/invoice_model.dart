@@ -304,7 +304,7 @@ class BillingSettings {
     this.upiId,
     this.upiPayeeName,
     this.invoicePrefix = 'INV',
-    this.defaultGstRate = 18,
+    this.defaultGstRate = 9,
     this.gstInclusive = false,
     this.sacCode = '999722',
     this.footerNote,
@@ -341,7 +341,7 @@ class BillingSettings {
             ? m['invoice_prefix'].toString().trim()
             : 'INV',
         defaultGstRate: m['default_gst_rate'] == null
-            ? 18
+            ? 9
             : _toDouble(m['default_gst_rate']),
         gstInclusive: m['gst_inclusive'] == true,
         sacCode: m['sac_code']?.toString() ?? '999722',

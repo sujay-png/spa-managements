@@ -30,11 +30,9 @@ class _HoverableServiceCardState extends State<HoverableServiceCard> {
 
   void _setHovering(bool hovering) {
     if (_isHovering == hovering) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _isHovering != hovering) {
-        setState(() => _isHovering = hovering);
-      }
-    });
+    if (mounted) {
+      setState(() => _isHovering = hovering);
+    }
   }
 
   @override
@@ -95,14 +93,13 @@ class _HoverableServiceCardState extends State<HoverableServiceCard> {
                           icon: const Icon(Icons.edit_outlined, size: 18, color: Color(0xFF6B6E82)),
                           tooltip: 'Edit Service',
                           splashRadius: 18,
-                          constraints: const BoxConstraints(),
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                          visualDensity: VisualDensity.compact,
                           onPressed: widget.onEdit,
                         ),
                       PopupMenuButton<String>(
                         icon: const Icon(Icons.more_vert, size: 20, color: Color(0xFF6B6E82)),
+                        splashRadius: 18,
                         padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
                         onSelected: (value) {
                           if (value == 'edit' && widget.onEdit != null) {
                             widget.onEdit!();

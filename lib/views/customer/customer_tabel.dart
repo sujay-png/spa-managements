@@ -63,320 +63,341 @@ class _CustomerTabelState extends State<CustomerTabel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Table Header Row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border)),
+          LayoutBuilder(
+            builder: (context, tableConstraints) {
+              final isWide = tableConstraints.maxWidth >= 750;
+              final tableBody = SizedBox(
+                width: isWide ? tableConstraints.maxWidth : 750,
+                child: Column(
+                  children: [
+            /// Table Header Row
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.border)),
+              ),
+              child: const Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      'CUST ID',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'NAME',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'CONTACT',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'VISITS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+       
+                  Expanded(
+                    flex: 3,
+                    child: Text(
+                      'LAST VISIT',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 30),
+                ],
+              ),
             ),
-            child: const Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'CUST ID',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'NAME',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'CONTACT',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'VISITS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-     
-                Expanded(
-                  flex: 3,
-                  child: Text(
-                    'LAST VISIT',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 30),
-              ],
-            ),
-          ),
-
-          customer.loading
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : paginatedCustomers.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: Text('No customers found')),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: paginatedCustomers.length,
-                  itemBuilder: (context, index) {
-                    final item = paginatedCustomers[index];
-
-                    return IgnorePointer(
-                      ignoring: item.isblacklisted,
-                      child: Opacity(
-                        opacity: item.isblacklisted ? 0.4 : 1.0,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 14,
-                          ),
-                          decoration: BoxDecoration(
-                            color: item.isblacklisted
-                                ? Colors.grey.shade200
-                                : Colors.transparent,
-                            border: Border(
-                              bottom: BorderSide(
-                                color: AppColors.border,
-                                width: index == paginatedCustomers.length - 1
-                                    ? 0
-                                    : 1,
+  
+            customer.loading
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : paginatedCustomers.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Center(child: Text('No customers found')),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: paginatedCustomers.length,
+                    itemBuilder: (context, index) {
+                      final item = paginatedCustomers[index];
+  
+                      return IgnorePointer(
+                        ignoring: item.isblacklisted,
+                        child: Opacity(
+                          opacity: item.isblacklisted ? 0.4 : 1.0,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: item.isblacklisted
+                                  ? Colors.grey.shade200
+                                  : Colors.transparent,
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: AppColors.border,
+                                  width: index == paginatedCustomers.length - 1
+                                      ? 0
+                                      : 1,
+                                ),
                               ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              //====================== Cust ID ======================
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  _formatCustomerId(item.id),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                    fontSize: 13,
+                            child: Row(
+                              children: [
+                                //====================== Cust ID ======================
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    _formatCustomerId(item.id),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              //====================== Name ======================
-                              Expanded(
-                                flex: 3,
-                                child: Row(
-                                  spacing: 15,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 15,
-                                      backgroundColor: AppColors.border,
-                                      child: Text(
-                                        _initials(item.name),
+                                //====================== Name ======================
+                                Expanded(
+                                  flex: 3,
+                                  child: Row(
+                                    spacing: 15,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 15,
+                                        backgroundColor: AppColors.border,
+                                        child: Text(
+                                          _initials(item.name),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textPrimary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                //====================== Email / Phone ======================
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.email,
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textSecondary,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      Text(
+                                        item.phoneno,
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                //====================== Visits ======================
+                                Expanded(
+                                  flex: 3,
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_today_outlined,
+                                        size: 12,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '${item.totalVisits}',
+                                        style: TextStyle(
                                           color: AppColors.textPrimary,
                                           fontSize: 12,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.textPrimary,
-                                            fontSize: 13,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                      ],
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              //====================== Email / Phone ======================
-                              Expanded(
-                                flex: 3,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.email,
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 13,
-                                      ),
+                                
+                                //====================== Last Visit ======================
+                                Expanded(
+                                  flex: 3,
+                                  child: Text(
+                                    item.lastVisit != null
+                                        ? '${item.lastVisit!.day}/${item.lastVisit!.month}/${item.lastVisit!.year}'
+                                        : '-',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                      fontSize: 13,
                                     ),
-                                    Text(
-                                      item.phoneno,
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
+                                  ),
                                 ),
-                              ),
-                              //====================== Visits ======================
-                              Expanded(
-                                flex: 3,
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_today_outlined,
-                                      size: 12,
+                                //====================== Actions ======================
+                                SizedBox(
+                                  width: 30,
+                                  child: PopupMenuButton<String>(
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      size: 18,
                                       color: AppColors.textSecondary,
                                     ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${item.totalVisits}',
-                                      style: TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
+                                    onSelected: (value) {
+                                      if (value == 'edit') {
+                                        widget.onEdit(item);
+                                      } else if (value == 'delete') {
+                                        _deletecustomer(item);
+                                      } else if (value == 'block') {
+                                        context
+                                            .read<CustomerController>()
+                                            .toggleBlacklistCustomer(
+                                              item.id!,
+                                              item.isblacklisted,
+                                            );
+                                      }
+                                    },
+                                    itemBuilder: (context) => [
+                                      const PopupMenuItem(
+                                        value: 'edit',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.edit_outlined, size: 16),
+                                            SizedBox(width: 8),
+                                            Text('Edit'),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              
-                              //====================== Last Visit ======================
-                              Expanded(
-                                flex: 3,
-                                child: Text(
-                                  item.lastVisit != null
-                                      ? '${item.lastVisit!.day}/${item.lastVisit!.month}/${item.lastVisit!.year}'
-                                      : '-',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.textPrimary,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                              //====================== Actions ======================
-                              SizedBox(
-                                width: 30,
-                                child: PopupMenuButton<String>(
-                                  icon: Icon(
-                                    Icons.more_vert,
-                                    size: 18,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                  onSelected: (value) {
-                                    if (value == 'edit') {
-                                      widget.onEdit(item);
-                                    } else if (value == 'delete') {
-                                      _deletecustomer(item);
-                                    } else if (value == 'block') {
-                                      context
-                                          .read<CustomerController>()
-                                          .toggleBlacklistCustomer(
-                                            item.id!,
-                                            item.isblacklisted,
-                                          );
-                                    }
-                                  },
-                                  itemBuilder: (context) => [
-                                    const PopupMenuItem(
-                                      value: 'edit',
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.edit_outlined, size: 16),
-                                          SizedBox(width: 8),
-                                          Text('Edit'),
-                                        ],
+                                      const PopupMenuItem(
+                                        value: 'delete',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.delete_outline,
+                                              size: 16,
+                                              color: Colors.red,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              'Delete',
+                                              style: TextStyle(color: Colors.red),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'delete',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.delete_outline,
-                                            size: 16,
-                                            color: Colors.red,
-                                          ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            'Delete',
-                                            style: TextStyle(color: Colors.red),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    PopupMenuItem(
-                                      value: 'block',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            item.isblacklisted
-                                                ? Icons.check_circle_outline
-                                                : Icons.block,
-                                            size: 16,
-                                            color: item.isblacklisted
-                                                ? Colors.green
-                                                : Colors.red,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            item.isblacklisted
-                                                ? 'Unblock Customer'
-                                                : 'Block Customer',
-                                            style: TextStyle(
+                                      PopupMenuItem(
+                                        value: 'block',
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              item.isblacklisted
+                                                  ? Icons.check_circle_outline
+                                                  : Icons.block,
+                                              size: 16,
                                               color: item.isblacklisted
                                                   ? Colors.green
                                                   : Colors.red,
                                             ),
-                                          ),
-                                        ],
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              item.isblacklisted
+                                                  ? 'Unblock Customer'
+                                                  : 'Block Customer',
+                                              style: TextStyle(
+                                                color: item.isblacklisted
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
+  
+                  ],
                 ),
+              );
 
+              if (isWide) {
+                return tableBody;
+              }
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: tableBody,
+              );
+            },
+          ),
           //================================== Pagination ==================================
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

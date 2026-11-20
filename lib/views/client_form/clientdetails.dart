@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ira_spa_webapp/controllers/auth_controller.dart';
 import 'package:ira_spa_webapp/controllers/booking_controller.dart';
+import 'package:ira_spa_webapp/controllers/customer_controller.dart';
 import 'package:ira_spa_webapp/models/client_model.dart';
 import 'package:ira_spa_webapp/models/spa_service.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
@@ -56,6 +57,13 @@ class _ClientDetailsState extends State<ClientDetails> {
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _selectedDate = now;
+    _dobController.text = _formatDate(now);
+    final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+    final minute = now.minute.toString().padLeft(2, '0');
+    final ampm = now.hour >= 12 ? 'PM' : 'AM';
+    _timeController.text = "${hour.toString().padLeft(2, '0')}:$minute $ampm";
     _loadCustomers();
   }
 
@@ -122,8 +130,8 @@ class _ClientDetailsState extends State<ClientDetails> {
       final serviceTitles = widget.selectedServices.keys.map((s) => s.title).join(', ');
       final serviceDurations = widget.selectedServices.values.map((o) => '${o.duration} min').join(', ');
 
-      DateTime? slotDateTime = _selectedDate;
-      if (slotDateTime != null && _timeController.text.isNotEmpty) {
+      DateTime slotDateTime = _selectedDate ?? DateTime.now();
+      if (_timeController.text.isNotEmpty) {
         try {
           final timeStr = _timeController.text.trim();
           final parts = timeStr.split(RegExp(r'[:\s]'));
@@ -150,7 +158,7 @@ class _ClientDetailsState extends State<ClientDetails> {
         phone: _phoneController.text.trim(),
         location: _locationController.text.trim(),
         loyaltyCardNo: _loyaltyCardController.text.trim(),
-        appointmentDatetime: slotDateTime?.toIso8601String(),
+        appointmentDatetime: slotDateTime.toIso8601String(),
         // Goals & Concerns
         massageGoal: _goalData.massageGoals.join(', '),
         bodyFocusArea: _goalData.bodyFocusAreas.join(', '),
@@ -175,21 +183,22 @@ class _ClientDetailsState extends State<ClientDetails> {
         paymentMethod: isPaid ? _paymentMethod : null,
         duration: totalMinutes,
         bookingStatus: 'Confirmed',
-        appointmentSlot: slotDateTime?.toIso8601String(),
+        appointmentSlot: slotDateTime.toIso8601String(),
       );
 
       if (mounted) {
         try {
-          context.read<BookingController>().loadBookings(auth.businessRef!);
+          await context.read<BookingController>().loadBookings(auth.businessRef!);
+          context.read<CustomerController>().loadcustomer(auth.businessRef!);
         } catch (_) {}
       }
 
       if (!mounted) return;
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Client saved successfully! Total: ₹${totalAmount.toStringAsFixed(0)} (${isPaid ? "Paid via $_paymentMethod" : "Unpaid"})',
+            'Booking and client saved successfully! Total: ₹${totalAmount.toStringAsFixed(0)} (${isPaid ? "Paid via $_paymentMethod" : "Unpaid"})',
           ),
           backgroundColor: Colors.green,
         ),
@@ -288,8 +297,8 @@ class _ClientDetailsState extends State<ClientDetails> {
                               final picked = await showDatePicker(
                                 context: context,
                                 initialDate: _selectedDate ?? now,
-                                firstDate: DateTime(1900),
-                                lastDate: now,
+                                firstDate: DateTime(2020),
+                                lastDate: now.add(const Duration(days: 365)),
                               );
                               if (picked != null) {
                                 setState(() {
@@ -301,7 +310,31 @@ class _ClientDetailsState extends State<ClientDetails> {
                           ),
                         ),
                         const SizedBox(width: 20),
-                     
+                        Expanded(
+                          child: _buildInputField(
+                            label: 'Time',
+                            icon: Icons.access_time_outlined,
+                            hint: 'hh:mm a',
+                            controller: _timeController,
+                            readOnly: true,
+                            isRequired: true,
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Please select a time'
+                                : null,
+                            onTap: () async {
+                              final now = TimeOfDay.now();
+                              final picked = await showTimePicker(
+                                context: context,
+                                initialTime: now,
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _timeController.text = picked.format(context);
+                                });
+                              }
+                            },
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 25),

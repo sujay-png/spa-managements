@@ -18,66 +18,66 @@ class DashboardStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 165,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .04),
-            blurRadius: 14,
-            offset: const Offset(0, 5),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           /// Top Row
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  color: AppColors.textSecondary,
-                  size: 22,
-                ),
-              ),
-
-              const Spacer(),
-
-            ],
-          ),
-
-          const Spacer(),
-
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
               color: AppColors.textSecondary,
-              fontSize: 12,
-              letterSpacing: 1.4,
-              fontWeight: FontWeight.w500,
+              size: 20,
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
 
           Text(
-            value,
+            title.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-              height: 1,
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              letterSpacing: 0.8,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              maxLines: 1,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+                height: 1.1,
+              ),
             ),
           ),
         ],

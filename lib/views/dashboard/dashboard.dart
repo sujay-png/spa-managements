@@ -92,74 +92,92 @@ class _DashboardState extends State<Dashboard> {
                 ],
               ),
               //=========================Dashboard stats======================================
-              Row(
-                children: [
-                  Expanded(
-                    child: DashboardStats(
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final w = constraints.maxWidth;
+                  final cards = <Widget>[
+                    DashboardStats(
                       title: paycontroller.setupMissing
                           ? "Total Revenue"
                           : "Collected Today",
                       value: revenueLabel,
                       icon: Icons.currency_rupee,
                     ),
-                  ),
-
-                  if (!paycontroller.setupMissing) ...[
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: DashboardStats(
+                    if (!paycontroller.setupMissing)
+                      DashboardStats(
                         title: "This Month",
                         value: inr(paycontroller.monthCollection,
                             decimals: false),
                         icon: Icons.account_balance_wallet_outlined,
                       ),
-                    ),
-                  ],
-
-                  const SizedBox(width: 20),
-
-                  Expanded(
-                    child: DashboardStats(
+                    DashboardStats(
                       title: "Today's Bookings",
                       value: "${bookingcontroller.totalBookings}",
-                    
                       icon: Icons.calendar_today_outlined,
                     ),
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  Expanded(
-                    child: DashboardStats(
+                    DashboardStats(
                       title: "Total Customers",
                       value: "${customercontroller.totalcustomer}",
-                    
                       icon: Icons.groups_outlined,
                     ),
-                  ),
-
-                  const SizedBox(width: 20),
-
-                  Expanded(
-                    child: DashboardStats(
+                    DashboardStats(
                       title: "Avg. Wait Time",
                       value: "${bookingcontroller.waitingBookings}",
-                    
                       icon: Icons.schedule_outlined,
                     ),
-                  ),
-                ],
+                  ];
+
+                  if (w >= 1150) {
+                    return Row(
+                      children: [
+                        for (int i = 0; i < cards.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 14),
+                          Expanded(child: cards[i]),
+                        ],
+                      ],
+                    );
+                  }
+
+                  final crossAxisCount = w >= 700 ? 3 : 2;
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: crossAxisCount,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      mainAxisExtent: 130,
+                    ),
+                    itemCount: cards.length,
+                    itemBuilder: (context, index) => cards[index],
+                  );
+                },
               ),
 
-              //========================================List Tille==============================================================
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 15,
-                children: [
-                  Expanded(child: UpcommingAppointments()),
-                  Expanded(child: ServicesList()),
-                ],
+              //========================================Appointments & Top Services==============================================
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isStack = constraints.maxWidth < 1000;
+                  if (isStack) {
+                    return const Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        UpcommingAppointments(),
+                        SizedBox(height: 15),
+                        ServicesList(),
+                      ],
+                    );
+                  }
+                  return const Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 3, child: UpcommingAppointments()),
+                      SizedBox(width: 15),
+                      Expanded(flex: 2, child: ServicesList()),
+                    ],
+                  );
+                },
               ),
 
               //=========================Payments: pending + issues==========================

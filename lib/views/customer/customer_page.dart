@@ -65,81 +65,137 @@ class _CustomerPageState extends State<CustomerPage> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          'Manage your customer relationships',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                            letterSpacing: 1.4,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        Spacer(),
-                        SizedBox(
-                          width: 200,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              showcustomerdialog(context);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF8C7B68),
-                              foregroundColor: AppColors.surface,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
+                    LayoutBuilder(
+                      builder: (context, headerC) {
+                        final isMobile = headerC.maxWidth < 600;
+                        if (isMobile) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Manage your customer relationships',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                  letterSpacing: 1.4,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                            ),
-                            icon: const Icon(Icons.add, size: 20),
-                            label: Text(
-                              'Add Customer',
-                              style: Theme.of(context).textTheme.labelLarge
-                                  ?.copyWith(
-                                    fontSize: 15,
-                                    color: AppColors.surface,
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 44,
+                                child: ElevatedButton.icon(
+                                  onPressed: () => showcustomerdialog(context),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF8C7B68),
+                                    foregroundColor: AppColors.surface,
+                                    elevation: 0,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
+                                  icon: const Icon(Icons.add, size: 20),
+                                  label: const Text(
+                                    'Add Customer',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          children: [
+                            const Text(
+                              'Manage your customer relationships',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                                letterSpacing: 1.4,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
-                          ),
-                        ),
-                      ],
+                            const Spacer(),
+                            SizedBox(
+                              width: 180,
+                              height: 44,
+                              child: ElevatedButton.icon(
+                                onPressed: () => showcustomerdialog(context),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF8C7B68),
+                                  foregroundColor: AppColors.surface,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.add, size: 20),
+                                label: const Text(
+                                  'Add Customer',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                     //===========================customer stats==============================================
                     const SizedBox(height: 15),
                     Padding(
-                          padding: const EdgeInsets.all(23),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Customerstats(
-                                  title: 'Total Customers',
-                                  value: '${customer.totalcustomer}',
-                                
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                child: Customerstats(
-                                  title: 'Active Members',
-                                  value: '${customer.totalcustomer}',
-                                  
-                                ),
-                              ),
-                              const SizedBox(width: 15),
-                              Expanded(
-                                child: Customerstats(
-                                  title: 'New This Month',
-                                  value: "${customer.newThisMonth}",
-                               
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: LayoutBuilder(
+                        builder: (context, statsC) {
+                          final isRow = statsC.maxWidth >= 650;
+                          final cards = [
+                            Customerstats(
+                              title: 'Total Customers',
+                              value: '${customer.totalcustomer}',
+                            ),
+                            Customerstats(
+                              title: 'Active Members',
+                              value: '${customer.totalcustomer}',
+                            ),
+                            Customerstats(
+                              title: 'New This Month',
+                              value: '${customer.newThisMonth}',
+                            ),
+                          ];
+
+                          if (isRow) {
+                            return Row(
+                              children: [
+                                for (int i = 0; i < cards.length; i++) ...[
+                                  if (i > 0) const SizedBox(width: 14),
+                                  Expanded(child: cards[i]),
+                                ],
+                              ],
+                            );
+                          }
+
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              mainAxisExtent: 110,
+                            ),
+                            itemCount: cards.length,
+                            itemBuilder: (_, i) => cards[i],
+                          );
+                        },
+                      ),
+                    ),
                     //======================Search bar filter and export button==================================
                     Padding(
                       padding: const EdgeInsets.all(16),

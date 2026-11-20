@@ -114,127 +114,204 @@ class _UpcommingAppointmentsState extends State<UpcommingAppointments> {
               ),
             )
           else
-            SingleChildScrollView(
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: bookings.length,
-                itemBuilder: (context, index) {
-                  final booking = bookings[index];
-                  final String time = booking.timeslot.isNotEmpty ? booking.timeslot : 'N/A';
-                  final String customerName = booking.customer.trim().isNotEmpty
-                      ? booking.customer
-                      : (booking.customerRef != null ? 'Customer #${booking.customerRef}' : 'Unknown Customer');
-                  final String serviceName = booking.servicename.trim().isNotEmpty
-                      ? booking.servicename
-                      : (booking.serviceRef != null ? 'Service #${booking.serviceRef}' : 'Service');
-                  final String staffName = booking.therapistname.trim().isNotEmpty
-                      ? booking.therapistname
-                      : (booking.therapistRef != null ? 'Staff #${booking.therapistRef}' : 'Unassigned');
-                  final String status = booking.statusrequired.toString() ?? 'pending';
-              
-                  final bool isConfirmed = status.toLowerCase() == 'confirmed' ||
-                      status.toLowerCase() == 'completed';
-              
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: AppColors.border,
-                          width: index == bookings.length - 1 ? 0 : 1,
-                        ),
-                      ),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-              
-                      // 1. Time
-                      leading: SizedBox(
-                        width: 100,
-                        child: Center(
-                          child: Text(
-                            time,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ),
-              
-                      // 2. Client Name
-                      title: Text(
-                        customerName,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-              
-                      // 3. Service Name
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          serviceName,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-              
-                      // 4. Staff Name + Booking Status
-                      trailing: SizedBox(
-                        width: 170,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: bookings.length,
+              separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+              itemBuilder: (context, index) {
+                final booking = bookings[index];
+                final String time = booking.timeslot.isNotEmpty ? booking.timeslot : 'N/A';
+                final String customerName = booking.customer.trim().isNotEmpty
+                    ? booking.customer
+                    : (booking.customerRef != null ? 'Customer #${booking.customerRef}' : 'Unknown Customer');
+                final String serviceName = booking.servicename.trim().isNotEmpty
+                    ? booking.servicename
+                    : (booking.serviceRef != null ? 'Service #${booking.serviceRef}' : 'Service');
+                final String staffName = booking.therapistname.trim().isNotEmpty
+                    ? booking.therapistname
+                    : (booking.therapistRef != null ? 'Staff #${booking.therapistRef}' : 'Unassigned');
+                final String status = booking.statusrequired.isNotEmpty ? booking.statusrequired : 'pending';
+
+                final bool isConfirmed = status.toLowerCase() == 'confirmed' ||
+                    status.toLowerCase() == 'completed';
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  child: LayoutBuilder(
+                    builder: (context, rowC) {
+                      final isNarrow = rowC.maxWidth < 450;
+                      if (isNarrow) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                staffName,
-                                textAlign: TextAlign.end,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.textSecondary,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      time,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                _buildStatusBadge(status, isConfirmed),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              customerName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isConfirmed
-                                    ? Colors.green.withValues(alpha: 0.12)
-                                    : Colors.orange.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                status,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: isConfirmed ? Colors.green : Colors.orange,
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    serviceName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  staffName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          // 1. Time
+                          SizedBox(
+                            width: 130,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.schedule, size: 14, color: AppColors.textSecondary),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    time,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
+                          // 2. Client & Service
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  customerName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  serviceName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
+                          // 3. Staff Name
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 90),
+                            child: Text(
+                              staffName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.end,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+
+                          // 4. Status Badge
+                          _buildStatusBadge(status, isConfirmed),
+                        ],
+                      );
+                    },
+                  ),
+                );
+              },
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status, bool isConfirmed) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 4,
+      ),
+      decoration: BoxDecoration(
+        color: isConfirmed
+            ? Colors.green.withValues(alpha: 0.12)
+            : Colors.orange.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: isConfirmed ? Colors.green.shade800 : Colors.orange.shade800,
+        ),
       ),
     );
   }

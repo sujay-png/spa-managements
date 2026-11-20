@@ -83,119 +83,125 @@ class _BookingTabelState extends State<BookingTabel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// Table Header Row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.border)),
-            ),
-            child: const Row(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    'BOOKING ID',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
+          LayoutBuilder(
+            builder: (context, tableConstraints) {
+              final isWide = tableConstraints.maxWidth >= 920;
+              final tableBody = SizedBox(
+                width: isWide ? tableConstraints.maxWidth : 920,
+                child: Column(
+                  children: [
+                    /// Table Header Row
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: AppColors.border)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: Text(
+                              'BOOKING ID',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              'CUSTOMER',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              'SERVICE',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              'THERAPIST',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              'PAYMENT STATUS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              'DATE & TIME',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              'SERVICE STATUS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textSecondary,
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 30),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'CUSTOMER',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'SERVICE',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'THERAPIST',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'PAYMENT STATUS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'DATE & TIME',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
 
-                Expanded(
-                  flex: 1,
-                  child: Text(
-                    ' SERVICE STATUS',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 30), // Action Column space
-              ],
-            ),
-          ),
-
-          bookingController.loading
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
-                )
-              : paginatedAppointments.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: Text('No bookings found')),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: paginatedAppointments.length,
-                  itemBuilder: (context, index) {
+                    bookingController.loading
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40),
+                            child: Center(child: CircularProgressIndicator()),
+                          )
+                        : paginatedAppointments.isEmpty
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 40),
+                                child: Center(child: Text('No bookings found')),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: paginatedAppointments.length,
+                                itemBuilder: (context, index) {
                     final BookingsModel item = paginatedAppointments[index];
 
                     final isConfirmed =
@@ -469,77 +475,89 @@ class _BookingTabelState extends State<BookingTabel> {
 
                           /// Status
                           Expanded(
-                            flex: 1,
-                            child: DropdownButtonFormField<String>(
-                              key: UniqueKey(),
-                              initialValue:
-                                  (item.statusLabel == 'Completed' ||
-                                      item.statusLabel == 'Pending')
-                                  ? item.statusLabel
-                                  : 'Pending',
-                              decoration: InputDecoration(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                filled: true,
-                                fillColor: item.statusLabel == "Pending"
-                                    ? Colors.orange.withValues(alpha: .12)
-                                    : Colors.blue.withValues(alpha: .12),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: BorderSide.none,
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: BorderSide.none,
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(5),
-                                  borderSide: BorderSide.none,
-                                ),
-                              ),
-                              icon: const Icon(
-                                Icons.keyboard_arrow_down,
-                                size: 18,
-                              ),
-                              style: TextStyle(
-                                color: item.statusLabel == "Pending"
-                                    ? Colors.orange
-                                    : Colors.blue,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 11,
-                              ),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: "Pending",
-                                  child: Text("Pending"),
-                                ),
+                            flex: 2,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: PopupMenuButton<String>(
+                                tooltip: 'Change service status',
+                                onSelected: (value) async {
+                                  if (value == item.statusLabel) return;
 
-                                DropdownMenuItem(
-                                  value: "Completed",
-                                  child: Text("Completed"),
-                                ),
-                              ],
-                              onChanged: (value) async {
-                                if (value == null) return;
-                                if (value == item.statusLabel) return;
-
-                                if (value == "Completed") {
-                                  final inv = await showCheckoutDialog(
-                                    context: context,
-                                    item: item,
-                                    service: service,
-                                  );
-                                  if (inv == null || !inv.isPaid) {
-                                    if (mounted) setState(() {});
+                                  if (value == "Completed") {
+                                    final inv = await showCheckoutDialog(
+                                      context: context,
+                                      item: item,
+                                      service: service,
+                                    );
+                                    if (inv == null || !inv.isPaid) {
+                                      if (mounted) setState(() {});
+                                    }
+                                  } else {
+                                    await context
+                                        .read<BookingController>()
+                                        .updateStatus(item.id!, value);
                                   }
-                                } else {
-                                  await context
-                                      .read<BookingController>()
-                                      .updateStatus(item.id!, value);
-                                }
-                              },
+                                },
+                                itemBuilder: (context) => const [
+                                  PopupMenuItem(
+                                    value: "Pending",
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.hourglass_empty,
+                                            size: 16, color: Colors.orange),
+                                        SizedBox(width: 8),
+                                        Text("Pending"),
+                                      ],
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: "Completed",
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.check_circle_outline,
+                                            size: 16, color: Colors.green),
+                                        SizedBox(width: 8),
+                                        Text("Completed"),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: item.statusLabel == "Completed"
+                                        ? Colors.green.withValues(alpha: .12)
+                                        : Colors.orange.withValues(alpha: .12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        item.statusLabel,
+                                        style: TextStyle(
+                                          color: item.statusLabel == "Completed"
+                                              ? Colors.green.shade700
+                                              : Colors.orange.shade800,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Icon(
+                                        Icons.keyboard_arrow_down,
+                                        size: 16,
+                                        color: item.statusLabel == "Completed"
+                                            ? Colors.green.shade700
+                                            : Colors.orange.shade800,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
 
@@ -547,6 +565,8 @@ class _BookingTabelState extends State<BookingTabel> {
                           SizedBox(
                             width: 30,
                             child: PopupMenuButton<String>(
+                              padding: EdgeInsets.zero,
+                              splashRadius: 18,
                               icon: const Icon(
                                 Icons.more_vert,
                                 size: 18,
@@ -595,6 +615,20 @@ class _BookingTabelState extends State<BookingTabel> {
                     );
                   },
                 ),
+                  ],
+                ),
+              );
+
+              if (isWide) {
+                return tableBody;
+              }
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: tableBody,
+              );
+            },
+          ),
 
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),

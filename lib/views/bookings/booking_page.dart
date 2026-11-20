@@ -136,41 +136,38 @@ class _BookingPageState extends State<BookingPage> {
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16),
-
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 46,
-                              child: TextField(
-                                onChanged: (value) {
-                                  context.read<BookingController>().search(
-                                    value,
-                                  );
-                                },
-                                decoration: const InputDecoration(
-                                  hintText:
-                                      'Search by customer, phone or bookingId…',
-                                  prefixIcon: Icon(Icons.search),
-                                ),
+                      child: LayoutBuilder(
+                        builder: (context, filterC) {
+                          final isNarrow = filterC.maxWidth < 500;
+                          final searchField = SizedBox(
+                            height: 46,
+                            child: TextField(
+                              onChanged: (value) {
+                                context.read<BookingController>().search(value);
+                              },
+                              decoration: const InputDecoration(
+                                hintText:
+                                    'Search by customer, phone or bookingId…',
+                                prefixIcon: Icon(Icons.search),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
+                          );
 
-                          SizedBox(
+                          final statusDropdown = SizedBox(
                             height: 46,
-                            width: 160,
+                            width: isNarrow ? double.infinity : 160,
                             child: Consumer<BookingController>(
                               builder: (context, controller, _) {
                                 return DropdownButtonFormField<String>(
-                                  initialValue: controller.bookings.isEmpty
-                                      ? 'All'
-                                      : null,
+                                  value: controller.statusFilter,
+                                  isDense: true,
+                                  isExpanded: true,
                                   hint: const Text("Status"),
                                   decoration: InputDecoration(
+                                    isDense: true,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 12,
+                                      vertical: 10,
                                     ),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(10),
@@ -208,10 +205,26 @@ class _BookingPageState extends State<BookingPage> {
                                 );
                               },
                             ),
-                          ),
+                          );
 
-                          const SizedBox(width: 12),
-                        ],
+                          if (isNarrow) {
+                            return Column(
+                              children: [
+                                searchField,
+                                const SizedBox(height: 10),
+                                statusDropdown,
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(child: searchField),
+                              const SizedBox(width: 12),
+                              statusDropdown,
+                            ],
+                          );
+                        },
                       ),
                     ),
                     //==============================Bookings Tabel============================================================

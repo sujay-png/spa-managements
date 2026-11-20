@@ -7,6 +7,7 @@ import 'package:ira_spa_webapp/models/invoice_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
 import 'package:ira_spa_webapp/utils/payment_utils.dart';
 import 'package:ira_spa_webapp/views/payments/billing_settings_dialog.dart';
+import 'package:ira_spa_webapp/views/payments/ca_report_dialog.dart';
 import 'package:ira_spa_webapp/views/payments/checkout_dialog.dart';
 import 'package:ira_spa_webapp/views/payments/invoice_actions.dart';
 import 'package:provider/provider.dart';
@@ -81,47 +82,82 @@ class _PaymentsPageState extends State<PaymentsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             //------------------------------------------------------- Header
-            Row(
-              children: [
-                const Expanded(
-                  child: Column(
+            LayoutBuilder(
+              builder: (context, headerC) {
+                final isCompact = headerC.maxWidth < 800;
+                final titleBlock = Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text('Payments & Invoices',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 26,
+                          letterSpacing: 1.2,
+                          fontWeight: FontWeight.w500,
+                        )),
+                    SizedBox(height: 4),
+                    Text('Collect via UPI QR, cash or card and issue GST invoices',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          letterSpacing: 1.2,
+                        )),
+                  ],
+                );
+
+                final actionButtons = Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => showCaReportDialog(context),
+                      icon: const Icon(Icons.account_balance_outlined, size: 18),
+                      label: const Text('Export Reports'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF665646),
+                        side: const BorderSide(color: Color(0xFF8C7B68)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () => showBillingSettingsDialog(context),
+                      icon: const Icon(Icons.settings_outlined, size: 18),
+                      label: const Text('Billing settings'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: pay.setupMissing ? null : _newBill,
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        backgroundColor: _brandDark,
+                        foregroundColor: Colors.white,
+                        padding:
+                            const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      ),
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text('New bill'),
+                    ),
+                  ],
+                );
+
+                if (isCompact) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Payments & Invoices',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 28,
-                            letterSpacing: 1.4,
-                            fontWeight: FontWeight.w500,
-                          )),
-                      Text('Collect via UPI QR, cash or card and issue GST invoices',
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                            letterSpacing: 1.4,
-                          )),
+                      titleBlock,
+                      const SizedBox(height: 14),
+                      actionButtons,
                     ],
-                  ),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () => showBillingSettingsDialog(context),
-                  icon: const Icon(Icons.settings_outlined, size: 18),
-                  label: const Text('Billing settings'),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: pay.setupMissing ? null : _newBill,
-                  style: ElevatedButton.styleFrom(
-                          minimumSize: const Size(0, 44),
-                    backgroundColor: _brandDark,
-                    foregroundColor: Colors.white,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-                  ),
-                  icon: const Icon(Icons.add, size: 18),
-                  label: const Text('New bill'),
-                ),
-              ],
+                  );
+                }
+
+                return Row(
+                  children: [
+                    Expanded(child: titleBlock),
+                    const SizedBox(width: 16),
+                    actionButtons,
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 15),
 
@@ -145,24 +181,50 @@ class _PaymentsPageState extends State<PaymentsPage> {
               ),
 
             //-------------------------------------------------------- Stats
-            Row(
-              children: [
-                _stat('Collected today', inr(pay.todayCollection, decimals: false),
-                    '${pay.todayPaidCount} payments', Icons.today_outlined),
-                _stat('This month', inr(pay.monthCollection, decimals: false),
-                    'GST ${inr(pay.monthGst, decimals: false)}',
-                    Icons.calendar_month_outlined),
-                _stat(
-                  'Unpaid dues',
-                  inr(pay.unpaidTotal, decimals: false),
-                  '${pay.unpaidInvoices.length} invoices • ${uncollected.length} bookings',
-                  Icons.pending_actions_outlined,
-                  warn: pay.unpaidInvoices.isNotEmpty || uncollected.isNotEmpty,
-                ),
-                if (wide)
+            LayoutBuilder(
+              builder: (context, statsC) {
+                final isWide = statsC.maxWidth >= 1050;
+                final cards = [
+                  _stat('Collected today', inr(pay.todayCollection, decimals: false),
+                      '${pay.todayPaidCount} payments', Icons.today_outlined),
+                  _stat('This month', inr(pay.monthCollection, decimals: false),
+                      'GST ${inr(pay.monthGst, decimals: false)}',
+                      Icons.calendar_month_outlined),
+                  _stat(
+                    'Unpaid dues',
+                    inr(pay.unpaidTotal, decimals: false),
+                    '${pay.unpaidInvoices.length} inv • ${uncollected.length} bks',
+                    Icons.pending_actions_outlined,
+                    warn: pay.unpaidInvoices.isNotEmpty || uncollected.isNotEmpty,
+                  ),
                   _stat('Avg. bill (month)', inr(pay.averageTicket, decimals: false),
                       'per paid invoice', Icons.trending_up),
-              ],
+                ];
+
+                if (isWide) {
+                  return Row(
+                    children: [
+                      for (int i = 0; i < cards.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 14),
+                        Expanded(child: cards[i]),
+                      ],
+                    ],
+                  );
+                }
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    mainAxisExtent: 148,
+                  ),
+                  itemCount: cards.length,
+                  itemBuilder: (_, i) => cards[i],
+                );
+              },
             ),
             const SizedBox(height: 15),
 
@@ -183,34 +245,55 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 children: [
                   _filters(),
                   const Divider(height: 1),
-                  _tableHeader(),
-                  const Divider(height: 1),
-                  if (pay.loading)
-                    const Padding(
-                      padding: EdgeInsets.all(40),
-                      child: CircularProgressIndicator(color: _brand),
-                    )
-                  else if (list.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(48),
-                      child: Column(
-                        children: [
-                          Icon(Icons.receipt_long_outlined,
-                              size: 40, color: AppColors.textSecondary),
-                          SizedBox(height: 8),
-                          Text('No invoices for this filter',
-                              style: TextStyle(color: AppColors.textSecondary)),
-                        ],
-                      ),
-                    )
-                  else
-                    ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: list.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (_, i) => _row(list[i]),
-                    ),
+                  LayoutBuilder(
+                    builder: (context, tblC) {
+                      final isWide = tblC.maxWidth >= 720;
+                      final tblContent = SizedBox(
+                        width: isWide ? tblC.maxWidth : 720,
+                        child: Column(
+                          children: [
+                            _tableHeader(),
+                            const Divider(height: 1),
+                            if (pay.loading)
+                              const Padding(
+                                padding: EdgeInsets.all(40),
+                                child: CircularProgressIndicator(color: _brand),
+                              )
+                            else if (list.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.all(48),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.receipt_long_outlined,
+                                        size: 40, color: AppColors.textSecondary),
+                                    SizedBox(height: 8),
+                                    Text('No invoices for this filter',
+                                        style: TextStyle(color: AppColors.textSecondary)),
+                                  ],
+                                ),
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: list.length,
+                                separatorBuilder: (_, _) => const Divider(height: 1),
+                                itemBuilder: (_, i) => _row(list[i]),
+                              ),
+                          ],
+                        ),
+                      );
+
+                      if (isWide) return tblContent;
+                      return Scrollbar(
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: tblContent,
+                        ),
+                      );
+                    },
+                  ),
                   const Divider(height: 1),
                   Padding(
                     padding:
@@ -270,50 +353,55 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   Widget _stat(String title, String value, String sub, IconData icon,
       {bool warn = false}) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(right: 15),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: warn ? AppColors.warning : AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(icon, size: 20, color: AppColors.textSecondary),
-                ),
-              ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: warn ? AppColors.warning : AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(8),
             ),
-            const SizedBox(height: 14),
-            Text(title.toUpperCase(),
+            child: Icon(icon, size: 16, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 6),
+          Text(title.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 10.5,
+                letterSpacing: 0.6,
+                fontWeight: FontWeight.w600,
+              )),
+          const SizedBox(height: 2),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(value,
+                maxLines: 1,
                 style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                  letterSpacing: 1.3,
-                )),
-            const SizedBox(height: 6),
-            Text(value,
-                style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
+                  height: 1.1,
                 )),
-            const SizedBox(height: 4),
-            Text(sub,
-                style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 2),
+          Text(sub,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10.5, color: AppColors.textSecondary)),
+        ],
       ),
     );
   }

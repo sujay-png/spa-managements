@@ -627,32 +627,83 @@ class DatabaseService {
     String? bookingStatus,
     String? appointmentSlot,
   }) async {
-    // Save client
+    // 1. Save client in 'clients' table
     final clientResponse = await _supabase
         .from('clients')
         .insert(client.toMap())
         .select()
         .single();
 
-    // Save booking with all payment details
+    // 2. Also ensure customer is present in 'Customers' table
+    try {
+      if (client.businessRef != null && client.name.trim().isNotEmpty) {
+        final existing = await _supabase
+            .from('Customers')
+            .select('id')
+            .eq('business_ref', client.businessRef!)
+            .eq('customer_phone', client.phone.trim())
+            .maybeSingle();
+
+        if (existing == null) {
+          await _supabase.from('Customers').insert({
+            'business_ref': client.businessRef,
+            'customer_name': client.name.trim(),
+            'customer_phone': client.phone.trim(),
+            if (client.email.trim().isNotEmpty) 'customer_email': client.email.trim(),
+            if (client.location.trim().isNotEmpty) 'customer_address': client.location.trim(),
+            'is_blacklisted': false,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('[insertClient] Customers table sync error: $e');
+    }
+
+    // 3. Save booking in 'Booking' table
+    final bookingSlot = appointmentSlot ??
+        client.appointmentDatetime ??
+        DateTime.now().toIso8601String();
+
     final bookingPayload = <String, dynamic>{
       'business_ref': client.businessRef,
       'customer_ref': client.name,
-      'services': client.serviceName,
-      'available_slot': appointmentSlot ?? client.appointmentDatetime,
-      'confirmed_time': client.time,
-      'cust_phno': client.phone,
-      'location': client.location,
+      'services': client.serviceName ?? '',
+      'therapist': '',
+      'available_slot': bookingSlot,
+      'confirmed_time': client.time ?? '',
+      if (client.phone.isNotEmpty) 'cust_phno': client.phone,
       'booking_status': bookingStatus ?? 'Confirmed',
-      'rate': ?rate,
-      'total_amount': ?totalAmount,
-      'paid_amount': ?paidAmount,
-      'payment_status': ?paymentStatus,
-      'payment_method': ?paymentMethod,
-      'duration': ?duration,
+      if (rate != null) 'rate': rate,
+      if (totalAmount != null) 'total_amount': totalAmount,
+      if (paidAmount != null) 'paid_amount': paidAmount,
+      'payment_status': paymentStatus ?? 'unpaid',
+      if (paymentMethod != null) 'payment_method': paymentMethod,
+      if (duration != null) 'duration': duration,
+      if (client.massageGoal != null && client.massageGoal!.isNotEmpty)
+        'requirements_booking': client.massageGoal,
     };
 
-    await _supabase.from('Booking').insert(bookingPayload);
+    try {
+      await _supabase.from('Booking').insert(bookingPayload);
+    } catch (bookingError) {
+      debugPrint('[insertClient] Primary booking insert failed: $bookingError');
+      // Resilient fallback with only the core standard columns
+      final fallbackPayload = <String, dynamic>{
+        'business_ref': client.businessRef,
+        'customer_ref': client.name,
+        'services': client.serviceName ?? '',
+        'therapist': '',
+        'available_slot': bookingSlot,
+        'confirmed_time': client.time ?? '',
+        if (client.phone.isNotEmpty) 'cust_phno': client.phone,
+        'booking_status': bookingStatus ?? 'Confirmed',
+        if (rate != null) 'rate': rate,
+        if (totalAmount != null) 'total_amount': totalAmount,
+        'payment_status': paymentStatus ?? 'unpaid',
+      };
+      await _supabase.from('Booking').insert(fallbackPayload);
+    }
 
     return ClientModel.fromMap(clientResponse);
   }

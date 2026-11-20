@@ -105,49 +105,64 @@ class _StaffPageState extends State<StaffPage> {
             /// Grid View Layout
             staff.loading
                 ? const Center(child: CircularProgressIndicator())
-                : GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: staff.staffs.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          childAspectRatio: 1.2,
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final w = constraints.maxWidth;
+                      int crossAxisCount;
+                      double childAspectRatio;
+
+                      if (w >= 1150) {
+                        crossAxisCount = 3;
+                        childAspectRatio = 1.25;
+                      } else if (w >= 680) {
+                        crossAxisCount = 2;
+                        childAspectRatio = 1.3;
+                      } else {
+                        crossAxisCount = 1;
+                        childAspectRatio = 1.7;
+                      }
+
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: staff.staffs.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 14,
+                          mainAxisSpacing: 14,
+                          childAspectRatio: childAspectRatio,
                         ),
-                    itemBuilder: (context, index) {
-                      final staffMember = staff.staffs[index];
+                        itemBuilder: (context, index) {
+                          final staffMember = staff.staffs[index];
 
-                      return StaffCard(
-                        initials: _initials(staffMember.name),
-                        name: staffMember.name,
-                        designation: staffMember.designation,
-                        specialization: staffMember.specialization,
-                        email: staffMember.email,
-                        phone: staffMember.phno,
-                        statusBgColor: staffMember.jobStatus == "Busy"
-                            ? Colors.red.shade100
-                            : Colors.green.shade100,
-
-                        statusTextColor: staffMember.jobStatus == "Busy"
-                            ? Colors.red
-                            : Colors.green,
-
-                     
-                    
-                      appointments: staff.getBookingCount(staffMember.name).toString(),
-                        status: staffMember.jobStatus,
-
-                        onEdit: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) =>
-                                AddStaffDialog(staff: staffMember),
+                          return StaffCard(
+                            initials: _initials(staffMember.name),
+                            name: staffMember.name,
+                            designation: staffMember.designation,
+                            specialization: staffMember.specialization,
+                            email: staffMember.email,
+                            phone: staffMember.phno,
+                            statusBgColor: staffMember.jobStatus == "Busy"
+                                ? Colors.red.shade100
+                                : Colors.green.shade100,
+                            statusTextColor: staffMember.jobStatus == "Busy"
+                                ? Colors.red
+                                : Colors.green,
+                            appointments: staff
+                                .getBookingCount(staffMember.name)
+                                .toString(),
+                            status: staffMember.jobStatus,
+                            onEdit: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) =>
+                                    AddStaffDialog(staff: staffMember),
+                              );
+                            },
+                            onDelete: () {
+                              _deleteStaff(staffMember);
+                            },
                           );
-                        },
-                        onDelete: () {
-                          _deleteStaff(staffMember);
                         },
                       );
                     },

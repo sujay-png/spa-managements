@@ -213,9 +213,8 @@ class SelectionPanel extends StatelessWidget {
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
-                onTap: () {
-                   
-                  showDialog(
+                onTap: () async {
+                  final result = await showDialog<bool>(
                     context: context,
                     // This makes the background dark behind the popup
                     barrierDismissible: true,
@@ -228,14 +227,17 @@ class SelectionPanel extends StatelessWidget {
                           vertical: 24,
                         ),
                         child: ConstrainedBox(
-                          constraints:  BoxConstraints(maxWidth: 850),
-                          child:  ClientDetails(
+                          constraints: const BoxConstraints(maxWidth: 850),
+                          child: ClientDetails(
                              selectedServices: selectedServices,
-                          )
+                          ),
                         ),
                       );
                     },
                   );
+                  if (result == true) {
+                    onClear?.call();
+                  }
                 },
                 child: Container(
                   width: double.infinity,

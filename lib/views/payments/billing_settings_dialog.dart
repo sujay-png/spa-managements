@@ -89,7 +89,7 @@ class _BillingSettingsDialogState extends State<BillingSettingsDialog> {
         upiId: _nz(_upi),
         upiPayeeName: _nz(_payee) ?? _name.text.trim(),
         invoicePrefix: (_nz(_prefix) ?? 'INV').toUpperCase(),
-        defaultGstRate: double.tryParse(_gstRate.text.trim()) ?? 18,
+        defaultGstRate: double.tryParse(_gstRate.text.trim()) ?? 9,
         gstInclusive: _inclusive,
         sacCode: _nz(_sac) ?? '999722',
         footerNote: _nz(_footer),

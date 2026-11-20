@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:ira_spa_webapp/controllers/payment_controller.dart';
 import 'package:ira_spa_webapp/models/bookings_model.dart';
 import 'package:ira_spa_webapp/models/service_model.dart';
 import 'package:ira_spa_webapp/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
 /// Holds the confirmed payment data returned from the dialog
 class PaymentResult {
@@ -93,7 +95,9 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
   Widget build(BuildContext context) {
     final enteredPrice =
         double.tryParse(_priceController.text.trim()) ?? 0.0;
-    const gstRate = 0.18; // 18% standard GST rate
+    final payCtrl = context.watch<PaymentController>();
+    final gstRatePct = (payCtrl.settings?.defaultGstRate ?? 9.0).clamp(0.0, 100.0);
+    final gstRate = gstRatePct / 100.0;
     final gstAmount = _withGst ? (enteredPrice * gstRate) : 0.0;
     final totalPayable = enteredPrice + gstAmount;
 
@@ -150,6 +154,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
                           enteredPrice: enteredPrice,
                           gstAmount: gstAmount,
                           totalPayable: totalPayable,
+                          gstRatePct: gstRatePct,
                         ),
                 ),
               ),
@@ -347,6 +352,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
     required double enteredPrice,
     required double gstAmount,
     required double totalPayable,
+    required double gstRatePct,
   }) {
     final paymentModes = [
       ('QR Code / UPI', Icons.qr_code_scanner_rounded),
@@ -460,7 +466,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      'With GST (18%)',
+                      'With GST (${gstRatePct.toStringAsFixed(0)}%)',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight:
@@ -545,7 +551,7 @@ class _PaymentConfirmationDialogState extends State<PaymentConfirmationDialog> {
 
               // GST row
               _buildDetailRow(
-                _withGst ? 'GST (18%)' : 'GST',
+                _withGst ? 'GST (${gstRatePct.toStringAsFixed(0)}%)' : 'GST',
                 _withGst
                     ? '+ ₹${gstAmount.toStringAsFixed(2)}'
                     : '₹0.00 (Exempt)',

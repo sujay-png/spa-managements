@@ -23,6 +23,7 @@ class BookingController extends ChangeNotifier {
 
   String _search = '';
   String _statusFilter = 'All';
+  String get statusFilter => _statusFilter;
 
   //===================total bookings============
   int get totalBookings => _bookings.length;

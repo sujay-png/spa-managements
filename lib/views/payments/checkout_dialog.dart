@@ -216,7 +216,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
     return InvoiceTotals.compute(
       items: _items,
       discount: double.tryParse(_discountCtrl.text.trim()) ?? 0,
-      gstRate: _gstOn ? (s?.defaultGstRate ?? 18) : 0,
+      gstRate: _gstOn ? (s?.defaultGstRate ?? 9) : 0,
       inclusive: s?.gstInclusive ?? false,
     );
   }
@@ -529,7 +529,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
             ),
             const Spacer(),
             Text(
-              'GST ${(s?.defaultGstRate ?? 18).toStringAsFixed(0)}%',
+              'GST ${(s?.defaultGstRate ?? 9).toStringAsFixed(0)}%',
               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
             ),
             Switch(
@@ -636,10 +636,8 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
             child: _field(r.desc, 'Service / product', onChanged: (_) => setState(() {})),
           ),
           const SizedBox(width: 8),
-          _qtyStepper(r),
-          const SizedBox(width: 8),
           SizedBox(
-            width: 100,
+            width: 110,
             child: _field(
               r.rate,
               'Price',
@@ -659,36 +657,6 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                     icon: const Icon(Icons.close, color: AppColors.textSecondary),
                   )
                 : null,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _qtyStepper(_ItemRow r) {
-    return Container(
-      height: 40,
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.border),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: r.qty > 1 ? () => setState(() => r.qty--) : null,
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Icon(Icons.remove, size: 14),
-            ),
-          ),
-          Text('${r.qty}', style: const TextStyle(fontWeight: FontWeight.w600)),
-          InkWell(
-            onTap: () => setState(() => r.qty++),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Icon(Icons.add, size: 14),
-            ),
           ),
         ],
       ),
