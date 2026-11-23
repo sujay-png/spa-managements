@@ -16,6 +16,12 @@ enum CaPeriod {
   custom,
 }
 
+enum CaTaxFilter {
+  all,
+  gstOnly,
+  nonGstOnly,
+}
+
 Future<void> showCaReportDialog(BuildContext context) {
   return showDialog(
     context: context,
@@ -33,6 +39,7 @@ class CaReportDialog extends StatefulWidget {
 
 class _CaReportDialogState extends State<CaReportDialog> {
   CaPeriod _selectedPeriod = CaPeriod.thisMonth;
+  CaTaxFilter _selectedTaxFilter = CaTaxFilter.all;
   DateTimeRange? _customRange;
   bool _includeVoid = false;
   bool _downloadingCsv = false;
@@ -52,7 +59,6 @@ class _CaReportDialogState extends State<CaReportDialog> {
         return DateTimeRange(start: start, end: end);
 
       case CaPeriod.currentQuarter:
-        // Indian Fiscal Quarter: Q1 (Apr-Jun), Q2 (Jul-Sep), Q3 (Oct-Dec), Q4 (Jan-Mar)
         int qStartMonth;
         if (now.month >= 4 && now.month <= 6) {
           qStartMonth = 4;
@@ -68,7 +74,6 @@ class _CaReportDialogState extends State<CaReportDialog> {
         return DateTimeRange(start: start, end: end);
 
       case CaPeriod.financialYear:
-        // Apr 1 of current or previous year to Mar 31
         final fyStartYear = now.month >= 4 ? now.year : now.year - 1;
         final start = DateTime(fyStartYear, 4, 1);
         final end = DateTime(fyStartYear + 1, 3, 31, 23, 59, 59);
@@ -116,6 +121,17 @@ class _CaReportDialogState extends State<CaReportDialog> {
     }).toList();
   }
 
+  String _getTaxFilterKey() {
+    switch (_selectedTaxFilter) {
+      case CaTaxFilter.gstOnly:
+        return 'gst';
+      case CaTaxFilter.nonGstOnly:
+        return 'non_gst';
+      case CaTaxFilter.all:
+        return 'all';
+    }
+  }
+
   Future<void> _pickCustomRange() async {
     final now = DateTime.now();
     final picked = await showDateRangePicker(
@@ -149,19 +165,27 @@ class _CaReportDialogState extends State<CaReportDialog> {
 
   Future<void> _handleDownloadCsv(
     List<InvoiceModel> filtered,
-    BillingSettings settings,
-  ) async {
+    BillingSettings settings, {
+    String? specificTaxFilter,
+  }) async {
     setState(() => _downloadingCsv = true);
+    final filterKey = specificTaxFilter ?? _getTaxFilterKey();
     try {
       await CaReportService.downloadCsv(
         invoices: filtered,
         settings: settings,
         periodLabel: _getPeriodLabel(),
+        taxFilter: filterKey,
       );
       if (!mounted) return;
+      final typeLabel = filterKey == 'gst'
+          ? 'GST Invoices'
+          : filterKey == 'non_gst'
+              ? 'Non-GST Bills'
+              : 'Separated GST & Non-GST Report';
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('CA Billing Report (CSV) downloaded successfully!'),
+        SnackBar(
+          content: Text('$typeLabel (CSV) downloaded successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -185,6 +209,7 @@ class _CaReportDialogState extends State<CaReportDialog> {
         invoices: filtered,
         settings: settings,
         periodLabel: _getPeriodLabel(),
+        taxFilter: _getTaxFilterKey(),
       );
     } catch (e) {
       if (!mounted) return;
@@ -200,24 +225,34 @@ class _CaReportDialogState extends State<CaReportDialog> {
   Widget build(BuildContext context) {
     final pay = context.watch<PaymentController>();
     final settings = pay.settings ?? BillingSettings.empty(0, businessName: 'IRA Spa');
-    final filtered = _filterInvoices(pay.invoices);
-    final m = CaReportMetrics.compute(filtered);
+    final allPeriodInvoices = _filterInvoices(pay.invoices);
+    final m = CaReportMetrics.compute(allPeriodInvoices);
+
+    // Apply active tax filter
+    final List<InvoiceModel> displayInvoices;
+    if (_selectedTaxFilter == CaTaxFilter.gstOnly) {
+      displayInvoices = allPeriodInvoices.where((i) => i.hasGst || i.gst > 0).toList();
+    } else if (_selectedTaxFilter == CaTaxFilter.nonGstOnly) {
+      displayInvoices = allPeriodInvoices.where((i) => !i.hasGst && i.gst == 0).toList();
+    } else {
+      displayInvoices = allPeriodInvoices;
+    }
 
     const brandDark = Color(0xFF665646);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 820, maxHeight: 720),
+        constraints: const BoxConstraints(maxWidth: 880, maxHeight: 760),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
               decoration: const BoxDecoration(
                 color: Color(0xFFF9F6F0),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -240,7 +275,7 @@ class _CaReportDialogState extends State<CaReportDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Export Billing & Tax Report for Chartered Accountant',
+                          'Export Billing & Tax Report (GST & Non-GST)',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -248,7 +283,7 @@ class _CaReportDialogState extends State<CaReportDialog> {
                           ),
                         ),
                         Text(
-                          'Generates GSTR-1 & Audit-ready reports with SAC codes, GST breakups, and collection trails',
+                          'Separate reports for GST tax invoices and Non-GST bills with SAC codes, tax liabilities & payment trails',
                           style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                         ),
                       ],
@@ -265,21 +300,55 @@ class _CaReportDialogState extends State<CaReportDialog> {
             // Body
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(22),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Period Selector
+                    // 1. Tax Classification Selector
+                    Row(
+                      children: [
+                        const Text(
+                          'BILL CLASSIFICATION:',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                            color: Color(0xFF8B7D76),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _taxFilterChip(
+                          CaTaxFilter.all,
+                          'All Bills (${allPeriodInvoices.length})',
+                          subtitle: 'Separated in report',
+                        ),
+                        const SizedBox(width: 8),
+                        _taxFilterChip(
+                          CaTaxFilter.gstOnly,
+                          'GST Bills (${m.gstInvoicesCount})',
+                          badgeColor: const Color(0xFF28A745),
+                        ),
+                        const SizedBox(width: 8),
+                        _taxFilterChip(
+                          CaTaxFilter.nonGstOnly,
+                          'Non-GST Bills (${m.nonGstInvoicesCount})',
+                          badgeColor: const Color(0xFF17A2B8),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 2. Period Selector
                     const Text(
                       'SELECT REPORTING PERIOD',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2,
+                        letterSpacing: 1.1,
                         color: Color(0xFF8B7D76),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -309,10 +378,10 @@ class _CaReportDialogState extends State<CaReportDialog> {
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
-                        Icon(Icons.info_outline, size: 15, color: Colors.grey.shade600),
+                        Icon(Icons.info_outline, size: 14, color: Colors.grey.shade600),
                         const SizedBox(width: 6),
                         Text(
                           'Active Range: ${_getPeriodLabel()}',
@@ -331,107 +400,183 @@ class _CaReportDialogState extends State<CaReportDialog> {
                               activeColor: brandDark,
                               onChanged: (v) => setState(() => _includeVoid = v ?? false),
                             ),
-                            const Text('Include Void / Cancelled',
-                                style: TextStyle(fontSize: 12)),
+                            const Text('Include Voided Bills', style: TextStyle(fontSize: 12)),
                           ],
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
 
-                    // Metrics Preview Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFBF9F6),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE8E2D9)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                'TAX & TURNOVER PREVIEW (FOR CA AUDIT)',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.1,
-                                  color: brandDark,
-                                ),
-                              ),
-                              Text(
-                                '${filtered.length} Invoices Found',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const Divider(height: 20),
-                          Row(
-                            children: [
-                              _metricBox('Taxable Turnover', inr(m.totalTaxable), 'Base Sales'),
-                              _metricBox('CGST (9%)', inr(m.totalCgst), 'Central GST'),
-                              _metricBox('SGST (9%)', inr(m.totalSgst), 'State GST'),
-                              _metricBox('Total GST Liability', inr(m.totalGst), 'Total Output Tax'),
-                              _metricBox('Gross Revenue', inr(m.totalRevenue), 'Total Invoiced'),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          // Payment mode split
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    // 3. Dual Metrics Breakdown Cards (GST vs Non-GST)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left: GST Bills Card
+                        Expanded(
+                          flex: 3,
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: Colors.grey.shade200),
+                              color: const Color(0xFFF4F9F4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFC3E6CB)),
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Collection Audit:',
-                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                const SizedBox(width: 16),
-                                _modeChip('UPI / QR', m.upiTotal, m.upiCount, Colors.purple),
-                                const SizedBox(width: 14),
-                                _modeChip('Cash', m.cashTotal, m.cashCount, Colors.green),
-                                const SizedBox(width: 14),
-                                _modeChip('Card', m.cardTotal, m.cardCount, Colors.blue),
-                                if (m.unpaidCount > 0) ...[
-                                  const SizedBox(width: 14),
-                                  _modeChip('Unpaid', m.unpaidTotal, m.unpaidCount, Colors.orange),
-                                ],
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF28A745),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'GST BILLS (TAX INVOICES)',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '${m.gstInvoicesCount} Invoices',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF155724),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(child: _miniStat('Taxable Turnover', inr(m.gstTaxable), 'Base Sales')),
+                                    Expanded(child: _miniStat('CGST (9%)', inr(m.gstCgst), 'Central Tax')),
+                                    Expanded(child: _miniStat('SGST (9%)', inr(m.gstSgst), 'State Tax')),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _miniStat('Output GST Liability', inr(m.gstTotalTax), 'Payable to Govt',
+                                          highlight: true),
+                                    ),
+                                    Expanded(child: _miniStat('GST Gross Billing', inr(m.gstTotalRevenue), 'Taxable + GST')),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
+                        ),
+                        const SizedBox(width: 14),
+
+                        // Right: Non-GST Bills Card
+                        Expanded(
+                          flex: 2,
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF7F8FA),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFFD6D8DB)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF6C757D),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'NON-GST BILLS',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '${m.nonGstInvoicesCount} Bills',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF383D41),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Divider(height: 16),
+                                _miniStat('Non-GST Turnover', inr(m.nonGstTotalRevenue), 'Exempt / Bill of Supply'),
+                                const SizedBox(height: 10),
+                                _miniStat('Combined Gross Turnover', inr(m.totalRevenue),
+                                    '${allPeriodInvoices.length} Total Bills',
+                                    highlight: true),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // Payment mode audit strip
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDFBF7),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE8E2D9)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('Collections Trail:',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 14),
+                          _modeChip('UPI / QR', m.upiTotal, m.upiCount, Colors.purple),
+                          const SizedBox(width: 14),
+                          _modeChip('Cash', m.cashTotal, m.cashCount, Colors.green),
+                          const SizedBox(width: 14),
+                          _modeChip('Card', m.cardTotal, m.cardCount, Colors.blue),
+                          if (m.unpaidCount > 0) ...[
+                            const SizedBox(width: 14),
+                            _modeChip('Unpaid', m.unpaidTotal, m.unpaidCount, Colors.orange),
+                          ],
                         ],
                       ),
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 14),
 
                     // Compliance notice
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blue.shade200),
+                        color: Colors.amber.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.shade200),
                       ),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(Icons.verified_outlined, size: 18, color: Colors.blue.shade700),
-                          const SizedBox(width: 10),
+                          Icon(Icons.shield_outlined, size: 16, color: Colors.amber.shade900),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'The exported files include SAC 999722, GSTIN (${settings.gstin ?? "Not Set"}), customer details, line-item tax breakdowns, and payment reconciliation codes formatted for instant import into Tally, ClearTax, Marg, and Excel.',
-                              style: TextStyle(fontSize: 11.5, color: Colors.blue.shade900, height: 1.4),
+                              'CA Ready: GST bills and Non-GST bills are exported in separate sections with SAC code, 9% CGST / 9% SGST output liabilities, and audit trails for direct filing in GSTR-1 & Income Tax.',
+                              style: TextStyle(fontSize: 11, color: Colors.amber.shade900),
                             ),
                           ),
                         ],
@@ -444,7 +589,7 @@ class _CaReportDialogState extends State<CaReportDialog> {
 
             // Actions Footer
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
               decoration: const BoxDecoration(
                 border: Border(top: BorderSide(color: Color(0xFFEDE8E3))),
               ),
@@ -453,21 +598,38 @@ class _CaReportDialogState extends State<CaReportDialog> {
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     child: const Text('Close'),
                   ),
+                  const SizedBox(width: 10),
+                  // Download GST Bills only (Quick button)
+                  if (m.gstInvoicesCount > 0 && _selectedTaxFilter == CaTaxFilter.all)
+                    OutlinedButton.icon(
+                      onPressed: _downloadingCsv
+                          ? null
+                          : () => _handleDownloadCsv(allPeriodInvoices, settings, specificTaxFilter: 'gst'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1E7E34),
+                        side: const BorderSide(color: Color(0xFF28A745)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      icon: const Icon(Icons.download, size: 16),
+                      label: Text('Download GST Bills (${m.gstInvoicesCount})',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    ),
                   const Spacer(),
                   // Download CSV / Excel
                   OutlinedButton.icon(
-                    onPressed: filtered.isEmpty || _downloadingCsv
+                    onPressed: displayInvoices.isEmpty || _downloadingCsv
                         ? null
-                        : () => _handleDownloadCsv(filtered, settings),
+                        : () => _handleDownloadCsv(allPeriodInvoices, settings),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF1E7E34),
                       side: const BorderSide(color: Color(0xFF28A745)),
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     icon: _downloadingCsv
@@ -477,18 +639,25 @@ class _CaReportDialogState extends State<CaReportDialog> {
                             child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF1E7E34)),
                           )
                         : const Icon(Icons.table_view_outlined, size: 18),
-                    label: const Text('Download Excel / CSV', style: TextStyle(fontWeight: FontWeight.w600)),
+                    label: Text(
+                      _selectedTaxFilter == CaTaxFilter.gstOnly
+                          ? 'Download GST CSV (${m.gstInvoicesCount})'
+                          : _selectedTaxFilter == CaTaxFilter.nonGstOnly
+                              ? 'Download Non-GST CSV (${m.nonGstInvoicesCount})'
+                              : 'Download CSV (Separated)',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   // Download / Print PDF Report
                   ElevatedButton.icon(
-                    onPressed: filtered.isEmpty || _generatingPdf
+                    onPressed: displayInvoices.isEmpty || _generatingPdf
                         ? null
-                        : () => _handlePrintPdf(filtered, settings),
+                        : () => _handlePrintPdf(allPeriodInvoices, settings),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: brandDark,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
                     ),
@@ -499,14 +668,45 @@ class _CaReportDialogState extends State<CaReportDialog> {
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
                         : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                    label: const Text('Download / Print PDF Report',
-                        style: TextStyle(fontWeight: FontWeight.w600)),
+                    label: Text(
+                      _selectedTaxFilter == CaTaxFilter.gstOnly
+                          ? 'Print GST Report PDF'
+                          : _selectedTaxFilter == CaTaxFilter.nonGstOnly
+                              ? 'Print Non-GST Report PDF'
+                              : 'Download / Print PDF Report',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _taxFilterChip(CaTaxFilter filter, String label, {Color? badgeColor, String? subtitle}) {
+    final isSelected = _selectedTaxFilter == filter;
+    const brandDark = Color(0xFF665646);
+
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (val) {
+        if (val) setState(() => _selectedTaxFilter = filter);
+      },
+      selectedColor: badgeColor ?? brandDark,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : Colors.grey.shade800,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+        fontSize: 12,
+      ),
+      backgroundColor: Colors.grey.shade100,
+      side: BorderSide(
+        color: isSelected
+            ? (badgeColor ?? brandDark)
+            : Colors.grey.shade300,
       ),
     );
   }
@@ -531,18 +731,23 @@ class _CaReportDialogState extends State<CaReportDialog> {
     );
   }
 
-  Widget _metricBox(String label, String value, String sub) {
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF75788D))),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF2C2E3E))),
-          const SizedBox(height: 2),
-          Text(sub, style: TextStyle(fontSize: 10, color: Colors.grey.shade500)),
-        ],
-      ),
+  Widget _miniStat(String label, String value, String sub, {bool highlight = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 10.5, color: Color(0xFF6C757D))),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.bold,
+            color: highlight ? const Color(0xFF1E7E34) : const Color(0xFF2C2E3E),
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(sub, style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600)),
+      ],
     );
   }
 
@@ -551,15 +756,15 @@ class _CaReportDialogState extends State<CaReportDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 7,
+          height: 7,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 5),
-        Text('$mode: ', style: const TextStyle(fontSize: 11.5, color: Colors.black87)),
+        const SizedBox(width: 4),
+        Text('$mode: ', style: const TextStyle(fontSize: 11, color: Colors.black87)),
         Text(inr(total, decimals: false),
-            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
-        Text(' ($count)', style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(' ($count)', style: TextStyle(fontSize: 9.5, color: Colors.grey.shade600)),
       ],
     );
   }

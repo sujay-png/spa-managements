@@ -160,6 +160,42 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
           : m.contains('card')
               ? 'Card'
               : 'UPI';
+
+      final cleanPrice = double.tryParse((widget.item.servicePrice ?? '')
+              .replaceAll(RegExp(r'[^0-9.]'), '')) ??
+          0.0;
+      final serviceName = widget.item.servicename.isEmpty
+          ? 'Spa Service'
+          : widget.item.servicename;
+
+      _invoice = InvoiceModel(
+        businessRef: widget.item.businessRef ?? 0,
+        bookingId: widget.item.id,
+        invoiceNumber: 'INV-${(widget.item.id ?? 1).toString().padLeft(4, '0')}',
+        customerName: widget.item.customer,
+        customerPhone: widget.item.custphone,
+        therapist: widget.item.therapistname,
+        serviceDate: widget.item.bookingdate,
+        paidAt: widget.item.bookingdate,
+        paymentStatus: 'Paid',
+        paymentMethod: widget.item.paymentMethod ?? 'Cash',
+        items: [
+          InvoiceItem(
+            description: serviceName,
+            qty: 1,
+            rate: cleanPrice,
+          ),
+        ],
+        subtotal: cleanPrice,
+        discount: 0,
+        taxableAmount: cleanPrice,
+        gstRate: 0,
+        cgst: 0,
+        sgst: 0,
+        roundOff: 0,
+        total: cleanPrice,
+      );
+      _step = 2;
     }
 
     if (_rows.isEmpty) {
@@ -912,7 +948,8 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
   //------------------------------------------------------------------ Step 2
   Widget _doneStep() {
     final inv = _invoice!;
-    final s = _pay.settings;
+    final s = _pay.settings ??
+        BillingSettings.empty(inv.businessRef, businessName: 'Spa');
     return Column(
       children: [
         Container(
@@ -941,7 +978,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
           style: const TextStyle(fontWeight: FontWeight.bold, color: _brand),
         ),
         const SizedBox(height: 20),
-        if (s != null) InvoiceActions(invoice: inv, settings: s),
+        InvoiceActions(invoice: inv, settings: s),
         const SizedBox(height: 8),
       ],
     );
@@ -1017,6 +1054,8 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
         icon: Icons.check_circle_outline,
       ));
     } else {
+      children.add(secondary('Edit bill', () => setState(() => _step = 0)));
+      children.add(const SizedBox(width: 12));
       children.add(primary('Done', () => Navigator.of(context).pop(_invoice),
           icon: Icons.check));
     }

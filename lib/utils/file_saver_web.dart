@@ -16,3 +16,12 @@ Future<void> saveFileWeb({
   html.document.body?.children.remove(anchor);
   html.Url.revokeObjectUrl(url);
 }
+
+Future<void> openFileWeb({
+  required List<int> bytes,
+  required String mimeType,
+}) async {
+  final blob = html.Blob([bytes], mimeType);
+  final url = html.Url.createObjectUrlFromBlob(blob);
+  html.window.open(url, '_blank');
+}

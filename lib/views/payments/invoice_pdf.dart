@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:ira_spa_webapp/models/invoice_model.dart';
+import 'package:ira_spa_webapp/utils/file_saver.dart';
 import 'package:ira_spa_webapp/utils/payment_utils.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -26,11 +28,18 @@ class InvoicePdf {
     if (_fontTried) return;
     _fontTried = true;
     try {
-      _regular = await PdfGoogleFonts.notoSansRegular();
-      _bold = await PdfGoogleFonts.notoSansBold();
+      _regular = await PdfGoogleFonts.notoSansRegular()
+          .timeout(const Duration(seconds: 3));
+      _bold = await PdfGoogleFonts.notoSansBold()
+          .timeout(const Duration(seconds: 3));
     } catch (e) {
       debugPrint('[InvoicePdf] font load failed, using Helvetica: $e');
     }
+  }
+
+  static String _clean(String text) {
+    if (_regular != null) return text;
+    return text.replaceAll('₹', 'Rs.');
   }
 
   static String get _rs => _regular != null ? '₹' : 'Rs.';
@@ -66,17 +75,41 @@ class InvoicePdf {
     InvoicePaper paper = InvoicePaper.a4,
   }) async {
     final bytes = await build(inv, s, paper: paper);
-    await Printing.layoutPdf(
-      name: _fileName(inv),
-      format: paper == InvoicePaper.a4 ? PdfPageFormat.a4 : PdfPageFormat.roll80,
-      onLayout: (_) async => bytes,
-    );
+    if (kIsWeb) {
+      try {
+        final ok = await Printing.layoutPdf(
+          name: _fileName(inv),
+          format: paper == InvoicePaper.a4 ? PdfPageFormat.a4 : PdfPageFormat.roll80,
+          onLayout: (_) async => bytes,
+        );
+        if (!ok) {
+          await FileSaver.openInNewTab(bytes: bytes);
+        }
+      } catch (e) {
+        debugPrint('[InvoicePdf] layoutPdf error on web: $e, opening in tab');
+        await FileSaver.openInNewTab(bytes: bytes);
+      }
+    } else {
+      await Printing.layoutPdf(
+        name: _fileName(inv),
+        format: paper == InvoicePaper.a4 ? PdfPageFormat.a4 : PdfPageFormat.roll80,
+        onLayout: (_) async => bytes,
+      );
+    }
   }
 
-  /// Web: downloads the file. Mobile: opens the share sheet.
+  /// Web: downloads the file directly. Mobile: opens the share sheet.
   static Future<void> download(InvoiceModel inv, BillingSettings s) async {
     final bytes = await build(inv, s);
-    await Printing.sharePdf(bytes: bytes, filename: _fileName(inv));
+    if (kIsWeb) {
+      await FileSaver.download(
+        bytes: bytes,
+        fileName: _fileName(inv),
+        mimeType: 'application/pdf',
+      );
+    } else {
+      await Printing.sharePdf(bytes: bytes, filename: _fileName(inv));
+    }
   }
 
   static String _title(InvoiceModel inv, BillingSettings s) =>
@@ -482,7 +515,7 @@ class InvoicePdf {
             ),
             children: [
               c('${i + 1}'),
-              c(inv.items[i].description),
+              c(_clean(inv.items[i].description)),
               c(inv.items[i].sac ?? s.sacCode),
               c('${inv.items[i].qty}', al: pw.TextAlign.center),
               c(money(inv.items[i].rate), al: pw.TextAlign.right),
@@ -537,7 +570,7 @@ class InvoicePdf {
             if ((inv.therapist ?? '').isNotEmpty) row('Therapist', inv.therapist!),
             dash(),
             for (final it in inv.items) ...[
-              pw.Text(it.description, style: base),
+              pw.Text(_clean(it.description), style: base),
               row('  ${it.qty} x ${money(it.rate)}', money(it.amount)),
             ],
             dash(),

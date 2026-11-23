@@ -572,14 +572,31 @@ class _BookingTabelState extends State<BookingTabel> {
                                 size: 18,
                                 color: AppColors.textSecondary,
                               ),
-                              onSelected: (value) {
+                              onSelected: (value) async {
                                 if (value == 'edit') {
                                   widget.onEdit(item);
+                                } else if (value == 'receipt') {
+                                  await showCheckoutDialog(
+                                    context: context,
+                                    item: item,
+                                    service: service,
+                                  );
+                                  if (mounted) setState(() {});
                                 } else if (value == 'delete') {
                                   _deleteBooking(item);
                                 }
                               },
                               itemBuilder: (context) => const [
+                                PopupMenuItem(
+                                  value: 'receipt',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.receipt_long_outlined, size: 16),
+                                      SizedBox(width: 8),
+                                      Text('Invoice / Receipt'),
+                                    ],
+                                  ),
+                                ),
                                 PopupMenuItem(
                                   value: 'edit',
                                   child: Row(

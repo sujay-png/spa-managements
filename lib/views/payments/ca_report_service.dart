@@ -16,6 +16,9 @@ class CaReportMetrics {
   final int unpaidInvoices;
   final int voidInvoices;
 
+  final int gstInvoicesCount;
+  final int nonGstInvoicesCount;
+
   final double totalSubtotal;
   final double totalDiscount;
   final double totalTaxable;
@@ -24,6 +27,14 @@ class CaReportMetrics {
   final double totalGst;
   final double totalRoundOff;
   final double totalRevenue;
+
+  final double gstTaxable;
+  final double gstCgst;
+  final double gstSgst;
+  final double gstTotalTax;
+  final double gstTotalRevenue;
+
+  final double nonGstTotalRevenue;
 
   final double upiTotal;
   final int upiCount;
@@ -42,6 +53,8 @@ class CaReportMetrics {
     required this.paidInvoices,
     required this.unpaidInvoices,
     required this.voidInvoices,
+    required this.gstInvoicesCount,
+    required this.nonGstInvoicesCount,
     required this.totalSubtotal,
     required this.totalDiscount,
     required this.totalTaxable,
@@ -50,6 +63,12 @@ class CaReportMetrics {
     required this.totalGst,
     required this.totalRoundOff,
     required this.totalRevenue,
+    required this.gstTaxable,
+    required this.gstCgst,
+    required this.gstSgst,
+    required this.gstTotalTax,
+    required this.gstTotalRevenue,
+    required this.nonGstTotalRevenue,
     required this.upiTotal,
     required this.upiCount,
     required this.cashTotal,
@@ -66,6 +85,9 @@ class CaReportMetrics {
     int unpaid = 0;
     int voidCount = 0;
 
+    int gstCount = 0;
+    int nonGstCount = 0;
+
     double subtotal = 0.0;
     double discount = 0.0;
     double taxable = 0.0;
@@ -73,6 +95,13 @@ class CaReportMetrics {
     double sgst = 0.0;
     double roundOff = 0.0;
     double revenue = 0.0;
+
+    double gstTaxableSum = 0.0;
+    double gstCgstSum = 0.0;
+    double gstSgstSum = 0.0;
+    double gstRevenueSum = 0.0;
+
+    double nonGstRevenueSum = 0.0;
 
     double upi = 0.0;
     int upiC = 0;
@@ -89,7 +118,7 @@ class CaReportMetrics {
     for (final i in list) {
       if (i.isVoid) {
         voidCount++;
-        continue; // voided bills are excluded from financial turnover totals
+        continue;
       }
 
       subtotal += i.subtotal;
@@ -99,6 +128,18 @@ class CaReportMetrics {
       sgst += i.sgst;
       roundOff += i.roundOff;
       revenue += i.total;
+
+      final isGst = i.hasGst || i.gst > 0;
+      if (isGst) {
+        gstCount++;
+        gstTaxableSum += i.taxableAmount;
+        gstCgstSum += i.cgst;
+        gstSgstSum += i.sgst;
+        gstRevenueSum += i.total;
+      } else {
+        nonGstCount++;
+        nonGstRevenueSum += i.total;
+      }
 
       if (i.isPaid) {
         paid++;
@@ -113,7 +154,6 @@ class CaReportMetrics {
           card += i.total;
           cardC++;
         } else {
-          // fallback to UPI or bank
           upi += i.total;
           upiC++;
         }
@@ -129,6 +169,8 @@ class CaReportMetrics {
       paidInvoices: paid,
       unpaidInvoices: unpaid,
       voidInvoices: voidCount,
+      gstInvoicesCount: gstCount,
+      nonGstInvoicesCount: nonGstCount,
       totalSubtotal: round2(subtotal),
       totalDiscount: round2(discount),
       totalTaxable: round2(taxable),
@@ -137,6 +179,12 @@ class CaReportMetrics {
       totalGst: round2(cgst + sgst),
       totalRoundOff: round2(roundOff),
       totalRevenue: round2(revenue),
+      gstTaxable: round2(gstTaxableSum),
+      gstCgst: round2(gstCgstSum),
+      gstSgst: round2(gstSgstSum),
+      gstTotalTax: round2(gstCgstSum + gstSgstSum),
+      gstTotalRevenue: round2(gstRevenueSum),
+      nonGstTotalRevenue: round2(nonGstRevenueSum),
       upiTotal: round2(upi),
       upiCount: upiC,
       cashTotal: round2(cash),
@@ -158,18 +206,26 @@ class CaReportService {
     if (_fontsTried) return;
     _fontsTried = true;
     try {
-      _regular = await PdfGoogleFonts.notoSansRegular();
-      _bold = await PdfGoogleFonts.notoSansBold();
+      _regular = await PdfGoogleFonts.notoSansRegular()
+          .timeout(const Duration(seconds: 3));
+      _bold = await PdfGoogleFonts.notoSansBold()
+          .timeout(const Duration(seconds: 3));
     } catch (e) {
       debugPrint('[CaReportService] font loading fallback: $e');
     }
   }
 
-  /// Builds a clean, fully escaped CSV string suitable for Excel & Tally.
+  static String _clean(String text) {
+    if (_regular != null) return text;
+    return text.replaceAll('₹', 'Rs.');
+  }
+
+  /// Builds a clean, fully escaped CSV string separating GST and Non-GST bills with subtotals.
   static String buildCsv({
     required List<InvoiceModel> invoices,
     required BillingSettings settings,
     required String periodLabel,
+    String taxFilter = 'all', // 'all', 'gst', 'non_gst'
   }) {
     final buffer = StringBuffer();
     final m = CaReportMetrics.compute(invoices);
@@ -181,15 +237,19 @@ class CaReportService {
       return '"$s"';
     }
 
-    // Header metadata
+    final gstInvoices = invoices.where((i) => (i.hasGst || i.gst > 0) && !i.isVoid).toList();
+    final nonGstInvoices = invoices.where((i) => !i.hasGst && i.gst == 0 && !i.isVoid).toList();
+    final voidInvoices = invoices.where((i) => i.isVoid).toList();
+
+    // 1. Report Header
     buffer.writeln('${escape("SPA BILLING & GST AUDIT REPORT")},,,,,,,,,,,,,,,,,,,,');
     buffer.writeln('${escape("Business Name")},${escape(settings.businessName.isEmpty ? "IRA Spa" : settings.businessName)},,,,,,,,,,,,,,,,,,,');
     buffer.writeln('${escape("GSTIN")},${escape(settings.gstin ?? "N/A")},${escape("Default SAC")},${escape(settings.sacCode)},,,,,,,,,,,,,,,,,,');
     buffer.writeln('${escape("Period")},${escape(periodLabel)},${escape("Generated At")},${escape(nowFormatted)},,,,,,,,,,,,,,,,,,');
-    buffer.writeln(',,,,,,,,,,,,,,,,,,,,'); // Blank separator
+    buffer.writeln('${escape("Report Mode")},${escape(taxFilter == "gst" ? "GST Bills Only" : taxFilter == "non_gst" ? "Non-GST Bills Only" : "All Bills (GST & Non-GST Separated)")},,,,,,,,,,,,,,,,,,,');
+    buffer.writeln(',,,,,,,,,,,,,,,,,,,,');
 
-    // Column Headers
-    final headers = [
+    final gstHeaders = [
       'Sl No',
       'Invoice No',
       'Invoice Date',
@@ -212,82 +272,174 @@ class CaReportService {
       'Payment Ref / UTR',
       'Therapist',
     ];
-    buffer.writeln(headers.map(escape).join(','));
 
-    // Rows
-    for (int i = 0; i < invoices.length; i++) {
-      final inv = invoices[i];
-      final serviceNames = inv.items.map((e) => e.description).join('; ');
-      final sac = inv.items.isNotEmpty && inv.items.first.sac != null && inv.items.first.sac!.isNotEmpty
-          ? inv.items.first.sac!
-          : settings.sacCode;
+    // 2. SECTION 1: GST BILLS
+    if (taxFilter != 'non_gst') {
+      buffer.writeln('${escape("--- SECTION 1: GST TAX INVOICES (WITH SAC & TAX LIABILITY) ---")},,,,,,,,,,,,,,,,,,,,');
+      buffer.writeln(gstHeaders.map(escape).join(','));
 
-      final row = [
-        (i + 1).toString(),
-        inv.invoiceNumber,
-        inv.serviceDate != null ? formatDate(inv.serviceDate!) : formatDate(inv.createdAt),
-        inv.paymentStatus.toUpperCase(),
-        inv.customerName,
-        inv.customerPhone ?? '',
-        serviceNames,
-        sac,
-        inv.subtotal.toStringAsFixed(2),
-        inv.discount.toStringAsFixed(2),
-        inv.taxableAmount.toStringAsFixed(2),
-        '${inv.gstRate.toStringAsFixed(0)}%',
-        inv.cgst.toStringAsFixed(2),
-        inv.sgst.toStringAsFixed(2),
-        inv.gst.toStringAsFixed(2),
-        inv.roundOff.toStringAsFixed(2),
-        inv.total.toStringAsFixed(2),
-        inv.paymentMethod ?? (inv.isPaid ? 'Paid' : 'Unpaid'),
-        inv.paidAt != null ? formatDate(inv.paidAt!) : '',
-        inv.paymentRef ?? '',
-        inv.therapist ?? '',
-      ];
-      buffer.writeln(row.map(escape).join(','));
+      if (gstInvoices.isEmpty) {
+        buffer.writeln('${escape("No GST invoices in this period")},,,,,,,,,,,,,,,,,,,,');
+      } else {
+        for (int i = 0; i < gstInvoices.length; i++) {
+          final inv = gstInvoices[i];
+          final serviceNames = inv.items.map((e) => e.description).join('; ');
+          final sac = inv.items.isNotEmpty && inv.items.first.sac != null && inv.items.first.sac!.isNotEmpty
+              ? inv.items.first.sac!
+              : settings.sacCode;
+
+          final row = [
+            (i + 1).toString(),
+            inv.invoiceNumber,
+            inv.serviceDate != null ? formatDate(inv.serviceDate!) : formatDate(inv.createdAt),
+            inv.paymentStatus.toUpperCase(),
+            inv.customerName,
+            inv.customerPhone ?? '',
+            serviceNames,
+            sac,
+            inv.subtotal.toStringAsFixed(2),
+            inv.discount.toStringAsFixed(2),
+            inv.taxableAmount.toStringAsFixed(2),
+            '${inv.gstRate.toStringAsFixed(0)}%',
+            inv.cgst.toStringAsFixed(2),
+            inv.sgst.toStringAsFixed(2),
+            inv.gst.toStringAsFixed(2),
+            inv.roundOff.toStringAsFixed(2),
+            inv.total.toStringAsFixed(2),
+            inv.paymentMethod ?? (inv.isPaid ? 'Paid' : 'Unpaid'),
+            inv.paidAt != null ? formatDate(inv.paidAt!) : '',
+            inv.paymentRef ?? '',
+            inv.therapist ?? '',
+          ];
+          buffer.writeln(row.map(escape).join(','));
+        }
+
+        // GST Subtotal Row
+        final gstTotalRow = [
+          'SUBTOTAL (GST BILLS)',
+          '${m.gstInvoicesCount} Invoices',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          m.gstTaxable.toStringAsFixed(2),
+          '',
+          m.gstTaxable.toStringAsFixed(2),
+          '',
+          m.gstCgst.toStringAsFixed(2),
+          m.gstSgst.toStringAsFixed(2),
+          m.gstTotalTax.toStringAsFixed(2),
+          '',
+          m.gstTotalRevenue.toStringAsFixed(2),
+          '',
+          '',
+          '',
+          '',
+        ];
+        buffer.writeln(gstTotalRow.map(escape).join(','));
+      }
+      buffer.writeln(',,,,,,,,,,,,,,,,,,,,');
     }
 
-    // Totals Row
-    buffer.writeln(',,,,,,,,,,,,,,,,,,,,');
-    final totalRow = [
-      'TOTAL',
-      '${m.totalInvoices} Invoices',
-      '',
-      '',
-      '',
-      '',
-      '',
-      '',
-      m.totalSubtotal.toStringAsFixed(2),
-      m.totalDiscount.toStringAsFixed(2),
-      m.totalTaxable.toStringAsFixed(2),
-      '',
-      m.totalCgst.toStringAsFixed(2),
-      m.totalSgst.toStringAsFixed(2),
-      m.totalGst.toStringAsFixed(2),
-      m.totalRoundOff.toStringAsFixed(2),
-      m.totalRevenue.toStringAsFixed(2),
-      '',
-      '',
-      '',
-      '',
-    ];
-    buffer.writeln(totalRow.map(escape).join(','));
+    // 3. SECTION 2: NON-GST BILLS
+    if (taxFilter != 'gst') {
+      buffer.writeln('${escape("--- SECTION 2: NON-GST BILLS / BILL OF SUPPLY (WITHOUT GST) ---")},,,,,,,,,,,,,,,,,,,,');
+      final nonGstHeaders = [
+        'Sl No',
+        'Bill No',
+        'Date',
+        'Status',
+        'Customer Name',
+        'Customer Mobile',
+        'Services Rendered',
+        'SAC Code',
+        'Gross Amount (INR)',
+        'Discount (INR)',
+        'Net Total (INR)',
+        'Payment Mode',
+        'Payment Date',
+        'Payment Ref / UTR',
+        'Therapist',
+      ];
+      buffer.writeln(nonGstHeaders.map(escape).join(','));
 
-    // Executive Summary Section for CA
-    buffer.writeln(',,,,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("EXECUTIVE SUMMARY FOR CHARTERED ACCOUNTANT")},,,,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("Metric")},${escape("Amount (INR)")},${escape("Count")},,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("Total Taxable Turnover")},${escape(m.totalTaxable.toStringAsFixed(2))},${escape(m.paidInvoices + m.unpaidInvoices)},,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("CGST Output Liability (9%)")},${escape(m.totalCgst.toStringAsFixed(2))},,,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("SGST Output Liability (9%)")},${escape(m.totalSgst.toStringAsFixed(2))},,,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("Total GST Output Tax")},${escape(m.totalGst.toStringAsFixed(2))},,,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("Total Gross Revenue (Taxable + GST)")},${escape(m.totalRevenue.toStringAsFixed(2))},${escape(m.totalInvoices)},,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("Cancelled / Void Invoices")},${escape("0.00")},${escape(m.voidInvoices)},,,,,,,,,,,,,,,,,,');
+      if (nonGstInvoices.isEmpty) {
+        buffer.writeln('${escape("No Non-GST bills in this period")},,,,,,,,,,,,,,');
+      } else {
+        for (int i = 0; i < nonGstInvoices.length; i++) {
+          final inv = nonGstInvoices[i];
+          final serviceNames = inv.items.map((e) => e.description).join('; ');
+          final sac = inv.items.isNotEmpty && inv.items.first.sac != null && inv.items.first.sac!.isNotEmpty
+              ? inv.items.first.sac!
+              : settings.sacCode;
+
+          final row = [
+            (i + 1).toString(),
+            inv.invoiceNumber,
+            inv.serviceDate != null ? formatDate(inv.serviceDate!) : formatDate(inv.createdAt),
+            inv.paymentStatus.toUpperCase(),
+            inv.customerName,
+            inv.customerPhone ?? '',
+            serviceNames,
+            sac,
+            inv.subtotal.toStringAsFixed(2),
+            inv.discount.toStringAsFixed(2),
+            inv.total.toStringAsFixed(2),
+            inv.paymentMethod ?? (inv.isPaid ? 'Paid' : 'Unpaid'),
+            inv.paidAt != null ? formatDate(inv.paidAt!) : '',
+            inv.paymentRef ?? '',
+            inv.therapist ?? '',
+          ];
+          buffer.writeln(row.map(escape).join(','));
+        }
+
+        // Non-GST Subtotal Row
+        final nonGstTotalRow = [
+          'SUBTOTAL (NON-GST BILLS)',
+          '${m.nonGstInvoicesCount} Bills',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          m.nonGstTotalRevenue.toStringAsFixed(2),
+          '',
+          m.nonGstTotalRevenue.toStringAsFixed(2),
+          '',
+          '',
+          '',
+          '',
+        ];
+        buffer.writeln(nonGstTotalRow.map(escape).join(','));
+      }
+      buffer.writeln(',,,,,,,,,,,,,,,,,,,,');
+    }
+
+    // 4. VOID BILLS (IF ANY)
+    if (voidInvoices.isNotEmpty) {
+      buffer.writeln('${escape("--- VOID / CANCELLED BILLS (AUDIT TRAIL) ---")},,,,,,,,,,,,,,,,,,,,');
+      for (final inv in voidInvoices) {
+        buffer.writeln('${escape(inv.invoiceNumber)},${escape(inv.customerName)},${escape(formatDate(inv.createdAt))},${escape("VOIDED")},${escape(inv.total.toStringAsFixed(2))},,,,,,,,,,,,,,,');
+      }
+      buffer.writeln(',,,,,,,,,,,,,,,,,,,,');
+    }
+
+    // 5. EXECUTIVE SUMMARY FOR CA AUDIT & GSTR RECONCILIATION
+    buffer.writeln('${escape("=========================================================")},,,,,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("EXECUTIVE SUMMARY FOR CHARTERED ACCOUNTANT & GSTR RECONCILIATION")},,,,,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("Category / Metric")},${escape("Amount (INR)")},${escape("Invoice Count")},${escape("Notes")},,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("GST Invoices (With 9% GST)")},${escape(m.gstTotalRevenue.toStringAsFixed(2))},${escape(m.gstInvoicesCount)},${escape("Taxable: Rs. " + m.gstTaxable.toStringAsFixed(2))},,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("  - CGST Output Tax (9%)")},${escape(m.gstCgst.toStringAsFixed(2))},,${escape("Central Tax Component")},,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("  - SGST Output Tax (9%)")},${escape(m.gstSgst.toStringAsFixed(2))},,${escape("State Tax Component")},,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("  - Total Output GST Liability")},${escape(m.gstTotalTax.toStringAsFixed(2))},,${escape("GSTR-1 / GSTR-3B Liability")},,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("Non-GST Bills (Zero / Exempt)")},${escape(m.nonGstTotalRevenue.toStringAsFixed(2))},${escape(m.nonGstInvoicesCount)},${escape("Composition / Bill of Supply")},,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("GRAND TOTAL BILLING (TURNOVER)")},${escape(m.totalRevenue.toStringAsFixed(2))},${escape(m.totalInvoices)},${escape("Total Spa Revenue")},,,,,,,,,,,,,,,,,');
     buffer.writeln(',,,,,,,,,,,,,,,,,,,,');
     buffer.writeln('${escape("COLLECTIONS AUDIT BY PAYMENT MODE")},,,,,,,,,,,,,,,,,,,,');
-    buffer.writeln('${escape("Mode")},${escape("Total Amount (INR)")},${escape("Transactions")},,,,,,,,,,,,,,,,,,');
+    buffer.writeln('${escape("Payment Mode")},${escape("Total Amount (INR)")},${escape("Transactions")},,,,,,,,,,,,,,,,,,');
     buffer.writeln('${escape("UPI / QR Code")},${escape(m.upiTotal.toStringAsFixed(2))},${escape(m.upiCount)},,,,,,,,,,,,,,,,,,');
     buffer.writeln('${escape("Cash")},${escape(m.cashTotal.toStringAsFixed(2))},${escape(m.cashCount)},,,,,,,,,,,,,,,,,,');
     buffer.writeln('${escape("Card / POS")},${escape(m.cardTotal.toStringAsFixed(2))},${escape(m.cardCount)},,,,,,,,,,,,,,,,,,');
@@ -296,28 +448,36 @@ class CaReportService {
     return buffer.toString();
   }
 
-  /// Downloads CSV file to user's computer
+  /// Downloads CSV file to user's computer with separate GST & Non-GST files or combined.
   static Future<void> downloadCsv({
     required List<InvoiceModel> invoices,
     required BillingSettings settings,
     required String periodLabel,
+    String taxFilter = 'all',
   }) async {
     final csvString = buildCsv(
       invoices: invoices,
       settings: settings,
       periodLabel: periodLabel,
+      taxFilter: taxFilter,
     );
     final cleanPeriod = periodLabel.replaceAll(RegExp(r'[^A-Za-z0-9]'), '_');
-    final fileName = 'CA_Billing_Report_${cleanPeriod}_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
+    final tag = taxFilter == 'gst'
+        ? 'GST_Bills_'
+        : taxFilter == 'non_gst'
+            ? 'Non_GST_Bills_'
+            : 'Billing_Report_Separated_';
+    final fileName = 'CA_${tag}${cleanPeriod}_${DateFormat('yyyyMMdd').format(DateTime.now())}.csv';
     final bytes = utf8.encode(csvString);
     await FileSaver.download(bytes: bytes, fileName: fileName, mimeType: 'text/csv;charset=utf-8;');
   }
 
-  /// Builds a publication-ready landscape A4 PDF report for Chartered Accountants
+  /// Builds a publication-ready landscape A4 PDF report for Chartered Accountants with clearly separated GST & Non-GST sections
   static Future<Uint8List> buildPdf({
     required List<InvoiceModel> invoices,
     required BillingSettings settings,
     required String periodLabel,
+    String taxFilter = 'all',
   }) async {
     await _loadFonts();
     final doc = pw.Document(
@@ -333,19 +493,31 @@ class CaReportService {
     const softBg = PdfColor.fromInt(0xFFF9F6F0);
     const borderColor = PdfColor.fromInt(0xFFDDD2C3);
 
-    // Split invoices into pages (15 per page in landscape)
-    const int perPage = 14;
-    final int pageCount = (invoices.isEmpty ? 1 : (invoices.length / perPage).ceil());
+    final gstInvoices = invoices.where((i) => (i.hasGst || i.gst > 0) && !i.isVoid).toList();
+    final nonGstInvoices = invoices.where((i) => !i.hasGst && i.gst == 0 && !i.isVoid).toList();
+
+    List<InvoiceModel> displayList;
+    if (taxFilter == 'gst') {
+      displayList = gstInvoices;
+    } else if (taxFilter == 'non_gst') {
+      displayList = nonGstInvoices;
+    } else {
+      // In combined mode: GST invoices first, then Non-GST invoices
+      displayList = [...gstInvoices, ...nonGstInvoices];
+    }
+
+    const int perPage = 13;
+    final int pageCount = (displayList.isEmpty ? 1 : (displayList.length / perPage).ceil());
 
     for (int p = 0; p < pageCount; p++) {
       final start = p * perPage;
-      final end = (start + perPage < invoices.length) ? start + perPage : invoices.length;
-      final pageItems = invoices.isEmpty ? <InvoiceModel>[] : invoices.sublist(start, end);
+      final end = (start + perPage < displayList.length) ? start + perPage : displayList.length;
+      final pageItems = displayList.isEmpty ? <InvoiceModel>[] : displayList.sublist(start, end);
 
       doc.addPage(
         pw.Page(
           pageFormat: PdfPageFormat.a4.landscape,
-          margin: const pw.EdgeInsets.all(24),
+          margin: const pw.EdgeInsets.all(22),
           build: (ctx) {
             return pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -361,13 +533,13 @@ class CaReportService {
                         pw.Text(
                           settings.businessName.isEmpty ? 'IRA SPA' : settings.businessName.toUpperCase(),
                           style: pw.TextStyle(
-                            fontSize: 18,
+                            fontSize: 17,
                             fontWeight: pw.FontWeight.bold,
                             color: brandColor,
                           ),
                         ),
                         if (settings.address != null && settings.address!.isNotEmpty)
-                          pw.Text(settings.address!, style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+                          pw.Text(_clean(settings.address!), style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
                         pw.Text(
                           'GSTIN: ${settings.gstin ?? "Unregistered / Composition"}  •  Default SAC: ${settings.sacCode}',
                           style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800),
@@ -384,27 +556,31 @@ class CaReportService {
                             borderRadius: pw.BorderRadius.circular(4),
                           ),
                           child: pw.Text(
-                            'GST SALES REGISTER & CA AUDIT REPORT',
-                            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+                            taxFilter == 'gst'
+                                ? 'GST TAX INVOICES REGISTER'
+                                : taxFilter == 'non_gst'
+                                    ? 'NON-GST BILLS REGISTER'
+                                    : 'GST & NON-GST AUDIT REPORT',
+                            style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
                           ),
                         ),
-                        pw.SizedBox(height: 4),
-                        pw.Text('Period: $periodLabel', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold)),
+                        pw.SizedBox(height: 3),
+                        pw.Text('Period: $periodLabel', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
                         pw.Text(
                           'Generated: ${DateFormat('dd MMM yyyy, hh:mm a').format(DateTime.now())} • Page ${p + 1} of $pageCount',
-                          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+                          style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey600),
                         ),
                       ],
                     ),
                   ],
                 ),
 
-                pw.SizedBox(height: 10),
+                pw.SizedBox(height: 8),
 
                 // KPI summary cards (Show on Page 1)
                 if (p == 0) ...[
                   pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                     decoration: pw.BoxDecoration(
                       color: softBg,
                       borderRadius: pw.BorderRadius.circular(6),
@@ -413,17 +589,18 @@ class CaReportService {
                     child: pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
-                        _pdfStat('TOTAL INVOICES', '${m.totalInvoices}', '${m.paidInvoices} Paid • ${m.unpaidInvoices} Unpaid'),
-                        _pdfStat('TAXABLE TURNOVER', 'Rs. ${money(m.totalTaxable)}', 'Before GST'),
-                        _pdfStat('CGST (9%)', 'Rs. ${money(m.totalCgst)}', 'Central Tax'),
-                        _pdfStat('SGST (9%)', 'Rs. ${money(m.totalSgst)}', 'State Tax'),
-                        _pdfStat('TOTAL GST', 'Rs. ${money(m.totalGst)}', 'Output Liability'),
-                        _pdfStat('GROSS REVENUE', 'Rs. ${money(m.totalRevenue)}', 'Total Billing'),
+                        _pdfStat('TOTAL INVOICES', '${m.totalInvoices}', '${m.gstInvoicesCount} GST • ${m.nonGstInvoicesCount} Non-GST'),
+                        _pdfStat('GST TAXABLE', 'Rs. ${money(m.gstTaxable)}', '${m.gstInvoicesCount} GST Invoices'),
+                        _pdfStat('CGST (9%)', 'Rs. ${money(m.gstCgst)}', 'Central Tax'),
+                        _pdfStat('SGST (9%)', 'Rs. ${money(m.gstSgst)}', 'State Tax'),
+                        _pdfStat('OUTPUT GST TAX', 'Rs. ${money(m.gstTotalTax)}', 'GSTR Liability'),
+                        _pdfStat('NON-GST TURNOVER', 'Rs. ${money(m.nonGstTotalRevenue)}', '${m.nonGstInvoicesCount} Non-GST Bills'),
+                        _pdfStat('GROSS BILLING', 'Rs. ${money(m.totalRevenue)}', 'Total Sales'),
                         _pdfStat('COLLECTIONS', 'Rs. ${money(m.upiTotal + m.cashTotal + m.cardTotal)}', 'UPI: Rs.${money(m.upiTotal)} | Cash: Rs.${money(m.cashTotal)}'),
                       ],
                     ),
                   ),
-                  pw.SizedBox(height: 10),
+                  pw.SizedBox(height: 8),
                 ],
 
                 // Invoices Table
@@ -431,18 +608,19 @@ class CaReportService {
                   child: pw.Table(
                     border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
                     columnWidths: const {
-                      0: pw.FixedColumnWidth(24),  // Sl
+                      0: pw.FixedColumnWidth(22),  // Sl
                       1: pw.FixedColumnWidth(55),  // Inv No
-                      2: pw.FixedColumnWidth(55),  // Date
-                      3: pw.FlexColumnWidth(2.2), // Customer & Service
-                      4: pw.FixedColumnWidth(42),  // SAC
-                      5: pw.FixedColumnWidth(55),  // Taxable
-                      6: pw.FixedColumnWidth(30),  // Rate
-                      7: pw.FixedColumnWidth(45),  // CGST
-                      8: pw.FixedColumnWidth(45),  // SGST
-                      9: pw.FixedColumnWidth(55),  // Total
-                      10: pw.FixedColumnWidth(55), // Payment
-                      11: pw.FixedColumnWidth(45), // Status
+                      2: pw.FixedColumnWidth(50),  // Date
+                      3: pw.FixedColumnWidth(48),  // Type (GST/NON-GST)
+                      4: pw.FlexColumnWidth(2.2), // Customer & Service
+                      5: pw.FixedColumnWidth(38),  // SAC
+                      6: pw.FixedColumnWidth(52),  // Taxable
+                      7: pw.FixedColumnWidth(28),  // Rate
+                      8: pw.FixedColumnWidth(42),  // CGST
+                      9: pw.FixedColumnWidth(42),  // SGST
+                      10: pw.FixedColumnWidth(52), // Total
+                      11: pw.FixedColumnWidth(50), // Payment
+                      12: pw.FixedColumnWidth(42), // Status
                     },
                     children: [
                       // Header Row
@@ -452,6 +630,7 @@ class CaReportService {
                           _th('#'),
                           _th('Inv No'),
                           _th('Date'),
+                          _th('Type'),
                           _th('Customer / Service'),
                           _th('SAC'),
                           _th('Taxable (Rs)'),
@@ -471,6 +650,7 @@ class CaReportService {
                         final sac = i.items.isNotEmpty && i.items.first.sac != null && i.items.first.sac!.isNotEmpty
                             ? i.items.first.sac!
                             : settings.sacCode;
+                        final isGstBill = i.hasGst || i.gst > 0;
 
                         final isEven = entry.key % 2 == 0;
                         return pw.TableRow(
@@ -479,21 +659,27 @@ class CaReportService {
                             _td('$idx', align: pw.TextAlign.center),
                             _td(i.invoiceNumber, bold: true),
                             _td(i.serviceDate != null ? formatDate(i.serviceDate!) : formatDate(i.createdAt)),
+                            _td(
+                              isGstBill ? 'GST (9%)' : 'NON-GST',
+                              align: pw.TextAlign.center,
+                              bold: true,
+                              color: isGstBill ? const PdfColor.fromInt(0xFF1E7E34) : PdfColors.grey700,
+                            ),
                             pw.Padding(
-                              padding: const pw.EdgeInsets.all(4),
+                              padding: const pw.EdgeInsets.all(3.5),
                               child: pw.Column(
                                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                                 children: [
-                                  pw.Text(i.customerName, style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold)),
-                                  pw.Text(serviceNames, style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey700), maxLines: 1),
+                                  pw.Text(_clean(i.customerName), style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold)),
+                                  pw.Text(_clean(serviceNames), style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey700), maxLines: 1),
                                 ],
                               ),
                             ),
                             _td(sac, align: pw.TextAlign.center),
                             _td(money(i.taxableAmount), align: pw.TextAlign.right),
-                            _td('${i.gstRate.toInt()}%', align: pw.TextAlign.center),
-                            _td(money(i.cgst), align: pw.TextAlign.right),
-                            _td(money(i.sgst), align: pw.TextAlign.right),
+                            _td(isGstBill ? '${i.gstRate.toInt()}%' : '0%', align: pw.TextAlign.center),
+                            _td(isGstBill ? money(i.cgst) : '-', align: pw.TextAlign.right),
+                            _td(isGstBill ? money(i.sgst) : '-', align: pw.TextAlign.right),
                             _td(money(i.total), align: pw.TextAlign.right, bold: true),
                             _td(i.paymentMethod ?? (i.isPaid ? 'Paid' : '-'), align: pw.TextAlign.center),
                             _td(
@@ -508,12 +694,12 @@ class CaReportService {
                   ),
                 ),
 
-                pw.SizedBox(height: 6),
+                pw.SizedBox(height: 5),
 
-                // Table Footer / Page Totals
+                // Table Footer / Subtotals
                 if (p == pageCount - 1)
                   pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                     decoration: pw.BoxDecoration(
                       color: softBg,
                       border: pw.TableBorder.all(color: brandColor, width: 0.8),
@@ -521,19 +707,20 @@ class CaReportService {
                     child: pw.Row(
                       mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                       children: [
-                        pw.Text('GRAND TOTALS:', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: brandColor)),
-                        pw.Text('Taxable: Rs. ${money(m.totalTaxable)}', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
-                        pw.Text('CGST: Rs. ${money(m.totalCgst)}', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
-                        pw.Text('SGST: Rs. ${money(m.totalSgst)}', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
-                        pw.Text('Total GST: Rs. ${money(m.totalGst)}', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold)),
-                        pw.Text('Net Revenue: Rs. ${money(m.totalRevenue)}', style: pw.TextStyle(fontSize: 9.5, fontWeight: pw.FontWeight.bold, color: brandColor)),
+                        pw.Text('GRAND TOTALS:', style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: brandColor)),
+                        pw.Text('GST Bills: ${m.gstInvoicesCount} (Taxable: Rs. ${money(m.gstTaxable)} | Tax: Rs. ${money(m.gstTotalTax)})',
+                            style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF1E7E34))),
+                        pw.Text('Non-GST Bills: ${m.nonGstInvoicesCount} (Total: Rs. ${money(m.nonGstTotalRevenue)})',
+                            style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                        pw.Text('Gross Sales: Rs. ${money(m.totalRevenue)}',
+                            style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: brandColor)),
                       ],
                     ),
                   ),
 
-                pw.SizedBox(height: 4),
+                pw.SizedBox(height: 3),
                 pw.Text(
-                  '* This report is computer generated and verified for statutory GST compliance under the CGST / SGST Act 2017.',
+                  '* Statutory Report: GST bills and Non-GST bills are segregated with SAC codes and tax breakdowns for GSTR-1, GSTR-3B and Income Tax audit.',
                   style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey600),
                 ),
               ],
@@ -546,45 +733,64 @@ class CaReportService {
     return doc.save();
   }
 
-  /// Prints or opens the PDF share sheet
+  /// Prints or opens the PDF in new tab
   static Future<void> printOrSharePdf({
     required List<InvoiceModel> invoices,
     required BillingSettings settings,
     required String periodLabel,
+    String taxFilter = 'all',
   }) async {
     final bytes = await buildPdf(
       invoices: invoices,
       settings: settings,
       periodLabel: periodLabel,
+      taxFilter: taxFilter,
     );
     final cleanPeriod = periodLabel.replaceAll(RegExp(r'[^A-Za-z0-9]'), '_');
-    final fileName = 'CA_Report_${cleanPeriod}.pdf';
-    await Printing.layoutPdf(
-      name: fileName,
-      format: PdfPageFormat.a4.landscape,
-      onLayout: (_) async => bytes,
-    );
+    final tag = taxFilter == 'gst' ? 'GST_' : taxFilter == 'non_gst' ? 'Non_GST_' : '';
+    final fileName = 'CA_Report_${tag}${cleanPeriod}.pdf';
+    if (kIsWeb) {
+      try {
+        final ok = await Printing.layoutPdf(
+          name: fileName,
+          format: PdfPageFormat.a4.landscape,
+          onLayout: (_) async => bytes,
+        );
+        if (!ok) {
+          await FileSaver.openInNewTab(bytes: bytes);
+        }
+      } catch (e) {
+        debugPrint('[CaReportService] layoutPdf fallback: $e');
+        await FileSaver.openInNewTab(bytes: bytes);
+      }
+    } else {
+      await Printing.layoutPdf(
+        name: fileName,
+        format: PdfPageFormat.a4.landscape,
+        onLayout: (_) async => bytes,
+      );
+    }
   }
 
   static pw.Widget _pdfStat(String title, String val, String subtitle) {
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        pw.Text(title, style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey700)),
+        pw.Text(title, style: const pw.TextStyle(fontSize: 6.5, color: PdfColors.grey700)),
         pw.SizedBox(height: 1),
-        pw.Text(val, style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
-        pw.Text(subtitle, style: const pw.TextStyle(fontSize: 6, color: PdfColors.grey600)),
+        pw.Text(val, style: pw.TextStyle(fontSize: 8.5, fontWeight: pw.FontWeight.bold, color: PdfColors.black)),
+        pw.Text(subtitle, style: const pw.TextStyle(fontSize: 5.5, color: PdfColors.grey600)),
       ],
     );
   }
 
   static pw.Widget _th(String text) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 4),
       child: pw.Text(
         text,
         textAlign: pw.TextAlign.center,
-        style: pw.TextStyle(fontSize: 7.5, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
+        style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold, color: PdfColors.white),
       ),
     );
   }
@@ -596,12 +802,12 @@ class CaReportService {
     PdfColor? color,
   }) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      padding: const pw.EdgeInsets.symmetric(horizontal: 3, vertical: 3.5),
       child: pw.Text(
         text,
         textAlign: align,
         style: pw.TextStyle(
-          fontSize: 7.5,
+          fontSize: 7,
           fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
           color: color ?? PdfColors.black,
         ),

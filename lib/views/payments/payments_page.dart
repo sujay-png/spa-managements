@@ -671,7 +671,8 @@ Future<void> showInvoiceDetail(BuildContext context, InvoiceModel inv) {
     context: context,
     builder: (ctx) {
       final pay = ctx.watch<PaymentController>();
-      final s = pay.settings;
+      final s = pay.settings ??
+          BillingSettings.empty(inv.businessRef, businessName: 'Spa');
       Widget line(String k, String v, {bool bold = false}) => Padding(
             padding: const EdgeInsets.symmetric(vertical: 3),
             child: Row(
@@ -762,7 +763,7 @@ Future<void> showInvoiceDetail(BuildContext context, InvoiceModel inv) {
                   ),
                 ),
                 const SizedBox(height: 20),
-                if (s != null) Center(child: InvoiceActions(invoice: inv, settings: s)),
+                Center(child: InvoiceActions(invoice: inv, settings: s)),
                 const SizedBox(height: 16),
                 Row(
                   children: [
